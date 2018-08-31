@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:context=".fragments.TodayVerseFragment">
+
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/card_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="@dimen/card_margin"
+        android:elevation="3dp"
+        card_view:cardCornerRadius="@dimen/card_album_radius">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="@dimen/margin_padding_xnormal"
+                android:paddingBottom="@dimen/margin_padding_tiny"
+                android:paddingLeft="@dimen/verse_title_padding"
+                android:paddingRight="@dimen/verse_title_padding"/>
+
+            <TextView
+                android:id="@+id/verse"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/date"
+                android:textStyle="bold"
+                android:paddingLeft="@dimen/verse_title_padding"
+                android:paddingRight="@dimen/verse_title_padding"
+                android:textSize="@dimen/text_size_header"/>
+
+            <TextView
+                android:id="@+id/verse_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/verse"
+                android:paddingBottom="@dimen/margin_padding_normal"
+                android:paddingLeft="@dimen/verse_title_padding"
+                android:paddingRight="@dimen/verse_title_padding"
+                android:paddingTop="@dimen/verse_title_padding"
+                android:textSize="@dimen/text_size_header"/>
+
+            <TextView
+                android:id="@+id/issue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/verse_content"
+                android:paddingBottom="@dimen/songs_count_padding_bottom"
+                android:paddingLeft="@dimen/verse_title_padding"
+                android:paddingRight="@dimen/verse_title_padding"
+                android:textSize="@dimen/text_size_xnormal"/>
+
+        <RelativeLayout
+            android:id="@+id/verse_actions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/issue"
+            android:paddingBottom="@dimen/margin_padding_normal"
+            android:layout_centerHorizontal="true">
+
+            <ImageView
+                android:id="@+id/share_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
+                android:scaleType="centerCrop"
+                android:paddingLeft="@dimen/margin_padding_xnormal"
+                android:paddingRight="@dimen/margin_padding_xnormal"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:src="@drawable/ic_share_black" />
+
+            <ImageView
+                android:id="@+id/notFav_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
+                android:scaleType="centerCrop"
+                android:layout_centerHorizontal="true"
+                android:src="@drawable/ic_star_border_black_24dp" />
+            <ImageView
+                android:id="@+id/yesFav_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_star_yellow" />
+
+            <ImageView
+                android:id="@+id/note_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
+                android:scaleType="centerCrop"
+                android:paddingLeft="@dimen/margin_padding_xxnormal"
+                android:paddingRight="@dimen/margin_padding_xxnormal"
+                android:src="@drawable/ic_note_add_black_24dp" />
+
+        </RelativeLayout>
+        </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
+
+</LinearLayout>
+</ScrollView>

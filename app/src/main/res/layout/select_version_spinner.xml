@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    android:layout_height="match_parent" android:layout_width="match_parent">
+<RelativeLayout
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:padding="@dimen/margin_padding_normal"
+    android:layout_height="wrap_content" android:gravity="center_horizontal">
+
+    <TextView
+        android:id="@+id/test_graph_category"
+        android:text="Version:"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:padding="@dimen/margin_padding_xtiny"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/text_size_header"/>
+
+    <Spinner
+        android:id="@+id/version_spinner"
+        android:padding="@dimen/margin_padding_xtiny"
+        android:layout_toRightOf="@+id/test_graph_category"
+        android:layout_toEndOf="@+id/test_graph_category"
+        android:layout_alignBottom="@+id/test_graph_category"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="match_parent"
+        android:layout_margin="10dp"
+        android:layout_below="@+id/version_spinner"
+        android:layout_height="wrap_content"
+        android:text="View"
+        android:id="@+id/select_version_button"
+        android:layout_gravity="center_horizontal"/>
+
+</RelativeLayout>
+</ScrollView>

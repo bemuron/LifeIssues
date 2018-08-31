@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="none">
+        <item android:id="@+id/nav_notes" android:icon="@drawable/note"
+            android:title="@string/action_notes" />
+        <item android:id="@+id/nav_favourites" android:icon="@drawable/ic_star_black_24dp"
+            android:title="@string/action_favourites" />
+        <item android:id="@+id/nav_random" android:icon="@drawable/ic_toys_black_24dp"
+            android:title="@string/random" />
+            <item android:id="@+id/nav_about" android:icon="@drawable/ic_info_black_24dp"
+                android:title="@string/about" />
+            <item android:id="@+id/nav_settings" android:icon="@drawable/ic_settings_black_24dp"
+                android:title="@string/action_settings" />
+    </group>
+</menu>

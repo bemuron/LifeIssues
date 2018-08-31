@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout for list items in the search results.
+ -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+    android:background="@color/colorPrimary"
+        android:padding="5dp">
+
+    <TextView
+        android:id="@android:id/text1"
+        style="@style/suggestionsTheme"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Word"
+        android:textSize="@dimen/text_size_header" />
+
+    <TextView
+        android:id="@android:id/text2"
+        style="@style/suggestionsTheme"
+        android:maxLines="1"
+        android:text="Definition"
+        android:textSize="@dimen/text_size_normal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>
+

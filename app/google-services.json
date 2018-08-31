@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "229607121728",
+    "firebase_url": "https://lifeissues-77df5.firebaseio.com",
+    "project_id": "lifeissues-77df5",
+    "storage_bucket": "lifeissues-77df5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229607121728:android:0c60e17964cef623",
+        "android_client_info": {
+          "package_name": "com.lifeissues.lifeissues"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "229607121728-e879iog4f7gue2bbis8cuvaeol3eik3d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lifeissues.lifeissues",
+            "certificate_hash": "ddff00bf8536ca071dea4b98caa43c9b1e14bc70"
+          }
+        },
+        {
+          "client_id": "229607121728-ovbisd9vfsf6g2l6kmahumch4toh540i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGjHKrq-H6TpMju4DpRTLixWWQnQCuNWA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "229607121728-ovbisd9vfsf6g2l6kmahumch4toh540i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:showIn="@layout/single_article" android:layout_width="match_parent"
+    android:layout_height="match_parent" tools:context=".activities.Article">
+<!--
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_margin="@dimen/text_margin" android:layout_gravity="center"
+        android:id="@+id/article_name" android:text="Article Name"
+        />
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_margin="@dimen/text_margin"
+        android:id="@+id/article" android:text="Article"
+        />
+        <include layout="@layout/article" />
+    -->
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_margin="@dimen/text_margin" android:layout_centerHorizontal="true"
+            android:id="@+id/article_name"
+            />
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_margin="@dimen/text_margin"
+            android:id="@+id/article"
+            android:layout_below="@+id/article_name"
+            android:padding="5dp"
+            />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:id="@+id/favourite_img"
+            android:layout_below="@+id/article"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/ic_star_black_24dp" />
+
+    </RelativeLayout>
+
+</android.support.v4.widget.NestedScrollView>
