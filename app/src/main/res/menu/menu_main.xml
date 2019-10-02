@@ -11,23 +11,29 @@
         app:actionViewClass="android.support.v7.widget.SearchView" />
     <item
         android:id="@+id/action_notes"
-        android:orderInCategory="96"
+        android:orderInCategory="95"
         android:title="@string/action_notes"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_favorites"
-        android:orderInCategory="97"
+        android:orderInCategory="96"
         android:title="@string/action_favourites"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_random_verse"
-        android:orderInCategory="98"
+        android:orderInCategory="97"
         android:title="@string/random"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_about"
-        android:orderInCategory="99"
+        android:orderInCategory="98"
         android:title="@string/about"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_privacy_policy"
+        android:orderInCategory="99"
+        android:title="@string/privacy_policy"
         app:showAsAction="never" />
 
     <item

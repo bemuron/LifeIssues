@@ -168,9 +168,6 @@ public class NoteListAdapter extends RecyclerView.Adapter<NoteListAdapter.MyView
         if (!TextUtils.isEmpty(note.getPicture())) {
             Glide.with(context).load(note.getPicture())
                     .thumbnail(0.5f)
-                    .crossFade()
-                    .transform(new CircleTransform(context))
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(holder.imgProfile);
             holder.imgProfile.setColorFilter(null);
             holder.iconText.setVisibility(View.GONE);

@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +35,7 @@ import database.DatabaseTable;
  */
 
 public class TodayVerseFragment extends Fragment {
+    private static final String TAG = TodayVerseFragment.class.getSimpleName();
     private View rootView;
     private DatabaseTable dbhelper;
     private SharedPreferences prefs;
@@ -272,7 +274,8 @@ public class TodayVerseFragment extends Fragment {
             }
 
         }else{
-            Toast.makeText(getActivity(), "Switch is off", Toast.LENGTH_LONG).show();
+            //Toast.makeText(getActivity(), "Switch is off", Toast.LENGTH_LONG).show();
+            Log.d("switchValue", "Switch is off");
         }
         //getActivity().recreate();
     }

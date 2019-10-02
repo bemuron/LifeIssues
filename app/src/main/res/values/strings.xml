@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Life Issues</string>
     <string name="banner_ad_unit_id">ca-app-pub-3075330085087679/2977421942</string>
+    <!--LI adMob App Id -->
+    <string name="AdMob_App_ID">ca-app-pub-3075330085087679~5350882962</string>
+
     <!-- for testing purposes ad unit is: ca-app-pub-3940256099942544/6300978111 -->
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
@@ -97,9 +100,9 @@
     <string name="title_send_feedback">Send Feedback</string>
     <string name="title_faq">FAQ</string>
     <string name="summary_faq">View frequently asked questions</string>
-    <string name="url_faq">http://www.androidhive.info/privacy-policy/</string>
+    <string name="url_faq">http://www.emtechint.com/life_issues.html/</string>
     <string name="privacy_policy">Privacy Policy</string>
-    <string name="url_privacy">http://www.androidhive.info/privacy-policy/</string>
+    <string name="url_privacy">http://www.emtechint.com/life_issues.html/</string>
     <string name="title_terms">Terms &amp; Conditions</string>
     <string name="url_terms">http://www.androidhive.info/terms-of-service/</string>
     <string name="title_version">Version</string>

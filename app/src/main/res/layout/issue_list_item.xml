@@ -24,6 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:lines="1"
+            android:textColor="@color/from"
             android:textSize="@dimen/text_size_xxnormal"
             android:textStyle="bold" />
 
@@ -32,6 +33,7 @@
             android:text="John 3:16, Mark 11:23"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/from"
             android:ellipsize="end"
             android:lines="1"
             android:textSize="@dimen/text_size_xnormal" />

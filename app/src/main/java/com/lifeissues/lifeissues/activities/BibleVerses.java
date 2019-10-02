@@ -28,6 +28,7 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.adapters.BibleVersesPagerAdapter;
 import com.lifeissues.lifeissues.fragments.BibleVersesFragment;
@@ -74,6 +75,9 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_bar_bible_view);
 
+        //initialise the ads
+        MobileAds.initialize(this, "ca-app-pub-3075330085087679~5350882962");
+
         mAdView = (AdView) findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
             private void showToast(String message) {
@@ -110,7 +114,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         mAdView.loadAd(adRequest);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //setSupportActionBar(toolbar);
         setupActionBar();
 
         bibleVersesFragment = new BibleVersesFragment();

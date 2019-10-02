@@ -12,17 +12,17 @@ import android.os.PowerManager;
 public abstract class WakeReminderIntentService extends IntentService {
     abstract void doReminderWork(Intent intent);
 
-    public static final String LOCK_NAME_STATIC="com.lifeissues.lifeissues";
+    public static final String LOCK_NAME_STATIC="myapp:com.lifeissues.lifeissues";
     private static PowerManager.WakeLock lockStatic=null;
 
     public static void acquireStaticLock(Context context) {
-        getLock(context).acquire();
+        getLock(context).acquire(10*60*1000L /*10 minutes*/);
     }
 
     synchronized private static PowerManager.WakeLock getLock(Context context) {
         if (lockStatic==null) {
             PowerManager mgr=(PowerManager)context.getSystemService(Context.POWER_SERVICE);
-            lockStatic=mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+            lockStatic = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                     LOCK_NAME_STATIC);
             lockStatic.setReferenceCounted(true);
         }

@@ -19,6 +19,7 @@ import android.support.v7.widget.Toolbar;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,6 +32,7 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.lifeissues.lifeissues.adapters.MainTabsPagerAdapter;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.fragments.IssuesFragment;
@@ -43,6 +45,7 @@ import database.IssuesProvider;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,IssuesFragment.IssueSelectedListener {
 
+    private static final String TAG = MainActivity.class.getSimpleName();
     public static MainActivity instance;
     private AdView mAdView;
     private Random rand;
@@ -51,6 +54,7 @@ public class MainActivity extends AppCompatActivity
     private int post,counter = 0,max,random_articleID,min=1;
     private ListView mListView;
     private SimpleCursorAdapter words;
+    private String privacy_policy_link = "http://www.emtechint.com/life_issues.html";
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -73,7 +77,10 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         instance = this;
 
-        mAdView = (AdView) findViewById(R.id.adView);
+        //initialise the ads
+        MobileAds.initialize(this, "ca-app-pub-3075330085087679~5350882962");
+
+        mAdView = findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
             private void showToast(String message) {
                 Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
@@ -81,31 +88,32 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onAdLoaded() {
-               //showToast("Ad loaded.");
-                    mAdView.setVisibility(View.VISIBLE);
+                Log.e(TAG, "Ad loaded");
+                mAdView.setVisibility(View.VISIBLE);
             }
 
             @Override
             public void onAdFailedToLoad(int errorCode) {
                 //showToast(String.format("Ad failed to load with error code %d.", errorCode));
+                Log.e(TAG, "Failed to load ad "+errorCode);
             }
 
             @Override
             public void onAdOpened() {
                 //showToast("Ad opened.");
+                Log.e(TAG, "Ad opened");
             }
 
             @Override
             public void onAdClosed() {
-                //showToast("Ad closed.");
+                Log.e(TAG, "Ad closed");
             }
 
             @Override
             public void onAdLeftApplication() {
-                //showToast("Ad left application.");
+                Log.e(TAG, "Ad left application");
             }
         });
-
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
@@ -343,6 +351,9 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
         }
+        else if (id == R.id.action_privacy_policy){
+            openPrivacyPolicyLink();
+        }
         else if (id == R.id.action_search){
             return true;
         }
@@ -369,7 +380,10 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_about) {
             AboutLifeIssues.Show(this);
 
-        } else if (id == R.id.nav_settings) {
+        } else if (id == R.id.nav_privacy_policy) {
+            openPrivacyPolicyLink();
+
+        }else if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
         }
@@ -377,6 +391,12 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    //method to go to the website where the privacy policy resides
+    private void openPrivacyPolicyLink(){
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(privacy_policy_link));
+        startActivity(browserIntent);
     }
 
     }

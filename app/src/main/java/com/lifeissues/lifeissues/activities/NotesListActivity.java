@@ -94,7 +94,7 @@ public class NotesListActivity extends AppCompatActivity implements
         mAdView.loadAd(adRequest);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //setSupportActionBar(toolbar);
         setupActionBar();
 
         dbhelper = new DatabaseTable(this);
@@ -293,7 +293,7 @@ public class NotesListActivity extends AppCompatActivity implements
             startActivity(intent);
             mAdapter.notifyDataSetChanged();
 
-            Toast.makeText(getApplicationContext(), "Read: " + note.getTitle(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), "Read: " + note.getTitle(), Toast.LENGTH_SHORT).show();
         //}
     }
 /*

@@ -7,8 +7,10 @@
     android:focusable="true"
     android:orientation="vertical"
     android:paddingBottom="@dimen/padding_list_row"
-    android:paddingLeft="?listPreferredItemPaddingLeft"
-    android:paddingRight="?listPreferredItemPaddingRight"
+    android:paddingLeft="?android:listPreferredItemPaddingLeft"
+    android:paddingStart="?android:listPreferredItemPaddingLeft"
+    android:paddingRight="?android:listPreferredItemPaddingRight"
+    android:paddingEnd="?android:listPreferredItemPaddingRight"
     android:paddingTop="@dimen/padding_list_row">
 
     <LinearLayout

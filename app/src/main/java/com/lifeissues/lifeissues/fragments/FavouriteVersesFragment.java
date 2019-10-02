@@ -148,7 +148,7 @@ public class FavouriteVersesFragment extends Fragment implements FavouriteVerses
             //issue.setRead(true);
             verses.set(position, favouriteVerse);
             Intent intent = new Intent(FavouritesActivity.getInstance(), BibleVerses.class);
-            Toast.makeText(getActivity(), "cursor position = "+ favouriteVerse.getCursorPosition(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), "cursor position = "+ favouriteVerse.getCursorPosition(), Toast.LENGTH_SHORT).show();
             intent.putExtra("favourite_verses", "favourites");
             intent.putExtra("cursor_position", favouriteVerse.getCursorPosition());
             intent.putExtra("verse_ID", favouriteVerse.getId());

@@ -84,7 +84,7 @@ public class FavouritesActivity extends AppCompatActivity {
         mAdView.loadAd(adRequest);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        //setSupportActionBar(toolbar);
         setupActionBar();
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);

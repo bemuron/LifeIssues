@@ -24,6 +24,7 @@
         android:layout_marginLeft="@dimen/margin_padding_small"
         android:layout_marginStart="@dimen/margin_padding_small"
         android:layout_marginTop="@dimen/margin_padding_small"
+        android:inputType="text"
         android:hint="@string/note_title"
         android:padding="@dimen/margin_padding_normal"
         android:maxLines="1"

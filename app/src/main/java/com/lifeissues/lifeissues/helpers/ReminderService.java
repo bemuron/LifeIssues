@@ -4,6 +4,7 @@ package com.lifeissues.lifeissues.helpers;
  * Created by Emo on 6/17/2017.
  */
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -16,6 +17,8 @@ import com.lifeissues.lifeissues.activities.MainActivity;
 import com.lifeissues.lifeissues.R;
 
 public class ReminderService extends WakeReminderIntentService {
+    public static final String NOTIFICATION_CHANNEL_ID = "10001" ;
+    private final static String default_notification_channel_id = "default" ;
 
     public ReminderService() {
         super("ReminderService");
@@ -28,16 +31,19 @@ public class ReminderService extends WakeReminderIntentService {
         String verse = intent.getStringExtra("verse");
         String content = intent.getStringExtra("content");
 
-        NotificationManager mgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        //NotificationManager mgr = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService( Context.NOTIFICATION_SERVICE ) ;
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
         notificationIntent.putExtra("verseID", vId);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        //notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        notificationIntent.setFlags(Intent. FLAG_ACTIVITY_CLEAR_TOP | Intent. FLAG_ACTIVITY_SINGLE_TOP ) ;
 
         PendingIntent pi = PendingIntent.getActivity(this, vId, notificationIntent, PendingIntent.FLAG_ONE_SHOT);
         //PendingIntent.FLAG_UPDATE_CURRENT
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        //NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext() , default_notification_channel_id ) ;
         builder.setAutoCancel(true);
         //builder.setTicker("this is ticker text");
         builder.setContentTitle("Life Issues Daily Verse");
@@ -50,20 +56,18 @@ public class ReminderService extends WakeReminderIntentService {
         //builder.setNumber(vId);
         //builder.setSound();
         //builder.build();
-
-        //myNotication = builder.getNotification();
-        //score_explanation = builder.build();
-        // An issue could occur if user ever enters over 2,147,483,647 tasks. (Max int value).
-        // I highly doubt this will ever happen. But is good to score_explanation.
-        //int id = rowId;
-        mgr.notify(vId, builder.build());
-/*
-        Notification score_explanation=new Notification(android.R.drawable.stat_sys_warning, getString(R.string.notify_new_task_message), System.currentTimeMillis());
-        score_explanation.setLatestEventInfo(this, getString(R.string.notify_new_task_title), getString(R.string.notify_new_task_message), pi);
-        score_explanation.defaults |= Notification.DEFAULT_SOUND;
-        score_explanation.flags |= Notification.FLAG_AUTO_CANCEL;
-*/
-
+        if (android.os.Build.VERSION. SDK_INT >= android.os.Build.VERSION_CODES. O ) {
+            int importance = NotificationManager. IMPORTANCE_HIGH ;
+            NotificationChannel notificationChannel = new
+                    NotificationChannel( NOTIFICATION_CHANNEL_ID , "NOTIFICATION_CHANNEL_NAME" , importance) ;
+            builder.setChannelId( NOTIFICATION_CHANNEL_ID ) ;
+            assert mNotificationManager != null;
+            mNotificationManager.createNotificationChannel(notificationChannel) ;
+        }
+        assert mNotificationManager != null;
+        mNotificationManager.notify(( int ) System. currentTimeMillis () , builder.build()) ;
+        //mNotificationManager.notify();
+        throw new UnsupportedOperationException( "Not yet implemented" ) ;
 
 
     }
