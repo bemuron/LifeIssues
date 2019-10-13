@@ -28,7 +28,7 @@ public class ReminderManager {
         i.putExtra("verse", verse);
         i.putExtra("content", content);
 
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, i, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mAlarmManager.set(AlarmManager.RTC_WAKEUP, reminderTime.getTimeInMillis(), pi);
     }

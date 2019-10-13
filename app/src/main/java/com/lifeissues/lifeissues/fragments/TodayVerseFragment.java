@@ -40,8 +40,8 @@ public class TodayVerseFragment extends Fragment {
     private DatabaseTable dbhelper;
     private SharedPreferences prefs;
     private Random rand;
-    private Cursor cursor,c1,c2,c3,c4;
-    private int max,randomVerseID,min=1;
+    private Cursor cursor,c1,c2,c3,c4, c2date;
+    private int max,randomVerseID,randomVerseID2, min=1;
     private String versionCheck;
     private boolean notificationSwitch = false;
     private ImageView notFav, inFav,addNoteIcon, shareIcon;
@@ -147,6 +147,11 @@ public class TodayVerseFragment extends Fragment {
                     rand = new Random();//create random generator object
                     randomVerseID = rand.nextInt((max - min) + 1) + min;//get a random  verse id
                     c1 = dbhelper.getRandomVerse(randomVerseID);//get the content of that verse id
+
+                    //create another random object to get a verse for tomorrow
+                    rand = new Random();//create random generator object
+                    randomVerseID2 = rand.nextInt((max - min) + 1) + min;//get a random  verse id
+                    c2date = dbhelper.getRandomVerse(randomVerseID2);//get the content of that verse id
                 }
 
             return null;
@@ -177,14 +182,7 @@ public class TodayVerseFragment extends Fragment {
             issue.setText("Life Issue: " + issueName.substring(0, 1).toUpperCase() + issueName.substring(1));
             todayDate.setText(dateToday);
             switch (version){
-                case "kjv":
-                    verse.setText(bibleVerse);
-                    verse.append(" (KJV)");
-                    verse_content.setText(kjvVerseContent);
-                    handleNoteIcon(bibleVerse,issueName,kjvVerseContent);
-                    handleShareIcon(bibleVerse,ampVerseContent);
-                    //dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
-                    break;
+                //dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
                 case "msg":
                     verse.setText(bibleVerse);
                     verse.append(" (MSG)");
@@ -201,6 +199,7 @@ public class TodayVerseFragment extends Fragment {
                     handleShareIcon(bibleVerse,ampVerseContent);
                     //dailyVerseNotification(verseID,bibleVerse,ampVerseContent);
                     break;
+                case "kjv":
                 default:
                     verse.setText(bibleVerse);
                     verse.append(" (KJV)");
@@ -213,8 +212,9 @@ public class TodayVerseFragment extends Fragment {
         }
     }
 
+    //save the daily verse generated for today and the one for tomorrow
     private void saveDailyVerse(){
-        if (c1 != null){
+        if (c1 != null && c2date != null){
             c1.moveToFirst();
             String issueName = c1.getString(c1.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
             int verseID = c1.getInt(c1.getColumnIndex(DatabaseTable.KEY_ID));
@@ -228,11 +228,34 @@ public class TodayVerseFragment extends Fragment {
             System.out.println("Current time => " + c.getTime());
             SimpleDateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             String dateToday = df.format(c.getTime());
+            //today's notification
             dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
 
             if (dbhelper.addDailyVerse(verseID,bibleVerse,kjvVerseContent,msgVerseContent,ampVerseContent,
                     favValue,issueName,dateToday)){
                 new getDailyVerse().execute();
+            }
+
+            //handle cursor for tomorrows date
+            c2date.moveToFirst();
+            String issueName2 = c2date.getString(c2date.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
+            int verseID2 = c2date.getInt(c2date.getColumnIndex(DatabaseTable.KEY_ID));
+            String bibleVerse2 = c2date.getString(c2date.getColumnIndex(DatabaseTable.KEY_VERSE));
+            String kjvVerseContent2 = c2date.getString(c2date.getColumnIndex(DatabaseTable.KEY_KJV));
+            String msgVerseContent2 = c2date.getString(c2date.getColumnIndex(DatabaseTable.KEY_MSG));
+            String ampVerseContent2 = c2date.getString(c2date.getColumnIndex(DatabaseTable.KEY_AMP));
+            String favValue2 = c2date.getString(c2date.getColumnIndex(DatabaseTable.KEY_FAVOURITE));
+
+            //getting tomorrows's date to store notification for tomorrow
+            c.add(Calendar.DATE, 1); //add 1 to go to the next date
+            String dateTomorrow = df.format(c.getTime());
+
+            dailyVerseNotification(verseID2,bibleVerse2,kjvVerseContent2);
+
+
+            if (dbhelper.addDailyVerse(verseID2,bibleVerse2,kjvVerseContent2,msgVerseContent2,ampVerseContent2,
+                    favValue2,issueName2,dateTomorrow)){
+                Log.d(TAG, "Tomorrow's daily verse saved");
             }
         }
     }
@@ -275,7 +298,7 @@ public class TodayVerseFragment extends Fragment {
 
         }else{
             //Toast.makeText(getActivity(), "Switch is off", Toast.LENGTH_LONG).show();
-            Log.d("switchValue", "Switch is off");
+            Log.d(TAG+" :notifctn switchValue", "Switch is off");
         }
         //getActivity().recreate();
     }

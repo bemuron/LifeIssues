@@ -36,11 +36,11 @@ public class ReminderService extends WakeReminderIntentService {
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
         notificationIntent.putExtra("verseID", vId);
-        //notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        notificationIntent.setFlags(Intent. FLAG_ACTIVITY_CLEAR_TOP | Intent. FLAG_ACTIVITY_SINGLE_TOP ) ;
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        //notificationIntent.setFlags(Intent. FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pi = PendingIntent.getActivity(this, vId, notificationIntent, PendingIntent.FLAG_ONE_SHOT);
-        //PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent pi = PendingIntent.getActivity(this, vId, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //PendingIntent.FLAG_ONE_SHOT: Flag indicating that this PendingIntent can be used only once.
 
         //NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext() , default_notification_channel_id ) ;
