@@ -8,7 +8,7 @@ app:layout_behavior="@string/appbar_scrolling_view_behavior"
 tools:mContext=".activities.NotesListActivity"
 tools:showIn="@layout/app_bar_note_main">
 
-<android.support.v7.widget.RecyclerView
+<androidx.recyclerview.widget.RecyclerView
     android:id="@+id/notesListRecyclerView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

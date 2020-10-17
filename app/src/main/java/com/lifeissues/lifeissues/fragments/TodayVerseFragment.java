@@ -6,7 +6,8 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
+//import androidx.core.app.Fragment;
+import androidx.fragment.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +16,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdView;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.activities.MainActivity;
 import com.lifeissues.lifeissues.activities.NoteActivity;
@@ -229,7 +229,7 @@ public class TodayVerseFragment extends Fragment {
             SimpleDateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             String dateToday = df.format(c.getTime());
             //today's notification
-            dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
+            //dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
 
             if (dbhelper.addDailyVerse(verseID,bibleVerse,kjvVerseContent,msgVerseContent,ampVerseContent,
                     favValue,issueName,dateToday)){
@@ -250,7 +250,7 @@ public class TodayVerseFragment extends Fragment {
             c.add(Calendar.DATE, 1); //add 1 to go to the next date
             String dateTomorrow = df.format(c.getTime());
 
-            dailyVerseNotification(verseID2,bibleVerse2,kjvVerseContent2);
+            //dailyVerseNotification(verseID2,bibleVerse2,kjvVerseContent2);
 
 
             if (dbhelper.addDailyVerse(verseID2,bibleVerse2,kjvVerseContent2,msgVerseContent2,ampVerseContent2,

@@ -7,34 +7,24 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.Fragment;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ActionMode;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+
+import androidx.appcompat.view.ActionMode;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.activities.FavouritesActivity;
-import com.lifeissues.lifeissues.activities.MainActivity;
 import com.lifeissues.lifeissues.activities.NoteActivity;
-import com.lifeissues.lifeissues.activities.NotesListActivity;
-import com.lifeissues.lifeissues.adapters.IssueListAdapter;
 import com.lifeissues.lifeissues.adapters.NoteListAdapter;
-import com.lifeissues.lifeissues.helpers.DividerItemDecoration;
 import com.lifeissues.lifeissues.helpers.Note;
 
 import java.util.ArrayList;
@@ -98,7 +88,7 @@ public class FavouriteNotesListFragment extends Fragment implements
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(FavouritesActivity.getInstance());
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.addItemDecoration(new android.support.v7.widget.DividerItemDecoration(FavouritesActivity.getInstance(), LinearLayoutManager.VERTICAL));
+        recyclerView.addItemDecoration(new DividerItemDecoration(FavouritesActivity.getInstance(), LinearLayoutManager.VERTICAL));
         recyclerView.setAdapter(mAdapter);
 
         //actionModeCallback = new ActionModeCallback();

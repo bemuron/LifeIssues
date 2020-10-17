@@ -2,7 +2,8 @@ package com.lifeissues.lifeissues.models;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.support.v7.widget.AppCompatImageView;
+
+import androidx.appcompat.widget.AppCompatImageView;
 
 /**
  * Created by Emo on 7/18/2016.

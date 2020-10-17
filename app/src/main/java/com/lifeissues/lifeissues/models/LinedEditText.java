@@ -6,14 +6,15 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.support.v7.widget.AppCompatEditText;
+
+import androidx.appcompat.widget.AppCompatEditText;
 
 
 /**
  * Created by Emo on 6/7/2017.
  */
 
-public class LinedEditText extends AppCompatEditText{
+public class LinedEditText extends AppCompatEditText {
 
     private Rect rect;
     private Paint paint;

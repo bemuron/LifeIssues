@@ -14,10 +14,10 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
 import android.preference.SwitchPreference;
-import android.support.v7.app.ActionBar;
-import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
+
+import androidx.appcompat.app.ActionBar;
 
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.helpers.TimePreference;

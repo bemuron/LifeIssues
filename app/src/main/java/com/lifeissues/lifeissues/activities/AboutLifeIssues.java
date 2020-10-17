@@ -3,7 +3,6 @@ package com.lifeissues.lifeissues.activities;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.v7.app.AlertDialog;
 import android.text.SpannableString;
 import android.text.util.Linkify;
 import android.view.InflateException;
@@ -11,6 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.lifeissues.lifeissues.R;
 

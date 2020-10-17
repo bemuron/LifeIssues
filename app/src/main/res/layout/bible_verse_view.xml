@@ -14,7 +14,7 @@
         <!-- 1st card view. Used to display single verses. Is also used to display one of the 3
           Bible versions when in compare mode-->
 
-    <android.support.v7.widget.CardView
+    <androidx.cardview.widget.CardView
         android:id="@+id/card_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -65,9 +65,22 @@
                     android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
                     android:scaleType="centerCrop"
                     android:layout_alignParentLeft="true"
-                    android:paddingLeft="@dimen/margin_padding_xnormal"
-                    android:paddingRight="@dimen/margin_padding_xnormal"
+                    android:layout_alignParentStart="true"
+                    android:paddingLeft="@dimen/margin_padding_large"
+                    android:paddingRight="@dimen/margin_padding_large"
                     android:src="@drawable/ic_share_black" />
+
+                <ImageView
+                    android:id="@+id/verse_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@id/share_icon"
+                    android:layout_toEndOf="@id/share_icon"
+                    android:src="@drawable/ic_note_add_black_24dp"
+                    android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
+                    android:scaleType="centerCrop"
+                    android:paddingLeft="@dimen/margin_padding_large"
+                    android:paddingRight="@dimen/margin_padding_large"/>
 
                 <ImageView
                     android:id="@+id/fav_black"
@@ -75,9 +88,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
                     android:scaleType="centerCrop"
-                    android:layout_centerHorizontal="true"
-                    android:paddingLeft="@dimen/margin_padding_xnormal"
-                    android:paddingRight="@dimen/margin_padding_xnormal"
+                    android:layout_toLeftOf="@id/note_icon"
+                    android:layout_toStartOf="@id/note_icon"
+                    android:paddingLeft="@dimen/margin_padding_large"
+                    android:paddingRight="@dimen/margin_padding_large"
                     android:src="@drawable/ic_star_border_black_24dp" />
 
                 <ImageView
@@ -85,11 +99,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:src="@drawable/ic_star_yellow"
-                    android:layout_centerHorizontal="true"
+                    android:layout_toLeftOf="@id/note_icon"
+                    android:layout_toStartOf="@id/note_icon"
                     android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
                     android:scaleType="centerCrop"
-                    android:paddingLeft="@dimen/margin_padding_xnormal"
-                    android:paddingRight="@dimen/margin_padding_xnormal"/>
+                    android:paddingLeft="@dimen/margin_padding_large"
+                    android:paddingRight="@dimen/margin_padding_large"/>
 
                 <ImageView
                     android:id="@+id/note_icon"
@@ -98,6 +113,7 @@
                     android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
                     android:scaleType="centerCrop"
                     android:layout_alignParentRight="true"
+                    android:layout_alignParentEnd="true"
                     android:paddingLeft="@dimen/margin_padding_xxnormal"
                     android:paddingRight="@dimen/margin_padding_xxnormal"
                     android:src="@drawable/ic_note_add_black_24dp" />
@@ -105,10 +121,10 @@
             </RelativeLayout>
         </RelativeLayout>
 
-    </android.support.v7.widget.CardView>
+    </androidx.cardview.widget.CardView>
 
         <!-- 2nd card view -->
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:id="@+id/card_view2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -146,10 +162,10 @@
             android:textSize="@dimen/text_size_header"/>
 
         </RelativeLayout>
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
 
         <!-- 3rd card view -->
-        <android.support.v7.widget.CardView
+        <androidx.cardview.widget.CardView
             android:id="@+id/card_view3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -187,7 +203,7 @@
                     android:textSize="@dimen/text_size_header"/>
 
             </RelativeLayout>
-        </android.support.v7.widget.CardView>
+        </androidx.cardview.widget.CardView>
 
 </LinearLayout>
 

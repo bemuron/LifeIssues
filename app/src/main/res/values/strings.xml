@@ -28,6 +28,16 @@
     <string name="ampVersion">\u0020(AMP)</string>
     <string name="msgVersion">\u0020(MSG)</string>
     <string name="content_desc_issueimage">Life Issue Image</string>
+    <string name="btn_login">Log In</string>
+    <string name="btn_register">Register</string>
+    <string name="btn_link_to_register">Not a member? Sign up now</string>
+    <string name="btn_link_to_login">Already a member? Log in now</string>
+    <string name="hint_password">Password</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_first_name">First Name</string>
+    <string name="hint_last_name">Last Name</string>
+    <string name="hint_gender">Gender</string>
+    <string name="register_on_lifeissues">Register on Life Issues</string>
 
     <string name="about_app">
         There is a solution to every situation you may go through in life.

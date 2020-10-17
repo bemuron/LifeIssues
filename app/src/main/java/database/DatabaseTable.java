@@ -345,7 +345,7 @@ public class DatabaseTable extends SQLiteAssetHelper {
 
         long id = db.insert(DAILY_VERSES_TABLE, null, cv);
         // Inserting Row
-        db.close(); // Closing database connection
+        //db.close(); // Closing database connection
 
         Log.d(TAG, "New verse inserted into sqlite: " + id);
         return true;

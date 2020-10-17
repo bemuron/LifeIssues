@@ -1,20 +1,21 @@
 package com.lifeissues.lifeissues.activities;
 
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.viewpager.widget.ViewPager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.lifeissues.lifeissues.*;
+import com.google.android.material.tabs.TabLayout;
+import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.adapters.FavouritesTabsPagerAdapter;
 
 /**
@@ -27,12 +28,12 @@ public class FavouritesActivity extends AppCompatActivity {
     private AdView mAdView;
 
     /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * The {@link androidx.viewpager.widget.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * {@link androidx.fragment.app.FragmentPagerAdapter} derivative, which will keep every
      * loaded fragment in memory. If this becomes too memory intensive, it
      * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     * {@link  androidx.fragment.app.FragmentStatePagerAdapter }.
      */
     private FavouritesTabsPagerAdapter mSectionsPagerAdapter;
 

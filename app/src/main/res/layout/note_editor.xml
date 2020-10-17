@@ -10,7 +10,7 @@
     android:paddingLeft="@dimen/margin_padding_tiny"
     android:paddingRight="@dimen/margin_padding_tiny">
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input_layout_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -30,10 +30,10 @@
         android:maxLines="1"
         android:textColor="#000000"/>
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
 
-    <android.support.design.widget.TextInputLayout
+    <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/input_layout_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -50,6 +50,6 @@
         android:scrollbars="vertical"
         android:textSize="@dimen/text_size_large"/>
 
-    </android.support.design.widget.TextInputLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>

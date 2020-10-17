@@ -1,8 +1,6 @@
 package com.lifeissues.lifeissues.adapters;
 
 import android.content.Context;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.RecyclerView;
 import android.util.SparseBooleanArray;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
@@ -11,9 +9,10 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.models.FavouriteVerse;
-import com.lifeissues.lifeissues.models.LifeIssue;
 
 import java.util.ArrayList;
 import java.util.List;
