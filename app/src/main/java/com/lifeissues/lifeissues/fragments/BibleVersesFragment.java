@@ -3,6 +3,8 @@ package com.lifeissues.lifeissues.fragments;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -56,12 +58,20 @@ import com.lifeissues.lifeissues.activities.NoteActivity;
 import com.lifeissues.lifeissues.helpers.CircleTransform;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 import database.DatabaseTable;
 
@@ -74,6 +84,7 @@ import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOption
 public class BibleVersesFragment extends Fragment implements AdapterView.OnItemSelectedListener{
     private static final String TAG = BibleVersesFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_CODE = 100;
+    private final static int REQUEST_ID_MULTIPLE_PERMISSIONS = 55;
     private View rootView;
     private Dialog spinnerDialog, verseImageDialog;
     private Spinner versionSpinner;
@@ -405,26 +416,52 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
                             String formattedDate = dateFormat.format(c.getTime());
 
-                            String path = Environment.getExternalStorageDirectory().toString();
-                            File myDir = new File(Environment.getExternalStoragePublicDirectory(
-                                    Environment.DIRECTORY_PICTURES), "/Life_Issues_Images/");
-                            //File myDir = new File(path + "/Life_Issues_Images");
-                            myDir.mkdirs();
-                            if (!myDir.mkdirs()) {
-                                Log.e(TAG, "Life_Issues_Images directory not created");
-                            }
-                            File file = new File(myDir, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
-                            if (!file.exists()) {
-                                Log.d("path", file.toString());
+                            BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
+                            bitmap = bitmapDrawable .getBitmap();
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                ContentResolver resolver = getActivity().getContentResolver();
+                                ContentValues contentValues = new ContentValues();
+                                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
+                                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Life_Issues_Images");
+                                contentValues.put(MediaStore.Images.Media.IS_PENDING, true);
+                                Uri imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
                                 try {
-                                    FileOutputStream fos = new FileOutputStream(file);
-                                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                                    fos.flush();
-                                    fos.close();
+                                    OutputStream fos = resolver.openOutputStream(Objects.requireNonNull(imageUri));
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                                    if (fos != null) {
+                                        fos.close();
+                                    }
+                                    contentValues.put(MediaStore.Images.Media.IS_PENDING, false);
+                                    resolver.update(imageUri, contentValues, null, null);
                                     Log.d(TAG, "File saved");
                                     Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
-                                } catch (Exception e) {
+                                } catch (IOException e) {
                                     e.printStackTrace();
+                                }
+                            }else{
+                                //String path = getActivity().getExternalFilesDir(null).toString();
+                                //File myDir = getActivity().getExternalFilesDir(
+                                //      Environment.DIRECTORY_PICTURES);
+                                File myDir = new File(Environment.getExternalStoragePublicDirectory(
+                                        Environment.DIRECTORY_PICTURES), "/Life_Issues_Images/");
+                                if (!myDir.mkdirs()) {
+                                    myDir.mkdirs();
+                                }
+                                File file = new File(myDir, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
+                                if (!file.exists()) {
+                                    Log.d("path", file.toString());
+                                    try {
+                                        FileOutputStream fos = new FileOutputStream(file);
+                                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                                        fos.flush();
+                                        fos.close();
+                                        Log.d(TAG, "File saved");
+                                        Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
                                 }
                             }
                         } else {
@@ -437,11 +474,13 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
                         String formattedDate = dateFormat.format(c.getTime());
 
-                        String path = Environment.getExternalStorageDirectory().toString();
                         File myDir = new File(Environment.getExternalStoragePublicDirectory(
                                 Environment.DIRECTORY_PICTURES), "/Life_Issues_Images/");
+
+                        //File myDir = getActivity().getExternalFilesDir(
+                          //      Environment.DIRECTORY_PICTURES);
                         //File myDir = new File(path + "/Life_Issues_Images");
-                        myDir.mkdirs();
+                        //myDir.mkdirs();
                         if (!myDir.mkdirs()) {
                             //myDir.mkdirs();
                             Log.e(TAG, "Life_Issues_Images directory not created");
@@ -451,6 +490,8 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                             Log.d("path", file.toString());
                             try {
                                 FileOutputStream fos = new FileOutputStream(file);
+                                BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
+                                Bitmap bitmap = bitmapDrawable .getBitmap();
                                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
                                 fos.flush();
                                 fos.close();
@@ -591,6 +632,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
             boolean bResponse = result;
             if (bResponse)
             {
+                verseImageIcon.setVisibility(View.VISIBLE);
                 loadVerseImage(vID);
             }
             else
@@ -636,9 +678,34 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     }
 
     private boolean checkPermission() {
-        return ContextCompat.checkSelfPermission(getActivity(),
-                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission
-                (getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        //checking for marshmallow devices and above in order to execute runtime
+        //permissions
+        int currentAPIVersion = Build.VERSION.SDK_INT;
+        if (currentAPIVersion >= android.os.Build.VERSION_CODES.M) {
+            int permisionWriteExternalStorage = ContextCompat.checkSelfPermission(getActivity(),
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            int permissionReadExternalStorage = ContextCompat.checkSelfPermission(getActivity(),
+                    Manifest.permission.READ_EXTERNAL_STORAGE);
+
+            //declare a list to hold the permissions we want to ask the user for
+            List<String> listPermissionsNeeded = new ArrayList<>();
+            if (permisionWriteExternalStorage != PackageManager.PERMISSION_GRANTED){
+                listPermissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            }
+            if (permissionReadExternalStorage != PackageManager.PERMISSION_GRANTED){
+                listPermissionsNeeded.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+            //if the permissions list is not empty, then request for the permission
+            if (!listPermissionsNeeded.isEmpty()){
+                ActivityCompat.requestPermissions(getActivity(), listPermissionsNeeded.toArray
+                        (new String[listPermissionsNeeded.size()]),REQUEST_ID_MULTIPLE_PERMISSIONS);
+                return false;
+            }else {
+                return true;
+            }
+        }else {
+            return true;
+        }
     }
 
     private String[] storage_permissions =
@@ -648,7 +715,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
             };
 
     private void requestPermission() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) &&
+        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) ||
                 ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)){
             new AlertDialog.Builder(getActivity())
                     .setTitle("Permission Request")
@@ -657,28 +724,74 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             ActivityCompat.requestPermissions(getActivity(),
-                                    storage_permissions,
+                                    new String[]{
+                                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                    },
                                     PERMISSION_REQUEST_CODE);
                         }
                     })
                     .show();
         }else{
             ActivityCompat.requestPermissions(getActivity(),
-                    storage_permissions,
+                    new String[]{
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    },
                     PERMISSION_REQUEST_CODE);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults){
-        switch (requestCode) {
-            case PERMISSION_REQUEST_CODE:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.e(TAG, "Permission Granted, Now you can use local drive .");
-            } else {
-                Log.e(TAG, "Permission Denied, You cannot use local drive .");
+        Log.d(TAG, "Permission callback called ----");
+        //fill with actual results from the user
+        if (requestCode == REQUEST_ID_MULTIPLE_PERMISSIONS) {
+            int currentAPIVersion = Build.VERSION.SDK_INT;
+            Map<String, Integer> perms = new HashMap<>();
+            if (currentAPIVersion >= Build.VERSION_CODES.M) {
+                //initialize the map with both permissions
+                perms.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
             }
-            break;
+            if (grantResults.length > 0) {
+                for (int i = 0; i < permissions.length; i++)
+                    perms.put(permissions[i], grantResults[i]);
+                //check for both permissions
+                if (perms.get(Manifest.permission.READ_EXTERNAL_STORAGE) ==
+                        PackageManager.PERMISSION_GRANTED && perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                        PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "Write and Read external storage permissions granted");
+                    //selectJobImage(currentJobImage);
+                } else {
+                    Log.d(TAG, "Some permissions are not granted, ask again");
+                    //permission is denied (this is the first time, when "never ask again" is not checked)
+                    //so ask again explaining the use of the permissions
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            || ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                        new AlertDialog.Builder(getActivity())
+                                .setTitle("Permission Request")
+                                .setMessage("Permission is required for the app to write and read from storage")
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        ActivityCompat.requestPermissions(getActivity(),
+                                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                                        Manifest.permission.READ_EXTERNAL_STORAGE},
+                                                REQUEST_ID_MULTIPLE_PERMISSIONS);
+                                    }
+                                })
+                                .show();
+                    }
+                    //permission is denied and never ask again is checked
+                    //shouldShowRequestPermissionRationale will return false
+                    else {
+                        Toast.makeText(getActivity(), "Go to settings and enable permissions",
+                                Toast.LENGTH_LONG).show();
+                    }
+
+                }
+            }
         }
     }
 
