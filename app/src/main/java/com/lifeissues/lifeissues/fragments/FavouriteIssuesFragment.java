@@ -138,7 +138,7 @@ public class FavouriteIssuesFragment extends Fragment implements IssueListAdapte
                 lifeIssue.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_FAV_ISSUE_NAME)));
                 lifeIssue.setVerses(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_FAV_ISSUE_VERSES)));
                 //get all verses associated with this issue and count them
-                c1 = dbhelper.getBibleVerses(lifeIssue.getIssueName().toLowerCase(Locale.US));
+                c1 = dbhelper.getBibleVerses(lifeIssue.getId());
                 lifeIssue.setNum_of_verses(Integer.toString(c1.getCount()));
                 //check if the issue is favourite
                 //checkFavourites(lifeIssue.getIssueName());

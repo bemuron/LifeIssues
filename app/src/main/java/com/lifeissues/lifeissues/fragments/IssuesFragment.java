@@ -12,11 +12,17 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.LoadAdError;
 import com.lifeissues.lifeissues.activities.BibleVerses;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.activities.MainActivity;
@@ -35,6 +41,7 @@ import database.DatabaseTable;
  */
 
 public class IssuesFragment extends Fragment implements IssueListAdapter.IssueListAdapterListener{
+    private static final String TAG = IssuesFragment.class.getSimpleName();
     View rootView;
     private RecyclerView recyclerView;
     private List<LifeIssue> issues = new ArrayList<>();
@@ -45,6 +52,7 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
     private DatabaseTable dbhelper;
     private ListView mListView;
     private Context context;
+    private InterstitialAd interstitialAd;
 
     public IssuesFragment() {
     }
@@ -155,16 +163,16 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
     //async task to get verses for a specific issue from db
     private class getVersesAsync extends AsyncTask<Void, Void, Void> {
         private LifeIssue mLifeIssue;
-        private String mIssueName;
+        private int mIssueId;
 
-        public getVersesAsync(LifeIssue issue, String issueName){
+        public getVersesAsync(LifeIssue issue, int issueId){
             this.mLifeIssue = issue;
-            this.mIssueName = issueName;
+            this.mIssueId = issueId;
         }
 
         @Override
         protected Void doInBackground(Void... arg) {
-            c1 = dbhelper.getBibleVerses(mIssueName);
+            c1 = dbhelper.getBibleVerses(mIssueId);
             return null;
         }
 
@@ -175,9 +183,9 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
         }
     }
 
-    private void setNumVerses(LifeIssue lifeIssue, String issue){
+    private void setNumVerses(LifeIssue lifeIssue, int id){
         //issue.setNum_of_verses(Integer.toString(c1.getCount()));
-        new getVersesAsync(lifeIssue,issue).execute();
+        new getVersesAsync(lifeIssue,id).execute();
     }
 
     public void displayLifeIssues() {
@@ -193,7 +201,8 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
                 lifeIssue.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME)));
                 //lifeIssue.setVerses(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_VERSES)));
                 //get all verses associated with this issue and count them
-                c1 = dbhelper.getBibleVerses(lifeIssue.getIssueName().toLowerCase(Locale.US));
+                //c1 = dbhelper.getBibleVerses(lifeIssue.getIssueName().toLowerCase(Locale.US));
+                c1 = dbhelper.getBibleVerses(lifeIssue.getId());
                 c1.moveToFirst();
                 lifeIssue.setNum_of_verses(Integer.toString(c1.getCount()));
                     lifeIssue.setVerses(c1.getString(c1.getColumnIndex(DatabaseTable.KEY_VERSE)));
@@ -226,24 +235,25 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
     public void onMessageRowClicked(int position) {
         // verify whether action mode is enabled or not
         // if enabled, change the row state to activated
-        if (issuesAdapter.getSelectedItemCount() > 0) {
+        /*if (issuesAdapter.getSelectedItemCount() > 0) {
             //enableActionMode(position);
-        } else {
-            // read the message which removes bold from the row
-            LifeIssue issue = issues.get(position);
-            //issue.setRead(true);
-            issues.set(position, issue);
-            //master detail flow callback
-            issueSelectedListener.onIssueSelection(position,issue.getId(),
-                    issue.getIssueName().toLowerCase(Locale.US));
+        } else {*/
 
-            Intent intent = new Intent(MainActivity.getInstance(), BibleVerses.class);
-            //Toast.makeText(getActivity(), "id = "+ issue.getId(), Toast.LENGTH_SHORT).show();
-            intent.putExtra("issue_ID", issue.getId());
-            intent.putExtra("issue_name", issue.getIssueName().toLowerCase(Locale.US));
-            startActivity(intent);
+        // read the message which removes bold from the row
+        LifeIssue issue = issues.get(position);
+        //issue.setRead(true);
+        issues.set(position, issue);
+        //master detail flow callback
+        issueSelectedListener.onIssueSelection(position,issue.getId(),
+                issue.getIssueName().toLowerCase(Locale.US));
 
-        }
+        Intent intent = new Intent(MainActivity.getInstance(), BibleVerses.class);
+        //Toast.makeText(getActivity(), "id = "+ issue.getId(), Toast.LENGTH_SHORT).show();
+        intent.putExtra("issue_ID", issue.getId());
+        intent.putExtra("issue_name", issue.getIssueName().toLowerCase(Locale.US));
+        startActivity(intent);
+
+        //}
     }
 
     @Override

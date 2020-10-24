@@ -30,7 +30,11 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.lifeissues.lifeissues.adapters.MainTabsPagerAdapter;
@@ -53,8 +57,9 @@ public class MainActivity extends AppCompatActivity
     private DatabaseTable dbhelper;
     private int post,counter = 0,max,random_articleID,min=1;
     private ListView mListView;
+    private InterstitialAd interstitialAd;
     private SimpleCursorAdapter words;
-    private String privacy_policy_link = "http://www.emtechint.com/life_issues.html";
+    private String privacy_policy_link = "http://www.emtechint.com/life_issues.html", issueID;
 
     /**
      * The {PagerAdapter} that will provide
@@ -75,8 +80,14 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         instance = this;
 
-        //initialise the ads
-        MobileAds.initialize(this, "ca-app-pub-3075330085087679~5350882962");
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {}
+        });
+
+        //setup and initialize the interstitial ads
+        setUpInterstitialAd();
 
         mAdView = findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
@@ -91,9 +102,14 @@ public class MainActivity extends AppCompatActivity
             }
 
             @Override
-            public void onAdFailedToLoad(int errorCode) {
+            public void onAdFailedToLoad(LoadAdError loadAdError) {
                 //showToast(String.format("Ad failed to load with error code %d.", errorCode));
-                Log.e(TAG, "Failed to load ad "+errorCode);
+                String error =
+                        String.format(
+                                "domain: %s, code: %d, message: %s",
+                                loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+
+                Log.e(TAG, "onAdFailedToLoad() with error: "+error);
             }
 
             @Override
@@ -278,16 +294,21 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected Void doInBackground(Void... arg0) {
             cursor = dbhelper.getAllBibleVerses();
+            cursor.moveToFirst();
+            //issueID = cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
             max = cursor.getCount();
             rand = new Random();
+            random_articleID = rand.nextInt((max - min) + 1) + min;
+            //get the issues id
+            issueID = dbhelper.getIssueID(random_articleID);
 
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
-            random_articleID = rand.nextInt((max - min) + 1) + min;
             Intent intent = new Intent(MainActivity.this, BibleVerses.class);
+            intent.putExtra("issue_ID", issueID);
             intent.putExtra("V-ID", random_articleID);
             startActivity(intent);
 
@@ -397,4 +418,50 @@ public class MainActivity extends AppCompatActivity
         startActivity(browserIntent);
     }
 
+    //show the ad
+    private void showInterstitial() {
+        // Show the ad if it's ready. Otherwise toast and restart the game.
+        if (interstitialAd != null && interstitialAd.isLoaded()) {
+            interstitialAd.show();
+        } else {
+            Log.e(TAG,"Ad did not load");
+        }
     }
+
+
+    //set up the interstitial ad
+    private void setUpInterstitialAd(){
+        // Create the InterstitialAd and set the adUnitId.
+        interstitialAd = new InterstitialAd(this);
+        // Defined in res/values/strings.xml
+        interstitialAd.setAdUnitId(getString(R.string.TEST_interstitial_ad_unit));
+
+        //request for the ad
+        AdRequest adRequest = new AdRequest.Builder().build();
+        //load it into the object
+        interstitialAd.loadAd(adRequest);
+
+        interstitialAd.setAdListener(
+                new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        Log.i(TAG,"onAdLoaded()");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        String error =
+                                String.format(
+                                        "domain: %s, code: %d, message: %s",
+                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    }
+
+                    @Override
+                    public void onAdClosed() {
+                        Log.e(TAG,"Interstitial Ad closed");
+                    }
+                });
+    }
+
+}

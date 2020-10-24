@@ -55,6 +55,7 @@ import com.google.android.material.button.MaterialButton;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.activities.MainActivity;
 import com.lifeissues.lifeissues.activities.NoteActivity;
+import com.lifeissues.lifeissues.adapters.BibleVersesPagerAdapter;
 import com.lifeissues.lifeissues.helpers.CircleTransform;
 
 import java.io.File;
@@ -97,16 +98,18 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     public VersionSelectedListener versionSelectedListener;
     private TextView verse_content, verse_content2, verse_content3, verse2, verse3, verse;
     private CardView cardView2, cardView3;
-    private int vID;
+    private int vID, issueId;
     private MaterialButton shareImageButton, saveImageButton;
     private DatabaseTable dbhelper;
     private ProgressBar imageProgressBar;
     private Bitmap bitmap;
+    private int isFavorite;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        dbhelper = new DatabaseTable(getActivity());
         //setUserVisibleHint(false);
 
         //getting arguments from the bundle object
@@ -127,8 +130,18 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         }
 
         vID = data.getInt("VerseID");
+        issueId = data.getInt("issueID");
+        //get issue name
+        //getIssueNameAsync task = new getIssueNameAsync();
+        //task.execute(issueId);
         issueName = data.getString("issueName");
-        favouriteValue = data.getString("favValue");
+        isFavorite = data.getInt("favValue");
+
+        //isVerseFavoriteAsync tsk = new isVerseFavoriteAsync();
+        //tsk.execute(vID, issueId);
+
+        //Set title
+        getActivity().setTitle(issueName.substring(0, 1).toUpperCase() + issueName.substring(1));
     }
 
     public BibleVersesFragment() {
@@ -138,14 +151,15 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.bible_verse_view, container, false);
-        dbhelper = new DatabaseTable(getActivity());
+        //dbhelper = new DatabaseTable(getActivity());
 
         getAllWidgets(rootView);
         // Load the saved state if there is one
         if(savedInstanceState != null) {
             versionSpinner.setSelection(savedInstanceState.getInt("currentVerse", 0));
             issueName = savedInstanceState.getString("issueName");
-            favouriteValue = savedInstanceState.getString("favValue");
+            isFavorite = savedInstanceState.getInt("favValue");
+            //favouriteValue = savedInstanceState.getString("favValue");
             verseContent = savedInstanceState.getString("verseContent");
             bibleVerse = savedInstanceState.getString("Verse");
             vID = savedInstanceState.getInt("VerseID");
@@ -157,6 +171,8 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                 bibleVerse3 = savedInstanceState.getString("ampVerse");
             }
         }
+
+        updateStar(isFavorite);
 
         Log.e(TAG, "Verse ID = "+vID);
         //load the image
@@ -172,13 +188,12 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         shareVerseImage(vID);
 
         setSpinnerAdapter();
-        updateStar(favouriteValue);
 
         notFav.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 inFav.setVisibility(View.VISIBLE);
                 notFav.setVisibility(View.INVISIBLE);
-                dbhelper.addFavourite(vID);
+                dbhelper.addFavourite(vID,issueId);
                 //adapter.notifyDataSetChanged();
                 // new checkFavourite().execute();
                 //favouriteValue = cursor.getString(6);
@@ -197,7 +212,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                 inFav.setVisibility(View.INVISIBLE);
                 notFav.setVisibility(View.VISIBLE);
 
-                dbhelper.deleteFavourite(vID);
+                dbhelper.deleteFavourite(vID,issueId);
                 //cursor.requery();
                 //updateStar(favouriteValue);
 
@@ -207,7 +222,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         });
 
         //note editor with click listener to launch it
-        addNoteIcon = (ImageView) rootView.findViewById(R.id.note_icon);
+        addNoteIcon = rootView.findViewById(R.id.note_icon);
         addNoteIcon.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
@@ -246,9 +261,6 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                 verseImageDialog.show();
             }
         });
-
-        //Set title
-        getActivity().setTitle(issueName.substring(0, 1).toUpperCase() + issueName.substring(1));
 
         //set the texts
         //if we are in compare mode, display all versions
@@ -295,6 +307,8 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         shareImageButton = verseImageDialog.findViewById(R.id.shareImageButton);
         verseImage = verseImageDialog.findViewById(R.id.verseImageView);
         imageProgressBar = verseImageDialog.findViewById(R.id.verse_image_progress);
+        shareImageButton.setClickable(false);
+        saveImageButton.setClickable(false);
 
         verse = view.findViewById(R.id.bible_verse);
         verse2 = (TextView) view.findViewById(R.id.bible_verse2);
@@ -563,11 +577,11 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
             }
     }
 
-    public void updateStar(String value){
-        if(value.equals("yes")){
+    public void updateStar(int value){
+        if(value == 1){
             inFav.setVisibility(View.VISIBLE);
             notFav.setVisibility(View.INVISIBLE);
-        } else if (value.equals("no")) {
+        } else{
             inFav.setVisibility(View.INVISIBLE);
             notFav.setVisibility(View.VISIBLE);
         }
@@ -584,7 +598,8 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     public void onSaveInstanceState(Bundle currentState) {
         currentState.putInt("currentVerse", versionSpinner.getSelectedItemPosition());
         currentState.putString("issueName", issueName);
-        currentState.putString("favValue", favouriteValue);
+        currentState.putInt("favValue", isFavorite);
+        //currentState.putString("favValue", favouriteValue);
         currentState.putString("verseContent", verseContent);
         currentState.putString("Verse", bibleVerse);
         currentState.putInt("VerseID", vID);
@@ -599,6 +614,49 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         //calling super makes the fragment store its state in arrays that are not cleaned up
         //leading to memory leaks
         //super.onSaveInstanceState(currentState);
+    }
+
+    //async task to get the issue name
+    private class getIssueNameAsync extends AsyncTask<Integer, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected String doInBackground(Integer... arg) {
+            Log.e(TAG, "Issue ID = "+arg[0]);
+            return dbhelper.getIssueName(arg[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            Log.e(TAG, "Issue name = "+result);
+            issueName = result;
+            //Set title
+            getActivity().setTitle(result.substring(0, 1).toUpperCase() + result.substring(1));
+        }
+    }
+
+    //async task to check if verse is favorite
+    private class isVerseFavoriteAsync extends AsyncTask<Integer, Void, Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+        @Override
+        protected Boolean doInBackground(Integer... arg) {
+            //check if verse is favorite
+            return dbhelper.isVerseFavorite(arg[0],arg[1]);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            Log.e(TAG, "Is verse favorite = "+result);
+            //isFavorite = result;
+            //updateStar(result);
+        }
     }
 
     //async task checks if the image exists
@@ -618,7 +676,6 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                 HttpURLConnection con =  (HttpURLConnection)
                         new URL("https://www.emtechint.com/lifeissues/verse_images/" + params[0] +".png").openConnection();
                 con.setRequestMethod("HEAD");
-                System.out.println(con.getResponseCode());
                 return (con.getResponseCode() == HttpURLConnection.HTTP_OK);
             }
             catch (Exception e) {
@@ -634,6 +691,8 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
             {
                 verseImageIcon.setVisibility(View.VISIBLE);
                 loadVerseImage(vID);
+                shareImageButton.setClickable(true);
+                saveImageButton.setClickable(true);
             }
             else
             {
@@ -707,12 +766,6 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
             return true;
         }
     }
-
-    private String[] storage_permissions =
-            {
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-            };
 
     private void requestPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) ||

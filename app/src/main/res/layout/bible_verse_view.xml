@@ -66,8 +66,8 @@
                     android:scaleType="centerCrop"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
-                    android:paddingLeft="@dimen/margin_padding_xxnormal"
-                    android:paddingRight="@dimen/margin_padding_xxnormal"
+                    android:paddingLeft="@dimen/margin_padding_xnormal"
+                    android:paddingRight="@dimen/margin_padding_xnormal"
                     android:src="@drawable/ic_share_black" />
 
                 <ImageView
@@ -77,7 +77,7 @@
                     android:layout_toRightOf="@id/share_icon"
                     android:layout_toEndOf="@id/share_icon"
                     android:visibility="gone"
-                    android:src="@drawable/ic_note_add_black_24dp"
+                    android:src="@drawable/ic_image"
                     android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
                     android:scaleType="centerCrop"
                     android:paddingLeft="@dimen/margin_padding_large"
@@ -115,8 +115,8 @@
                     android:scaleType="centerCrop"
                     android:layout_alignParentRight="true"
                     android:layout_alignParentEnd="true"
-                    android:paddingLeft="@dimen/margin_padding_xxnormal"
-                    android:paddingRight="@dimen/margin_padding_xxnormal"
+                    android:paddingLeft="@dimen/margin_padding_xnormal"
+                    android:paddingRight="@dimen/margin_padding_xnormal"
                     android:src="@drawable/ic_note_add_black_24dp" />
 
             </RelativeLayout>

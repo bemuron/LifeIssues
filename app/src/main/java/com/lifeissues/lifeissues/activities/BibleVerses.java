@@ -15,6 +15,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
@@ -23,10 +24,15 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.adapters.BibleVersesPagerAdapter;
 import com.lifeissues.lifeissues.fragments.BibleVersesFragment;
+import com.lifeissues.lifeissues.fragments.IssuesFragment;
 import com.lifeissues.lifeissues.helpers.ZoomOutPageTransformer;
 
 import java.util.Locale;
@@ -39,6 +45,7 @@ import database.DatabaseTable;
  */
 
 public class BibleVerses extends AppCompatActivity implements BibleVersesFragment.VersionSelectedListener{
+    private static final String TAG = BibleVerses.class.getSimpleName();
     private AdView mAdView;
     DatabaseTable dbhelper;
     Cursor c,cursor;
@@ -48,8 +55,11 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     public ViewPager mViewPager;
     private Intent intent;
     private TextView lblCount;
-    private String issueName,issueNameUri, favouriteVerses, favouriteIssueName;
-    private int selectedPosition = 0, pageCount,currentPage,favVersePos, max,random_articleID,min=1, verseID;
+    private InterstitialAd interstitialAd;
+    private AdRequest adRequest;
+    private String issueName,issueNameUri, favouriteVerses, favouriteIssueName, randomVerse;
+    private int selectedPosition = 0, pageCount,currentPage,
+            favVersePos, max,random_articleID,min=1, verseID = 0, issueId = 0;
 
 
     //saving the page number
@@ -70,10 +80,15 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_bar_bible_view);
 
-        //initialise the ads
-        MobileAds.initialize(this, "ca-app-pub-3075330085087679~5350882962");
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {}
+        });
 
-        mAdView = (AdView) findViewById(R.id.adView);
+        setUpInterstitialAd();
+
+        mAdView = findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
             private void showToast(String message) {
                 Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
@@ -86,8 +101,14 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             }
 
             @Override
-            public void onAdFailedToLoad(int errorCode) {
+            public void onAdFailedToLoad(LoadAdError loadAdError) {
                 //showToast(String.format("Ad failed to load with error code %d.", errorCode));
+                String error =
+                        String.format(
+                                "domain: %s, code: %d, message: %s",
+                                loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+
+                Log.e(TAG, "onAdFailedToLoad() with error: "+error);
             }
 
             @Override
@@ -105,7 +126,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
                 //showToast("Ad left application.");
             }
         });
-        AdRequest adRequest = new AdRequest.Builder().build();
+        adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -132,22 +153,24 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         favouriteVerses = intent.getStringExtra("favourite_verses");
         favouriteIssueName = intent.getStringExtra("fav_issue_name");
         favVersePos = intent.getIntExtra("cursor_position", 0);
+        randomVerse = intent.getStringExtra("randomVerse");
         issueName = intent.getStringExtra("issue_name");//list click
+        issueId = intent.getIntExtra("issue_ID",0);//list click / random verse
         verseID = intent.getIntExtra("V-ID",0);//random verse
         //Toast.makeText(getApplication(), "fav pos = " + favVersePos, Toast.LENGTH_SHORT).show();
         /*check whether the user is coming from a click on the list
         * or a click on the search list view
         * or a click on the random verse*/
-        if (issueName != null){
-            //get content from db by passing name of the category
-            new getBibleVersesAsync(issueName).execute();
+        if ((issueId > 0) && (verseID == 0)){
+            //get content from db by passing id of the category
+            new getBibleVersesAsync(issueId).execute();
         }
-        else if (verseID != 0){//user has clicked on random issue/verse
+        else if ((verseID > 0) && (issueId > 0) && (!favouriteVerses.equals("favourites"))){//user has clicked on random issue/verse
             //cursor = dbhelper.getRandomVerse(verseID);
-            new getRandomVerseAsync(verseID).execute();
+            new getRandomVerseAsync(verseID, issueId).execute();
 
-        } else if (favouriteVerses != null){
-            new getFavouriteVersesAsync().execute();
+        } else if ((favouriteVerses.equals("favourites")) && (verseID > 0) && (issueId > 0)){
+            new getFavouriteVersesAsync(prefs, issueId).execute();
         }
         else {//user is coming from a search query
             Uri uri = getIntent().getData();
@@ -161,7 +184,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
 
             //get content from db by passing name of the issue
             //c = dbhelper.getBibleVerses(issueName);
-            new getBibleVersesAsync(issueName).execute();
+            new getBibleVersesAsync(issueId).execute();
 
         }
 
@@ -314,7 +337,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             //issueName = intent.getStringExtra("issue_name");
             //get content from db by passing id of the category
             //c = dbhelper.getBibleVerses(issueName);
-            new getVersesAsync(versionSelected, prefs, issueName).execute();
+            new getVersesAsync(versionSelected, prefs, issueId).execute();
             //pageCount = c.getCount();
             //c.moveToFirst();
             //setAdapter(c, prefs, versionSelected);
@@ -328,7 +351,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             //setAdapter(cursor, prefs, versionSelected);
 
         } else if (favouriteVerses != null){
-            new getSpinnerFavouriteVersesAsync(versionSelected,prefs).execute();
+            new getSpinnerFavouriteVersesAsync(versionSelected,prefs, issueId).execute();
         }
         else {//user is coming from a search query
             Uri uri = getIntent().getData();
@@ -342,7 +365,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
 
             //get content from db by passing name of the issue
             //c = dbhelper.getBibleVerses(issueName);
-            new getVersesAsync(versionSelected, prefs, issueName).execute();
+            new getVersesAsync(versionSelected, prefs, issueId).execute();
             //pageCount = c.getCount();
             //c.moveToFirst();
             //Toast.makeText(getBaseContext(), "ID= "+ cat_id , Toast.LENGTH_SHORT).show();
@@ -352,15 +375,15 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
 
     //async task to get verses for a specific issue from db
     private class getBibleVersesAsync extends AsyncTask<Void, Void, Void> {
-        private String mIssue;
+        private int mIssueId;
 
-        public getBibleVersesAsync(String issue){
-            this.mIssue = issue;
+        public getBibleVersesAsync(int issueId){
+            this.mIssueId = issueId;
         }
 
         @Override
         protected Void doInBackground(Void... argo) {
-            c = dbhelper.getBibleVerses(mIssue);
+            c = dbhelper.getBibleVerses(mIssueId);
             return null;
         }
 
@@ -376,9 +399,11 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     //async task to get random verse
     private class getRandomVerseAsync extends AsyncTask<Void, Void, Void> {
         private int verseID;
+        private int mIssueID;
 
-        public getRandomVerseAsync(int verseId){
+        public getRandomVerseAsync(int verseId, int issueID){
             this.verseID = verseId;
+            this.mIssueID = issueID;
         }
 
         @Override
@@ -428,13 +453,13 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     private class getVersesAsync extends AsyncTask<Void, Void, Void> {
         private String mVersion;
         private SharedPreferences mPreferences;
-        private String mIssue;
+        private int mIssueId;
         ProgressDialog pd;
 
-        public getVersesAsync(String versionSelected, SharedPreferences prefs, String issueName){
+        public getVersesAsync(String versionSelected, SharedPreferences prefs, int issueId){
             this.mVersion = versionSelected;
             this.mPreferences = prefs;
-            this.mIssue = issueName;
+            this.mIssueId = issueId;
         }
 
         @Override
@@ -445,7 +470,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
 
         @Override
         protected Void doInBackground(Void... arg) {
-            c = dbhelper.getBibleVerses(mIssue);
+            c = dbhelper.getBibleVerses(mIssueId);
             return null;
         }
 
@@ -460,6 +485,13 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
 
     //async task to get favourite verses from db
     private class getFavouriteVersesAsync extends AsyncTask<Void, Void, Void> {
+        private SharedPreferences mPreferences;
+        private int mIssueId;
+
+        public getFavouriteVersesAsync(SharedPreferences prefs, int issueId){
+            this.mPreferences = prefs;
+            this.mIssueId = issueId;
+        }
 
         @Override
         protected Void doInBackground(Void... arg0) {
@@ -471,7 +503,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         protected void onPostExecute(Void result) {
             pageCount = c.getCount();
             c.moveToFirst();
-            setUpAdapter(c, prefs);
+            setUpAdapter(c, mPreferences);
 
         }
     }
@@ -515,10 +547,12 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     private class getSpinnerFavouriteVersesAsync extends AsyncTask<Void, Void, Void> {
         private String mVersion;
         private SharedPreferences mPreferences;
+        private int mIssueID;
 
-        public getSpinnerFavouriteVersesAsync(String versionSelected, SharedPreferences prefs){
+        public getSpinnerFavouriteVersesAsync(String versionSelected, SharedPreferences prefs, int issueID){
             this.mVersion = versionSelected;
             this.mPreferences = prefs;
+            this.mIssueID = issueID;
         }
 
         @Override
@@ -535,6 +569,52 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             setAdapter(c, mPreferences, mVersion);
 
         }
+    }
+
+    //show the ad
+    private void showInterstitial() {
+        // Show the ad if it's ready.
+        if (interstitialAd != null && interstitialAd.isLoaded()) {
+            interstitialAd.show();
+        } else {
+            Log.e(TAG,"Ad did not load");
+        }
+    }
+
+    //set up the interstitial ad
+    private void setUpInterstitialAd(){
+        // Create the InterstitialAd and set the adUnitId.
+        interstitialAd = new InterstitialAd(this);
+        // Defined in res/values/strings.xml
+        interstitialAd.setAdUnitId(getString(R.string.TEST_interstitial_ad_unit));
+
+        //request for the add
+        adRequest = new AdRequest.Builder().build();
+        //load it into the object
+        interstitialAd.loadAd(adRequest);
+
+        interstitialAd.setAdListener(
+                new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        interstitialAd.show();
+                        Log.i(TAG,"onAdLoaded()");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        String error =
+                                String.format(
+                                        "domain: %s, code: %d, message: %s",
+                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    }
+
+                    @Override
+                    public void onAdClosed() {
+                        Log.e(TAG,"Interstitial Ad closed");
+                    }
+                });
     }
 
 }

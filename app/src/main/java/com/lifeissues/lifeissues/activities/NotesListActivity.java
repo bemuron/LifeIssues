@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,6 +27,11 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.lifeissues.lifeissues.adapters.NoteListAdapter;
 
@@ -40,6 +46,7 @@ import database.DatabaseTable;
 
 public class NotesListActivity extends AppCompatActivity implements
         NoteListAdapter.NoteListAdapterListener {
+    private static final String TAG = NotesListActivity.class.getSimpleName();
     private ListView listView;
     private AdView mAdView;
     private DatabaseTable dbhelper;
@@ -48,6 +55,8 @@ public class NotesListActivity extends AppCompatActivity implements
     private RecyclerView recyclerView;
     private NoteListAdapter mAdapter;
     private TextView emptyView;
+    private AdRequest adRequest;
+    private InterstitialAd interstitialAd;
     private SwipeRefreshLayout swipeRefreshLayout;
     //private ActionModeCallback actionModeCallback;
     private ActionMode actionMode;
@@ -58,6 +67,12 @@ public class NotesListActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_bar_note_main);
+
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {}
+        });
 
         mAdView = (AdView) findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
@@ -72,8 +87,12 @@ public class NotesListActivity extends AppCompatActivity implements
             }
 
             @Override
-            public void onAdFailedToLoad(int errorCode) {
-                //showToast(String.format("Ad failed to load with error code %d.", errorCode));
+            public void onAdFailedToLoad(LoadAdError loadAdError) {
+                String error =
+                        String.format(
+                                "domain: %s, code: %d, message: %s",
+                                loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+                Log.e(TAG, "onAdFailedToLoad() with error: "+error);
             }
 
             @Override
@@ -297,6 +316,45 @@ public class NotesListActivity extends AppCompatActivity implements
 
             //Toast.makeText(getApplicationContext(), "Read: " + note.getTitle(), Toast.LENGTH_SHORT).show();
         //}
+    }
+
+    //set up the interstitial ad
+    private void setUpInterstitialAd(){
+        // Create the InterstitialAd and set the adUnitId.
+        interstitialAd = new InterstitialAd(this);
+        // Defined in res/values/strings.xml
+        interstitialAd.setAdUnitId(getString(R.string.TEST_interstitial_ad_unit));
+
+        //request for the ad
+        adRequest = new AdRequest.Builder().build();
+        //load it into the object
+        interstitialAd.loadAd(adRequest);
+
+        interstitialAd.setAdListener(
+                new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        interstitialAd.show();
+                        Log.i(TAG,"onAdLoaded()");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        String error =
+                                String.format(
+                                        "domain: %s, code: %d, message: %s",
+                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    }
+
+                    @Override
+                    public void onAdClosed() {
+                        //request for another ad
+                        adRequest = new AdRequest.Builder().build();
+
+                        Log.e(TAG,"Interstitial Ad closed");
+                    }
+                });
     }
 /*
     @Override

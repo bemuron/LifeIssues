@@ -123,7 +123,8 @@ public class FavouriteVersesFragment extends Fragment implements FavouriteVerses
 
                 favouriteVerse = new FavouriteVerse();
                 favouriteVerse.setId(cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ID)));
-                favouriteVerse.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID)));
+                favouriteVerse.setIssueId(cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID)));
+                favouriteVerse.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME)));
                 favouriteVerse.setVerse(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_VERSE)));
                 favouriteVerse.setCursorPosition(cursor.getPosition());
 
@@ -152,6 +153,7 @@ public class FavouriteVersesFragment extends Fragment implements FavouriteVerses
             intent.putExtra("favourite_verses", "favourites");
             intent.putExtra("cursor_position", favouriteVerse.getCursorPosition());
             intent.putExtra("verse_ID", favouriteVerse.getId());
+            intent.putExtra("issue_ID", favouriteVerse.getIssueId());
             intent.putExtra("fav_issue_name", favouriteVerse.getIssueName().toLowerCase(Locale.US));
             startActivity(intent);
 

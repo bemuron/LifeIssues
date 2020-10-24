@@ -1,6 +1,7 @@
 package com.lifeissues.lifeissues.activities;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
@@ -14,18 +15,26 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.tabs.TabLayout;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.adapters.FavouritesTabsPagerAdapter;
+import com.lifeissues.lifeissues.fragments.BibleVersesFragment;
 
 /**
  * Created by Emo on 7/23/2016.
  */
 
 public class FavouritesActivity extends AppCompatActivity {
-
+    private static final String TAG = FavouritesActivity.class.getSimpleName();
     public static FavouritesActivity instance;
     private AdView mAdView;
+    private InterstitialAd interstitialAd;
+    private AdRequest adRequest;
 
     /**
      * The {@link androidx.viewpager.widget.PagerAdapter} that will provide
@@ -48,6 +57,14 @@ public class FavouritesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_favourites);
         instance = this;
 
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {}
+        });
+
+        setUpInterstitialAd();
+
         mAdView = (AdView) findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
             private void showToast(String message) {
@@ -61,8 +78,14 @@ public class FavouritesActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onAdFailedToLoad(int errorCode) {
+            public void onAdFailedToLoad(LoadAdError loadAdError) {
                 //showToast(String.format("Ad failed to load with error code %d.", errorCode));
+                String error =
+                        String.format(
+                                "domain: %s, code: %d, message: %s",
+                                loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+
+                Log.e(TAG, "onAdFailedToLoad() with error: "+error);
             }
 
             @Override
@@ -83,6 +106,8 @@ public class FavouritesActivity extends AppCompatActivity {
 
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+
+        //showInterstitial();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
@@ -140,6 +165,55 @@ public class FavouritesActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         return super.onOptionsItemSelected(item);
+    }
+
+    //show the ad
+    private void showInterstitial() {
+        // Show the ad if it's ready. Otherwise toast and restart the game.
+        if (interstitialAd != null && interstitialAd.isLoaded()) {
+            interstitialAd.show();
+        } else {
+            Log.e(TAG,"Ad did not load");
+        }
+    }
+
+
+    //set up the interstitial ad
+    private void setUpInterstitialAd(){
+        // Create the InterstitialAd and set the adUnitId.
+        interstitialAd = new InterstitialAd(this);
+        // Defined in res/values/strings.xml
+        interstitialAd.setAdUnitId(getString(R.string.TEST_interstitial_ad_unit));
+
+        //request for the add
+        adRequest = new AdRequest.Builder().build();
+        //load it into the object
+        interstitialAd.loadAd(adRequest);
+
+        interstitialAd.setAdListener(
+                new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        interstitialAd.show();
+                        Log.i(TAG,"onAdLoaded()");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        String error =
+                                String.format(
+                                        "domain: %s, code: %d, message: %s",
+                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    }
+
+                    @Override
+                    public void onAdClosed() {
+                        Log.e(TAG,"Interstitial Ad closed");
+                        //request for another ad
+                        adRequest = new AdRequest.Builder().build();
+                    }
+                });
     }
 
 }

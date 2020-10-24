@@ -38,9 +38,11 @@ public class DatabaseTable extends SQLiteAssetHelper {
     public static final String BIBLE_VERSES_TABLE = "bible_verses";
     public static final String DAILY_VERSES_TABLE = "daily_verses";
     public static final String NOTES_TABLE = "notes";
+    public static final String ISSUES_VERSES_TABLE = "issues_verses";
 
     //Common column names
     public static final String KEY_ID = "_id";
+    public static final String KEY_ISSUE_ID = "issue_id";
     public static final String KEY_ISSUE_CAT = "issue_category";
     public static final String KEY_FAVOURITE = "favourite";
 
@@ -61,7 +63,6 @@ public class DatabaseTable extends SQLiteAssetHelper {
     public static final String KEY_DATE_UPDATED = "date_updated";
 
     //Bible verses and Daily verses table column names
-    public static final String KEY_ISSUE_ID = "issue_id";
     public static final String KEY_ISSUE_NAME_ID = "issue_name";
     public static final String KEY_DATE_TAKEN = "date_taken";
     public static final String KEY_VERSE = "verse";
@@ -69,6 +70,10 @@ public class DatabaseTable extends SQLiteAssetHelper {
     public static final String KEY_MSG = "msg";
     public static final String KEY_AMP = "amp";
     public static final String KEY_TEXT = "issue_text";
+
+    //issues_verses table
+    public static final String KEY_VERSE_ID = "verse_id";
+    public static final String KEY_IS_FAVORITE = "is_favorite";
 
     //private final IssuesOpenHelper mIssuesOpenHelper;
     private static final HashMap<String,String> mColumnMap = buildColumnMap();
@@ -95,6 +100,7 @@ public class DatabaseTable extends SQLiteAssetHelper {
         db.execSQL("DROP TABLE IF EXISTS " + DAILY_VERSES_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + NOTES_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + FAVOURITES_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + ISSUES_VERSES_TABLE);
         onCreate(db);
     }
     /**
@@ -218,12 +224,31 @@ public class DatabaseTable extends SQLiteAssetHelper {
         return c;
     }
 
-    //getting a favourite issie from the db
+    //getting a favourite issue from the db
     public Cursor getFavouriteIssue(String issueName) {
         SQLiteDatabase db = this.getReadableDatabase();
         String sql = "SELECT * FROM " + FAVOURITES_TABLE + " WHERE " + KEY_FAV_ISSUE_NAME + " =?";
         Cursor c = db.rawQuery(sql,new String[]{issueName});
         return c;
+    }
+
+    //get issue name
+    public String getIssueName(int issueID) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT " + KEY_ISSUE_NAME + " FROM " + FTS_VIRTUAL_ISSUES_TABLE + " WHERE rowid =?";
+        Cursor c = db.rawQuery(sql,new String[]{String.valueOf(issueID)});
+        c.moveToFirst();
+        return c.getString(c.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
+    }
+
+    //get issue ID
+    //used for the random verse
+    public String getIssueID(int verseID) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String sql = "SELECT " + KEY_ISSUE_ID + " FROM " + ISSUES_VERSES_TABLE + " WHERE verse_id =? LIMIT 1";
+        Cursor c = db.rawQuery(sql,new String[]{String.valueOf(verseID)});
+        c.moveToFirst();
+        return c.getString(c.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
     }
 
     //adding a favourite issue to the db
@@ -253,11 +278,11 @@ public class DatabaseTable extends SQLiteAssetHelper {
     }
 
     //adding a favourite to the db
-    public int addFavourite(int verse_id){
+    public int addFavourite(int verse_id, int issueID){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
-        cv.put(KEY_FAVOURITE,"yes"); //These Fields should be your String values of actual column names
-        return db.update(BIBLE_VERSES_TABLE, cv, "_id="+verse_id, null);
+        cv.put(KEY_IS_FAVORITE,"1"); //These Fields should be your String values of actual column names
+        return db.update(ISSUES_VERSES_TABLE, cv, "verse_id="+verse_id +" and issue_id="+issueID, null);
     }
 
     //getting a favourite from the db
@@ -278,46 +303,83 @@ public class DatabaseTable extends SQLiteAssetHelper {
     }
 */
     //deleting a favourite from the db
-    public int deleteFavourite(int verse_id){
+    public int deleteFavourite(int verse_id, int issueID){
         SQLiteDatabase db = this.getWritableDatabase();
+        /*Cursor c = db.rawQuery("update issues_verses " +
+                        "set is_favorite = 0 " +
+                        "WHERE issue_id =? and verse_id =?",
+                new String[]{String.valueOf(issueID),String.valueOf(verse_id)});*/
         ContentValues cv = new ContentValues();
-        cv.put(KEY_FAVOURITE,"no"); //These Fields should be your String values of actual column names
-        return db.update(BIBLE_VERSES_TABLE, cv, "_id="+verse_id, null);
+        cv.put(KEY_IS_FAVORITE,"0"); //These Fields should be your String values of actual column names
+        return db.update(ISSUES_VERSES_TABLE, cv, "verse_id="+verse_id +" and issue_id="+issueID, null);
     }
 
     //getting specific category content from the db
-    public Cursor getBibleVerses(String issue_name){
+    /*public Cursor getBibleVerses(String issue_name){
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.query(BIBLE_VERSES_TABLE,new String[]{KEY_ID,KEY_VERSE,KEY_KJV,KEY_MSG,KEY_AMP,
                         KEY_FAVOURITE,KEY_ISSUE_ID},
                 KEY_ISSUE_ID + " =? ",new String[]{issue_name},null,null,null,null);
+        return c;
+    }*/
+
+    //getting specific category content from the db
+    public Cursor getBibleVerses(int issueID){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("select b._id, iv.issue_id, i.suggest_text_1, b.verse, b.kjv, b.msg, b.amp, " +
+                        "iv.is_favorite from bible_verses b JOIN issues_verses iv on iv.verse_id = b._id JOIN " +
+                        "issues i on i.ROWID = iv.issue_id WHERE iv.issue_id =?",
+                new String[]{String.valueOf(issueID)});
         return c;
     }
 
     //getting random verse from the db
     public Cursor getRandomVerse(int verse_id){
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor c = db.query(BIBLE_VERSES_TABLE,new String[]{KEY_ID,KEY_VERSE,KEY_KJV,KEY_MSG,KEY_AMP,
-                        KEY_ISSUE_ID,KEY_FAVOURITE},
-                KEY_ID + " =? ",new String[]{String.valueOf(verse_id)},null,null,null,null);
+        Cursor c = db.rawQuery("select b._id, iv.issue_id, i.suggest_text_1, b.verse, b.kjv, b.msg, b.amp, " +
+                        "iv.is_favorite from bible_verses b JOIN issues_verses iv on iv.verse_id = b._id JOIN " +
+                        "issues i on i.ROWID = iv.issue_id WHERE b._id =? LIMIT 1",
+                new String[]{String.valueOf(verse_id)});
         return c;
     }
 
     //getting all bible verses from the db
     public Cursor getAllBibleVerses(){
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor c = db.query(BIBLE_VERSES_TABLE,new String[]{KEY_ID,KEY_VERSE,KEY_KJV,KEY_MSG,
-                KEY_AMP,KEY_FAVOURITE},null,null,null,null,null,null);
+        Cursor c = db.rawQuery("select b._id, iv.issue_id, i.suggest_text_1, b.verse, b.kjv, b.msg, b.amp, " +
+                        "iv.is_favorite from bible_verses b JOIN issues_verses iv on iv.verse_id = b._id JOIN " +
+                        "issues i on i.ROWID = iv.issue_id", null);
 
         return c;
     }
 
     public Cursor getAllFavouriteVerses() {
         SQLiteDatabase db = this.getReadableDatabase();
-        String sql = "SELECT * FROM " + BIBLE_VERSES_TABLE + " WHERE " + KEY_FAVOURITE+ " =?";
-        Cursor cursor = db.rawQuery(sql, new String[]{"yes"});
+        //String sql = "SELECT * FROM " + BIBLE_VERSES_TABLE + " WHERE " + KEY_FAVOURITE+ " =?";
+        String sql = "select b._id," +
+                "iv.issue_id," +
+                "i.suggest_text_1," +
+                "b.verse, b.kjv," +
+                "b.msg," +
+                "b.amp," +
+                "iv.is_favorite " +
+                "from bible_verses b " +
+                "JOIN issues_verses iv on iv.verse_id = b._id " +
+                "JOIN issues i on i.ROWID = iv.issue_id " +
+                "WHERE iv.is_favorite =?";
+        Cursor cursor = db.rawQuery(sql, new String[]{"1"});
 
         return cursor;
+    }
+
+    //checking if a specific verse is favorite
+    public boolean isVerseFavorite(int verseID, int issueID){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("select _id " +
+                        "from bible_verses " +
+                        "WHERE _id in (select verse_id from issues_verses where issue_id =? and verse_id =? and is_favorite =?)",
+                new String[]{String.valueOf(issueID),String.valueOf(verseID),"1"});
+        return c.getCount() == 1;
     }
 
     //checking if a daily verse for today has already been entered
@@ -331,7 +393,7 @@ public class DatabaseTable extends SQLiteAssetHelper {
 
     //adding a daily verse to the db
     public boolean addDailyVerse(int verse_id, String verse, String kjv, String msg, String amp,
-                             String favValue, String issueName, String dateTaken){
+                             String favValue, String issueName, int issue_id, String dateTaken){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(KEY_ID,verse_id); //These Fields should be your String values of actual column names
@@ -341,6 +403,7 @@ public class DatabaseTable extends SQLiteAssetHelper {
         cv.put(KEY_AMP,amp);
         cv.put(KEY_FAVOURITE,favValue);
         cv.put(KEY_ISSUE_NAME_ID,issueName);
+        cv.put(KEY_ISSUE_ID,issue_id);
         cv.put(KEY_DATE_TAKEN,dateTaken);
 
         long id = db.insert(DAILY_VERSES_TABLE, null, cv);
@@ -355,7 +418,7 @@ public class DatabaseTable extends SQLiteAssetHelper {
     public Cursor getDailyVerse(String dateToday){
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.query(DAILY_VERSES_TABLE,new String[]{KEY_ID,KEY_VERSE,KEY_KJV,KEY_MSG,KEY_AMP,
-                        KEY_ISSUE_NAME_ID,KEY_FAVOURITE,KEY_DATE_TAKEN},
+                        KEY_ISSUE_NAME_ID,KEY_ISSUE_ID,KEY_FAVOURITE,KEY_DATE_TAKEN},
                 KEY_DATE_TAKEN + " =? ",new String[]{dateToday},null,null,null,null);
         return c;
     }

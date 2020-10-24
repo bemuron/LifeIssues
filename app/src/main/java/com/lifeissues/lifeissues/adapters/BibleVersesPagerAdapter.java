@@ -1,14 +1,20 @@
 package com.lifeissues.lifeissues.adapters;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
+
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.lifeissues.lifeissues.R;
+import com.lifeissues.lifeissues.activities.BibleVerses;
+import com.lifeissues.lifeissues.activities.MainActivity;
 import com.lifeissues.lifeissues.app.AppController;
 import com.lifeissues.lifeissues.fragments.BibleVersesFragment;
 
@@ -19,9 +25,11 @@ import database.DatabaseTable;
  */
 
 public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
+    private static final String TAG = BibleVersesPagerAdapter.class.getSimpleName();
     private Cursor cursorData;
     private SharedPreferences prefs;
     private String bibleVersion;
+    private int issueID;
 
     Context context = AppController.getContext();
 
@@ -29,6 +37,7 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
                                    SharedPreferences sharedPreferences, String version) {
         super(fm);
         this.cursorData = cursor;
+        //this.issueID = issueID;
         this.prefs = sharedPreferences;
         this.bibleVersion = version;
     }
@@ -45,13 +54,15 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
 
 
         if (cursorData.moveToPosition(position)){
+            String issueName = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
             int verseID = cursorData.getInt(cursorData.getColumnIndex(DatabaseTable.KEY_ID));
+            int issueID = cursorData.getInt(cursorData.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
             String verse = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_VERSE));
             String kjvVerseContent = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_KJV));
             String msgVerseContent = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_MSG));
             String ampVerseContent = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_AMP));
-            String favValue = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_FAVOURITE));
-            String issue_name = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
+            int favValue = cursorData.getInt(cursorData.getColumnIndex(DatabaseTable.KEY_IS_FAVORITE));
+
             //check if we are coming from the spinner selection, if null then we are not
             if (bibleVersion == null) {
                 //check in prefs if user has a default version
@@ -116,14 +127,11 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
                 }
             }
 
-            data.putString("issueName", issue_name);
-            data.putString("favValue", favValue);
-            //getSupportActionBar().setTitle(issue_name.substring(0, 1).toUpperCase() + issue_name.substring(1));
+            data.putInt("issueID", issueID);
+            data.putString("issueName", issueName);
+            data.putInt("favValue", favValue);
             bibleVersesFragment.setArguments(data);
-
             //mViewPager.getAdapter().notifyDataSetChanged();
-
-
         }
 
         //mViewPager.getAdapter().notifyDataSetChanged();

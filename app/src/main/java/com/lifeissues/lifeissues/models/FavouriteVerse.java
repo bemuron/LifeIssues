@@ -8,6 +8,7 @@ public class FavouriteVerse {
     private String issueName;
     private String verse;
     private int id;
+    private int issueId;
     private int cursorPosition;
 
     public String getIssueName() {
@@ -32,6 +33,14 @@ public class FavouriteVerse {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getIssueId() {
+        return issueId;
+    }
+
+    public void setIssueId(int issueId) {
+        this.issueId = issueId;
     }
 
     public int getCursorPosition() {
