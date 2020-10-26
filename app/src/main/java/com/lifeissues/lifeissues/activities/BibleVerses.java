@@ -153,7 +153,6 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         favouriteVerses = intent.getStringExtra("favourite_verses");
         favouriteIssueName = intent.getStringExtra("fav_issue_name");
         favVersePos = intent.getIntExtra("cursor_position", 0);
-        randomVerse = intent.getStringExtra("randomVerse");
         issueName = intent.getStringExtra("issue_name");//list click
         issueId = intent.getIntExtra("issue_ID",0);//list click / random verse
         verseID = intent.getIntExtra("V-ID",0);//random verse
@@ -165,19 +164,24 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             //get content from db by passing id of the category
             new getBibleVersesAsync(issueId).execute();
         }
-        else if ((verseID > 0) && (issueId > 0) && (!favouriteVerses.equals("favourites"))){//user has clicked on random issue/verse
+        else if ((verseID > 0) && (favouriteVerses == null)){//user has clicked on random issue/verse
             //cursor = dbhelper.getRandomVerse(verseID);
-            new getRandomVerseAsync(verseID, issueId).execute();
+            new getRandomVerseAsync(verseID).execute();
 
-        } else if ((favouriteVerses.equals("favourites")) && (verseID > 0) && (issueId > 0)){
-            new getFavouriteVersesAsync(prefs, issueId).execute();
+        } else if ((favouriteVerses != null) && (favouriteVerses.equals("favourites"))){
+            new getFavouriteVersesAsync(prefs).execute();
         }
         else {//user is coming from a search query
             Uri uri = getIntent().getData();
             cursor = getContentResolver().query(uri, null, null, null, null);
             cursor.moveToFirst();
-            int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME);
-            issueName = cursor.getString(iIndex).toLowerCase(Locale.US);
+            //int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME);
+            //issueName = cursor.getString(iIndex).toLowerCase(Locale.US);
+            int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ID);
+            issueId = cursor.getInt(iIndex);
+            Log.e(TAG,"rowid "+cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ID));
+            Log.e(TAG,"issue name index"+cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME));
+            Log.e(TAG,"value at _id index"+cursor.getString(0).toLowerCase(Locale.US));
             //Toast.makeText(getApplication(), "issue = " + issueNameUri, Toast.LENGTH_SHORT).show();
             //new getVersesUriAsync().execute(uri);
             //issue_id = uri.getLastPathSegment();
@@ -351,7 +355,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             //setAdapter(cursor, prefs, versionSelected);
 
         } else if (favouriteVerses != null){
-            new getSpinnerFavouriteVersesAsync(versionSelected,prefs, issueId).execute();
+            new getSpinnerFavouriteVersesAsync(versionSelected,prefs).execute();
         }
         else {//user is coming from a search query
             Uri uri = getIntent().getData();
@@ -399,11 +403,9 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     //async task to get random verse
     private class getRandomVerseAsync extends AsyncTask<Void, Void, Void> {
         private int verseID;
-        private int mIssueID;
 
-        public getRandomVerseAsync(int verseId, int issueID){
+        public getRandomVerseAsync(int verseId){
             this.verseID = verseId;
-            this.mIssueID = issueID;
         }
 
         @Override
@@ -415,9 +417,10 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         @Override
         protected void onPostExecute(Void result) {
             pageCount = cursor.getCount();
-            cursor.moveToFirst();
-            issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
-            setUpAdapter(cursor, prefs);
+            if (cursor.moveToFirst()) {
+                issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
+                setUpAdapter(cursor, prefs);
+            }
             //Toast.makeText(getBaseContext(), "ID= "+ intent.getIntExtra("V-ID",0) , Toast.LENGTH_SHORT).show();
         }
     }
@@ -486,11 +489,9 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     //async task to get favourite verses from db
     private class getFavouriteVersesAsync extends AsyncTask<Void, Void, Void> {
         private SharedPreferences mPreferences;
-        private int mIssueId;
 
-        public getFavouriteVersesAsync(SharedPreferences prefs, int issueId){
+        public getFavouriteVersesAsync(SharedPreferences prefs){
             this.mPreferences = prefs;
-            this.mIssueId = issueId;
         }
 
         @Override
@@ -537,7 +538,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         protected void onPostExecute(Void result) {
             pageCount = cursor.getCount();
             cursor.moveToFirst();
-            issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
+            issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
             setAdapter(cursor, mPreferences, mVersion);
             pd.dismiss();
         }
@@ -547,12 +548,10 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     private class getSpinnerFavouriteVersesAsync extends AsyncTask<Void, Void, Void> {
         private String mVersion;
         private SharedPreferences mPreferences;
-        private int mIssueID;
 
-        public getSpinnerFavouriteVersesAsync(String versionSelected, SharedPreferences prefs, int issueID){
+        public getSpinnerFavouriteVersesAsync(String versionSelected, SharedPreferences prefs){
             this.mVersion = versionSelected;
             this.mPreferences = prefs;
-            this.mIssueID = issueID;
         }
 
         @Override
@@ -586,7 +585,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         // Create the InterstitialAd and set the adUnitId.
         interstitialAd = new InterstitialAd(this);
         // Defined in res/values/strings.xml
-        interstitialAd.setAdUnitId(getString(R.string.TEST_interstitial_ad_unit));
+        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
 
         //request for the add
         adRequest = new AdRequest.Builder().build();

@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * Searches the dictionary and displays results for the given query.
+     * Searches the issues and displays results for the given query.
      * @param query The search query
      */
 
@@ -300,7 +300,7 @@ public class MainActivity extends AppCompatActivity
             rand = new Random();
             random_articleID = rand.nextInt((max - min) + 1) + min;
             //get the issues id
-            issueID = dbhelper.getIssueID(random_articleID);
+            //issueID = dbhelper.getIssueID(random_articleID);
 
             return null;
         }
@@ -308,7 +308,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(Void result) {
             Intent intent = new Intent(MainActivity.this, BibleVerses.class);
-            intent.putExtra("issue_ID", issueID);
+            //intent.putExtra("issue_ID", issueID);
             intent.putExtra("V-ID", random_articleID);
             startActivity(intent);
 
@@ -434,7 +434,7 @@ public class MainActivity extends AppCompatActivity
         // Create the InterstitialAd and set the adUnitId.
         interstitialAd = new InterstitialAd(this);
         // Defined in res/values/strings.xml
-        interstitialAd.setAdUnitId(getString(R.string.TEST_interstitial_ad_unit));
+        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
 
         //request for the ad
         AdRequest adRequest = new AdRequest.Builder().build();

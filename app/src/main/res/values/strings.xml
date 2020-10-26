@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Life Issues</string>
-    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+    <string name="banner_ad_unit_id">ca-app-pub-3075330085087679/2977421942</string>
     <string name="interstitial_ad_unit_id">ca-app-pub-3075330085087679/5226948080</string>
     <!--LI adMob App Id -->
     <string name="AdMob_App_ID">ca-app-pub-3075330085087679~5350882962</string>

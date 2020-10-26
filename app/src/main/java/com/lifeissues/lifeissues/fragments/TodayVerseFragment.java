@@ -227,8 +227,8 @@ public class TodayVerseFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Void result) {
+            if (c1.moveToFirst())
                 saveDailyVerse();
-
         }
     }
 
@@ -284,7 +284,7 @@ public class TodayVerseFragment extends Fragment {
     //save the daily verse generated for today and the one for tomorrow
     private void saveDailyVerse(){
         if (c1 != null && c2date != null){
-            c1.moveToFirst();
+            //c1.moveToFirst();
             String issueName = c1.getString(c1.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
             int issueID = c1.getInt(c1.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
             int verseID = c1.getInt(c1.getColumnIndex(DatabaseTable.KEY_ID));

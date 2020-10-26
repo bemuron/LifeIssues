@@ -139,6 +139,7 @@ public class IssuesProvider extends ContentProvider {
     private Cursor getWord(Uri uri) {
       String rowId = uri.getLastPathSegment();
       String[] columns = new String[] {
+              BaseColumns._ID,
           DatabaseTable.KEY_ISSUE_NAME,
           DatabaseTable.KEY_ISSUE_VERSES};
 

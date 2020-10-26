@@ -56,7 +56,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             bindPreferenceSummaryToValue(findPreference(getString(R.string.key_daily_verse_version)));
 
             // time change listener
-            bindPreferenceSummaryToValue(findPreference(getString(R.string.key_daily_verse_time)));
+            //bindPreferenceSummaryToValue(findPreference(getString(R.string.key_daily_verse_time)));
 
             // notification preference change listener
             //bindPreferenceSummaryToValue(findPreference(getString(R.string.key_notifications_new_message_ringtone)));
@@ -172,7 +172,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("message/rfc822");
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"lifeissuesapp@gmail.com"});
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"contact@emtechint.com"});
         intent.putExtra(Intent.EXTRA_SUBJECT, "Query from Life Issues app user");
         intent.putExtra(Intent.EXTRA_TEXT, body);
         context.startActivity(Intent.createChooser(intent, context.getString(R.string.choose_email_client)));

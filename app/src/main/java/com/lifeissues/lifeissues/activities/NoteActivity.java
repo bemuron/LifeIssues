@@ -318,7 +318,7 @@ public class NoteActivity extends AppCompatActivity {
         // Create the InterstitialAd and set the adUnitId.
         interstitialAd = new InterstitialAd(this);
         // Defined in res/values/strings.xml
-        interstitialAd.setAdUnitId(getString(R.string.TEST_interstitial_ad_unit));
+        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
 
         //request for the ad
         adRequest = new AdRequest.Builder().build();

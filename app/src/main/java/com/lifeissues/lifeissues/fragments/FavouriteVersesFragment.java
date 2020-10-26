@@ -152,8 +152,8 @@ public class FavouriteVersesFragment extends Fragment implements FavouriteVerses
             //Toast.makeText(getActivity(), "cursor position = "+ favouriteVerse.getCursorPosition(), Toast.LENGTH_SHORT).show();
             intent.putExtra("favourite_verses", "favourites");
             intent.putExtra("cursor_position", favouriteVerse.getCursorPosition());
-            intent.putExtra("verse_ID", favouriteVerse.getId());
-            intent.putExtra("issue_ID", favouriteVerse.getIssueId());
+            //intent.putExtra("verse_ID", favouriteVerse.getId());
+            //intent.putExtra("issue_ID", favouriteVerse.getIssueId());
             intent.putExtra("fav_issue_name", favouriteVerse.getIssueName().toLowerCase(Locale.US));
             startActivity(intent);
 
