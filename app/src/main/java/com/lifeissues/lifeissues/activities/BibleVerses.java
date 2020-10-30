@@ -21,12 +21,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.ads.mediation.admob.AdMobAdapter;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.lifeissues.lifeissues.R;
@@ -39,6 +41,9 @@ import java.util.Locale;
 import java.util.Random;
 
 import database.DatabaseTable;
+
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
  * Created by Emo on 5/5/2017.
@@ -80,13 +85,21 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_bar_bible_view);
 
+        RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
+                .toBuilder()
+                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                .build();
+
+        MobileAds.setRequestConfiguration(requestConfiguration);
+
         // Initialize the Mobile Ads SDK.
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
             public void onInitializationComplete(InitializationStatus initializationStatus) {}
         });
 
-        setUpInterstitialAd();
+        //setUpInterstitialAd();
 
         mAdView = findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
@@ -175,21 +188,12 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             Uri uri = getIntent().getData();
             cursor = getContentResolver().query(uri, null, null, null, null);
             cursor.moveToFirst();
-            //int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME);
-            //issueName = cursor.getString(iIndex).toLowerCase(Locale.US);
             int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ID);
             issueId = cursor.getInt(iIndex);
             Log.e(TAG,"rowid "+cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ID));
             Log.e(TAG,"issue name index"+cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME));
             Log.e(TAG,"value at _id index"+cursor.getString(0).toLowerCase(Locale.US));
-            //Toast.makeText(getApplication(), "issue = " + issueNameUri, Toast.LENGTH_SHORT).show();
-            //new getVersesUriAsync().execute(uri);
-            //issue_id = uri.getLastPathSegment();
-
-            //get content from db by passing name of the issue
-            //c = dbhelper.getBibleVerses(issueName);
             new getBibleVersesAsync(issueId).execute();
-
         }
 
         //async to do stuff in background
@@ -336,44 +340,27 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     public void onSpinnerSelection(String versionSelected){
         mViewPager.setAdapter(null);
         //recreate();
-        if (issueName != null){
-            //issue_id = intent.getStringExtra("issue_ID");
-            //issueName = intent.getStringExtra("issue_name");
-            //get content from db by passing id of the category
-            //c = dbhelper.getBibleVerses(issueName);
-            new getVersesAsync(versionSelected, prefs, issueId).execute();
-            //pageCount = c.getCount();
-            //c.moveToFirst();
-            //setAdapter(c, prefs, versionSelected);
-        }
-        else if (verseID != 0){//user has clicked on random issue/verse
-            //cursor = dbhelper.getRandomVerse(verseID);
-            new getSpinnerRandomVerseAsync(versionSelected, prefs, verseID).execute();
-            //pageCount = cursor.getCount();
-            //cursor.moveToFirst();
-            //issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
-            //setAdapter(cursor, prefs, versionSelected);
+        if ((issueId > 0) && (verseID == 0)){
 
-        } else if (favouriteVerses != null){
+            new getVersesAsync(versionSelected, prefs, issueId).execute();
+        }
+        else if ((verseID > 0) && (favouriteVerses == null)){//user has clicked on random issue/verse
+
+            new getSpinnerRandomVerseAsync(versionSelected, prefs, verseID).execute();
+
+        } else if ((favouriteVerses != null) && (favouriteVerses.equals("favourites"))){
             new getSpinnerFavouriteVersesAsync(versionSelected,prefs).execute();
         }
         else {//user is coming from a search query
             Uri uri = getIntent().getData();
             cursor = getContentResolver().query(uri, null, null, null, null);
-            //issue_id = uri.getLastPathSegment();
-
             cursor.moveToFirst();
-            int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME);
-            issueName = cursor.getString(iIndex).toLowerCase(Locale.US);
-            //Toast.makeText(this, "issue = " + issueName, Toast.LENGTH_SHORT).show();
-
-            //get content from db by passing name of the issue
-            //c = dbhelper.getBibleVerses(issueName);
+            int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ID);
+            issueId = cursor.getInt(iIndex);
+            Log.e(TAG,"rowid "+cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ID));
+            Log.e(TAG,"issue name index"+cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME));
+            Log.e(TAG,"value at _id index"+cursor.getString(0).toLowerCase(Locale.US));
             new getVersesAsync(versionSelected, prefs, issueId).execute();
-            //pageCount = c.getCount();
-            //c.moveToFirst();
-            //Toast.makeText(getBaseContext(), "ID= "+ cat_id , Toast.LENGTH_SHORT).show();
-            //setAdapter(c, prefs, versionSelected);
         }
     }
 
@@ -537,9 +524,10 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         @Override
         protected void onPostExecute(Void result) {
             pageCount = cursor.getCount();
-            cursor.moveToFirst();
-            issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
-            setAdapter(cursor, mPreferences, mVersion);
+            if (cursor.moveToFirst()) {
+                issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
+                setAdapter(cursor, mPreferences, mVersion);
+            }
             pd.dismiss();
         }
     }

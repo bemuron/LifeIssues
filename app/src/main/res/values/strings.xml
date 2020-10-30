@@ -9,8 +9,9 @@
     <string name="TEST_interstitial_ad_unit">ca-app-pub-3940256099942544/1033173712</string>
 
     <!-- for testing purposes banner ad unit is: ca-app-pub-3940256099942544/6300978111
-    Interstitial ad unit is ca-app-pub-3940256099942544/1033173712
+    Interstitial TEST ad unit is ca-app-pub-3940256099942544/1033173712
     LIVE BANNER AD UNIT ca-app-pub-3075330085087679/2977421942
+    LIVE Interstitial ca-app-pub-3075330085087679/5226948080
     -->
 
     <string name="navigation_drawer_open">Open navigation drawer</string>

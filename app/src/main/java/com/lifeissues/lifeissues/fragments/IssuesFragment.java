@@ -23,6 +23,10 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.lifeissues.lifeissues.activities.BibleVerses;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.activities.MainActivity;
@@ -35,6 +39,9 @@ import java.util.List;
 import java.util.Locale;
 
 import database.DatabaseTable;
+
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
  * Created by Emo on 8/31/2017.
@@ -68,8 +75,32 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         context = AppController.getContext();
+
+        RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
+                .toBuilder()
+                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                .build();
+
+        MobileAds.setRequestConfiguration(requestConfiguration);
+
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(getActivity(), new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {}
+        });
+
+        //setup and initialize the interstitial ads
+        // Create the InterstitialAd and set the adUnitId.
+        interstitialAd = new InterstitialAd(getActivity());
+        // Defined in res/values/strings.xml
+        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
+
+        //request for the ad
+        AdRequest adRequest = new AdRequest.Builder().build();
+        //load it into the object
+        interstitialAd.loadAd(adRequest);
     }
 
     @Override
@@ -239,19 +270,13 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
             //enableActionMode(position);
         } else {*/
 
-        // read the message which removes bold from the row
-        LifeIssue issue = issues.get(position);
-        //issue.setRead(true);
-        issues.set(position, issue);
-        //master detail flow callback
-        issueSelectedListener.onIssueSelection(position,issue.getId(),
-                issue.getIssueName().toLowerCase(Locale.US));
-
-        Intent intent = new Intent(MainActivity.getInstance(), BibleVerses.class);
-        //Toast.makeText(getActivity(), "id = "+ issue.getId(), Toast.LENGTH_SHORT).show();
-        intent.putExtra("issue_ID", issue.getId());
-        intent.putExtra("issue_name", issue.getIssueName().toLowerCase(Locale.US));
-        startActivity(intent);
+        if (interstitialAd != null && interstitialAd.isLoaded()) {
+            interstitialAd.show();
+            doActionAfterAd("bibleVerses",position);
+        } else {
+            Log.e(TAG,"Ad did not load");
+            openActivityAfterAd(position);
+        }
 
         //}
     }
@@ -271,6 +296,51 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
             dbhelper.addFavouriteIssue(issue.getIssueName(), issue.getVerses());
         }
         issuesAdapter.notifyDataSetChanged();
+    }
+
+    private void openActivityAfterAd(int position){
+        // read the message which removes bold from the row
+        LifeIssue issue = issues.get(position);
+        //issue.setRead(true);
+        issues.set(position, issue);
+        //master detail flow callback
+        issueSelectedListener.onIssueSelection(position,issue.getId(),
+                issue.getIssueName().toLowerCase(Locale.US));
+
+        Intent intent = new Intent(MainActivity.getInstance(), BibleVerses.class);
+        //Toast.makeText(getActivity(), "id = "+ issue.getId(), Toast.LENGTH_SHORT).show();
+        intent.putExtra("issue_ID", issue.getId());
+        intent.putExtra("issue_name", issue.getIssueName().toLowerCase(Locale.US));
+        startActivity(intent);
+    }
+
+    //set up the interstitial ad
+    private void doActionAfterAd(String actionName, int position){
+
+        interstitialAd.setAdListener(
+                new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        Log.i(TAG,"onAdLoaded()");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        String error =
+                                String.format(
+                                        "domain: %s, code: %d, message: %s",
+                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    }
+
+                    @Override
+                    public void onAdClosed() {
+                        Log.e(TAG,"Interstitial Ad closed");
+                        if (actionName.equals("bibleVerses")){
+                            openActivityAfterAd(position);
+                        }
+                    }
+                });
     }
 
 }

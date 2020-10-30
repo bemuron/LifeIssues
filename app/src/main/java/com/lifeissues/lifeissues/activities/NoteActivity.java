@@ -25,6 +25,7 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -36,6 +37,9 @@ import java.util.Calendar;
 import java.util.Locale;
 
 import database.DatabaseTable;
+
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
  * Created by Emo on 10/2/2017.
@@ -61,13 +65,22 @@ public class NoteActivity extends AppCompatActivity {
         //setSupportActionBar(toolbar);
         setupActionBar();
         PreferenceManager.setDefaultValues(this, R.xml.pref_main, false);
+
+        RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
+                .toBuilder()
+                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                .build();
+
+        MobileAds.setRequestConfiguration(requestConfiguration);
+
         // Initialize the Mobile Ads SDK.
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
             public void onInitializationComplete(InitializationStatus initializationStatus) {}
         });
 
-        setUpInterstitialAd();
+        //setUpInterstitialAd();
 
         mAdView = findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
@@ -142,7 +155,7 @@ public class NoteActivity extends AppCompatActivity {
             }
         });
 
-        showInterstitial();
+        //showInterstitial();
 
     }//closing onCreate
 

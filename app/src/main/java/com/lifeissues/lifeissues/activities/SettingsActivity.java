@@ -15,6 +15,7 @@ import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
 import android.preference.SwitchPreference;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.appcompat.app.ActionBar;
@@ -169,12 +170,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     Build.VERSION.RELEASE + "\n App Version: " + body + "\n Device Brand: " + Build.BRAND +
                     "\n Device Model: " + Build.MODEL + "\n Device Manufacturer: " + Build.MANUFACTURER;
         } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG,e.getMessage());
+            //e.printStackTrace();
         }
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("message/rfc822");
+        Intent intent = new Intent(Intent.ACTION_SENDTO);
+        intent.setData(Uri.parse("mailto:")); // only email apps should handle this
         intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"contact@emtechint.com"});
         intent.putExtra(Intent.EXTRA_SUBJECT, "Query from Life Issues app user");
         intent.putExtra(Intent.EXTRA_TEXT, body);
-        context.startActivity(Intent.createChooser(intent, context.getString(R.string.choose_email_client)));
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
+            context.startActivity(intent);
+        }
     }
 }

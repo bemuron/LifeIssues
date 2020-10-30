@@ -1,7 +1,6 @@
 package com.lifeissues.lifeissues.fragments;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -44,22 +43,23 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
-import com.bumptech.glide.request.transition.Transition;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.button.MaterialButton;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.activities.MainActivity;
 import com.lifeissues.lifeissues.activities.NoteActivity;
-import com.lifeissues.lifeissues.adapters.BibleVersesPagerAdapter;
-import com.lifeissues.lifeissues.helpers.CircleTransform;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -77,6 +77,8 @@ import java.util.Objects;
 import database.DatabaseTable;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
  * Created by Emo on 9/4/2017.
@@ -104,11 +106,38 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     private ProgressBar imageProgressBar;
     private Bitmap bitmap;
     private int isFavorite;
+    private InterstitialAd interstitialAd;
 
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
+        RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
+                .toBuilder()
+                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                .build();
+
+        MobileAds.setRequestConfiguration(requestConfiguration);
+
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(getActivity(), new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {}
+        });
+
+        //setup and initialize the interstitial ads
+        // Create the InterstitialAd and set the adUnitId.
+        interstitialAd = new InterstitialAd(getActivity());
+        // Defined in res/values/strings.xml
+        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
+
+        //request for the ad
+        AdRequest adRequest = new AdRequest.Builder().build();
+        //load it into the object
+        interstitialAd.loadAd(adRequest);
+
         dbhelper = new DatabaseTable(getActivity());
         //setUserVisibleHint(false);
 
@@ -226,11 +255,13 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         addNoteIcon.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Intent intent = new Intent(MainActivity.getInstance(), NoteActivity.class);
-                intent.putExtra("verse", verse.getText().toString());
-                intent.putExtra("issueName", issueName);
-                intent.putExtra("content", verse_content.getText().toString());
-                startActivity(intent);
+                if (interstitialAd != null && interstitialAd.isLoaded()) {
+                    interstitialAd.show();
+                    doActionAfterAd("addNote", 0);
+                } else {
+                    Log.e(TAG,"Ad did not load");
+                    handleAddNote();
+                }
 
             }
         });
@@ -240,16 +271,14 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         shareIcon.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Intent sharingIntent = new Intent();
-                sharingIntent.setAction(Intent.ACTION_SEND);
-                String shareBody = "\n" + verseContent +
-                        "\n" + bibleVerse +
-                        "\n Life Issues App.";
-                //sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject Here");
-                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
-                sharingIntent.setType("text/plain");
-                startActivity(Intent.createChooser(sharingIntent, "Share verse"));
-
+                handleShareVerse();
+                /*if (interstitialAd != null && interstitialAd.isLoaded()) {
+                    interstitialAd.show();
+                    doActionAfterAd("shareVerse", 0);
+                } else {
+                    Log.e(TAG,"Ad did not load");
+                    handleShareVerse();
+                }*/
             }
         });
 
@@ -421,102 +450,14 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         saveImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String state = Environment.getExternalStorageState();
-                if (Environment.MEDIA_MOUNTED.equals(state)) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        if (checkPermission()) {
-                            //get today's date to be added to name of the image
-                            Calendar c = Calendar.getInstance();
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
-                            String formattedDate = dateFormat.format(c.getTime());
-
-                            BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
-                            bitmap = bitmapDrawable .getBitmap();
-
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                ContentResolver resolver = getActivity().getContentResolver();
-                                ContentValues contentValues = new ContentValues();
-                                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
-                                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
-                                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Life_Issues_Images");
-                                contentValues.put(MediaStore.Images.Media.IS_PENDING, true);
-                                Uri imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
-                                try {
-                                    OutputStream fos = resolver.openOutputStream(Objects.requireNonNull(imageUri));
-                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-                                    if (fos != null) {
-                                        fos.close();
-                                    }
-                                    contentValues.put(MediaStore.Images.Media.IS_PENDING, false);
-                                    resolver.update(imageUri, contentValues, null, null);
-                                    Log.d(TAG, "File saved");
-                                    Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }else{
-                                //String path = getActivity().getExternalFilesDir(null).toString();
-                                //File myDir = getActivity().getExternalFilesDir(
-                                //      Environment.DIRECTORY_PICTURES);
-                                File myDir = new File(Environment.getExternalStoragePublicDirectory(
-                                        Environment.DIRECTORY_PICTURES), "/Life_Issues_Images/");
-                                if (!myDir.mkdirs()) {
-                                    myDir.mkdirs();
-                                }
-                                File file = new File(myDir, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
-                                if (!file.exists()) {
-                                    Log.d("path", file.toString());
-                                    try {
-                                        FileOutputStream fos = new FileOutputStream(file);
-                                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                                        fos.flush();
-                                        fos.close();
-                                        Log.d(TAG, "File saved");
-                                        Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
-                        } else {
-                            requestPermission();
-                            Log.e(TAG, "Request for permission");
-                        }
-                    }else{
-                        //get today's date to be added to name of the image
-                        Calendar c = Calendar.getInstance();
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
-                        String formattedDate = dateFormat.format(c.getTime());
-
-                        File myDir = new File(Environment.getExternalStoragePublicDirectory(
-                                Environment.DIRECTORY_PICTURES), "/Life_Issues_Images/");
-
-                        //File myDir = getActivity().getExternalFilesDir(
-                          //      Environment.DIRECTORY_PICTURES);
-                        //File myDir = new File(path + "/Life_Issues_Images");
-                        //myDir.mkdirs();
-                        if (!myDir.mkdirs()) {
-                            //myDir.mkdirs();
-                            Log.e(TAG, "Life_Issues_Images directory not created");
-                        }
-                        File file = new File(myDir, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
-                        if (!file.exists()) {
-                            Log.d("path", file.toString());
-                            try {
-                                FileOutputStream fos = new FileOutputStream(file);
-                                BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
-                                Bitmap bitmap = bitmapDrawable .getBitmap();
-                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-                                fos.flush();
-                                fos.close();
-                                Log.d(TAG, "File saved");
-                                Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
+                handleSaveImage(verseId);
+                /*if (interstitialAd != null && interstitialAd.isLoaded()) {
+                    interstitialAd.show();
+                    doActionAfterAd("saveImage", verseId);
+                } else {
+                    Log.e(TAG,"Ad did not load");
+                    handleSaveImage(verseId);
+                }*/
                 verseImageDialog.dismiss();
             }
         });
@@ -527,19 +468,14 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         shareImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
-                    Bitmap bitmap = bitmapDrawable .getBitmap();
-                    String bitmapPath = MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), bitmap,bibleVerse, null);
-                    Uri bitmapUri = Uri.parse(bitmapPath);
-
-                    Intent shareIntent=new Intent(Intent.ACTION_SEND);
-                    shareIntent.setType("image/png");
-                    shareIntent.putExtra(Intent.EXTRA_STREAM, bitmapUri);
-                    startActivity(Intent.createChooser(shareIntent,"Share Verse Image"));
-                }catch (Exception e){
-                    Log.e(TAG, "ERROR sharing verse image: "+e.getMessage());
-                }
+                handleShareImage();
+                /*if (interstitialAd != null && interstitialAd.isLoaded()) {
+                    interstitialAd.show();
+                    doActionAfterAd("shareImage", verseID);
+                } else {
+                    Log.e(TAG,"Ad did not load");
+                    handleShareImage();
+                }*/
                 verseImageDialog.dismiss();
             }
         });
@@ -560,6 +496,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                             public boolean onLoadFailed(@Nullable GlideException e, Object model,
                                                         Target<Drawable> target, boolean isFirstResource) {
                                 imageProgressBar.setVisibility(View.GONE);
+                                Toast.makeText(getActivity(),"Could not load image",Toast.LENGTH_LONG).show();
                                 return false;
                             }
 
@@ -846,6 +783,182 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                 }
             }
         }
+    }
+
+    //handle save image
+    private void handleSaveImage(int verseId){
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (checkPermission()) {
+                    //get today's date to be added to name of the image
+                    Calendar c = Calendar.getInstance();
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
+                    String formattedDate = dateFormat.format(c.getTime());
+
+                    BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
+                    bitmap = bitmapDrawable .getBitmap();
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        ContentResolver resolver = getActivity().getContentResolver();
+                        ContentValues contentValues = new ContentValues();
+                        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
+                        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Life_Issues_Images");
+                        contentValues.put(MediaStore.Images.Media.IS_PENDING, true);
+                        Uri imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                        try {
+                            OutputStream fos = resolver.openOutputStream(Objects.requireNonNull(imageUri));
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                            if (fos != null) {
+                                fos.close();
+                            }
+                            contentValues.put(MediaStore.Images.Media.IS_PENDING, false);
+                            resolver.update(imageUri, contentValues, null, null);
+                            Log.d(TAG, "File saved");
+                            Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }else{
+                        //String path = getActivity().getExternalFilesDir(null).toString();
+                        //File myDir = getActivity().getExternalFilesDir(
+                        //      Environment.DIRECTORY_PICTURES);
+                        File myDir = new File(Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_PICTURES), "/Life_Issues_Images/");
+                        if (!myDir.mkdirs()) {
+                            myDir.mkdirs();
+                        }
+                        File file = new File(myDir, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
+                        if (!file.exists()) {
+                            Log.d("path", file.toString());
+                            try {
+                                FileOutputStream fos = new FileOutputStream(file);
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                                fos.flush();
+                                fos.close();
+                                Log.d(TAG, "File saved");
+                                Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                } else {
+                    requestPermission();
+                    Log.e(TAG, "Request for permission");
+                }
+            }else{
+                //get today's date to be added to name of the image
+                Calendar c = Calendar.getInstance();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
+                String formattedDate = dateFormat.format(c.getTime());
+
+                File myDir = new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES), "/Life_Issues_Images/");
+
+                //File myDir = getActivity().getExternalFilesDir(
+                //      Environment.DIRECTORY_PICTURES);
+                //File myDir = new File(path + "/Life_Issues_Images");
+                //myDir.mkdirs();
+                if (!myDir.mkdirs()) {
+                    //myDir.mkdirs();
+                    Log.e(TAG, "Life_Issues_Images directory not created");
+                }
+                File file = new File(myDir, "LIIMG_" + formattedDate + "_V" + verseId + ".png");
+                if (!file.exists()) {
+                    Log.d("path", file.toString());
+                    try {
+                        FileOutputStream fos = new FileOutputStream(file);
+                        BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
+                        Bitmap bitmap = bitmapDrawable .getBitmap();
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                        fos.flush();
+                        fos.close();
+                        Log.d(TAG, "File saved");
+                        Toast.makeText(getActivity(), "Image saved", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+    //handle share image
+    private void handleShareImage(){
+        try {
+            BitmapDrawable bitmapDrawable = ((BitmapDrawable) verseImage.getDrawable());
+            Bitmap bitmap = bitmapDrawable .getBitmap();
+            String bitmapPath = MediaStore.Images.Media.insertImage(getActivity().getContentResolver(), bitmap,bibleVerse, null);
+            Uri bitmapUri = Uri.parse(bitmapPath);
+
+            Intent shareIntent=new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("image/png");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, bitmapUri);
+            startActivity(Intent.createChooser(shareIntent,"Share Verse Image"));
+        }catch (Exception e){
+            Log.e(TAG, "ERROR sharing verse image: "+e.getMessage());
+        }
+    }
+
+    //handle share verse text
+    private void handleShareVerse(){
+        Intent sharingIntent = new Intent();
+        sharingIntent.setAction(Intent.ACTION_SEND);
+        String shareBody = "\n" + verseContent +
+                "\n" + bibleVerse +
+                "\n Life Issues App.";
+        //sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject Here");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+        sharingIntent.setType("text/plain");
+        startActivity(Intent.createChooser(sharingIntent, "Share verse"));
+    }
+
+    //handle add note
+    private void handleAddNote(){
+        Intent intent = new Intent(MainActivity.getInstance(), NoteActivity.class);
+        intent.putExtra("verse", verse.getText().toString());
+        intent.putExtra("issueName", issueName);
+        intent.putExtra("content", verse_content.getText().toString());
+        startActivity(intent);
+    }
+
+    //set up the interstitial ad
+    private void doActionAfterAd(String actionName, int verseId){
+
+        interstitialAd.setAdListener(
+                new AdListener() {
+                    @Override
+                    public void onAdLoaded() {
+                        Log.i(TAG,"onAdLoaded()");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        String error =
+                                String.format(
+                                        "domain: %s, code: %d, message: %s",
+                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
+                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    }
+
+                    @Override
+                    public void onAdClosed() {
+                        Log.e(TAG,"Interstitial Ad closed");
+                        if (actionName.equals("saveImage")){
+                            handleSaveImage(verseId);
+
+                        }else if (actionName.equals("shareImage")){
+                            handleShareImage();
+
+                        }else if (actionName.equals("shareVerse")){
+                            handleShareVerse();
+                        }else if (actionName.equals("addNote")){
+                            handleAddNote();
+                        }
+                    }
+                });
     }
 
 }

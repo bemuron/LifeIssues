@@ -208,20 +208,15 @@ public class TodayVerseFragment extends Fragment {
 
         @Override
         protected Void doInBackground(Void... arg0) {
+            max = dbhelper.countAllBibleVerses();
+            rand = new Random();//create random generator object
+            randomVerseID = rand.nextInt((max - min) + 1) + min;//get a random  verse id
+            c1 = dbhelper.getRandomVerse(randomVerseID);//get the content of that verse id
 
-                cursor = dbhelper.getAllBibleVerses();//get all verses in the db
-                if (cursor != null) {
-                    max = cursor.getCount();//count them
-                    rand = new Random();//create random generator object
-                    randomVerseID = rand.nextInt((max - min) + 1) + min;//get a random  verse id
-                    c1 = dbhelper.getRandomVerse(randomVerseID);//get the content of that verse id
-
-                    //create another random object to get a verse for tomorrow
-                    rand = new Random();//create random generator object
-                    randomVerseID2 = rand.nextInt((max - min) + 1) + min;//get a random  verse id
-                    c2date = dbhelper.getRandomVerse(randomVerseID2);//get the content of that verse id
-                }
-
+            //create another random object to get a verse for tomorrow
+            rand = new Random();//create random generator object
+            randomVerseID2 = rand.nextInt((max - min) + 1) + min;//get a random  verse id
+            c2date = dbhelper.getRandomVerse(randomVerseID2);//get the content of that verse id
             return null;
         }
 

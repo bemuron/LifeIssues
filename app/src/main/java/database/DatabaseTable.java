@@ -353,6 +353,14 @@ public class DatabaseTable extends SQLiteAssetHelper {
         return c;
     }
 
+    //count all bible verses in the db
+    public int countAllBibleVerses(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("select count(_id) as versesNumber from bible_verses", null);
+        c.moveToFirst();
+        return Integer.parseInt(c.getString(c.getColumnIndex("versesNumber")));
+    }
+
     public Cursor getAllFavouriteVerses() {
         SQLiteDatabase db = this.getReadableDatabase();
         //String sql = "SELECT * FROM " + BIBLE_VERSES_TABLE + " WHERE " + KEY_FAVOURITE+ " =?";

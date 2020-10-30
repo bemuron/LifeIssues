@@ -33,6 +33,7 @@ import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.google.android.material.navigation.NavigationView;
@@ -46,6 +47,9 @@ import java.util.Random;
 import database.DatabaseTable;
 import database.IssuesProvider;
 
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
+
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,IssuesFragment.IssueSelectedListener {
 
@@ -58,6 +62,7 @@ public class MainActivity extends AppCompatActivity
     private int post,counter = 0,max,random_articleID,min=1;
     private ListView mListView;
     private InterstitialAd interstitialAd;
+    private AdRequest adRequest;
     private SimpleCursorAdapter words;
     private String privacy_policy_link = "http://www.emtechint.com/life_issues.html", issueID;
 
@@ -80,6 +85,14 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         instance = this;
 
+        RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
+                .toBuilder()
+                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                .build();
+
+        MobileAds.setRequestConfiguration(requestConfiguration);
+
         // Initialize the Mobile Ads SDK.
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
@@ -87,7 +100,15 @@ public class MainActivity extends AppCompatActivity
         });
 
         //setup and initialize the interstitial ads
-        setUpInterstitialAd();
+        // Create the InterstitialAd and set the adUnitId.
+        interstitialAd = new InterstitialAd(this);
+        // Defined in res/values/strings.xml
+        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
+
+        //request for the ad
+        adRequest = new AdRequest.Builder().build();
+        //load it into the object
+        interstitialAd.loadAd(adRequest);
 
         mAdView = findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
@@ -128,7 +149,7 @@ public class MainActivity extends AppCompatActivity
                 Log.e(TAG, "Ad left application");
             }
         });
-        AdRequest adRequest = new AdRequest.Builder().build();
+        adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -293,22 +314,15 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected Void doInBackground(Void... arg0) {
-            cursor = dbhelper.getAllBibleVerses();
-            cursor.moveToFirst();
-            //issueID = cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
-            max = cursor.getCount();
+            max =  dbhelper.countAllBibleVerses();
             rand = new Random();
             random_articleID = rand.nextInt((max - min) + 1) + min;
-            //get the issues id
-            //issueID = dbhelper.getIssueID(random_articleID);
-
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
             Intent intent = new Intent(MainActivity.this, BibleVerses.class);
-            //intent.putExtra("issue_ID", issueID);
             intent.putExtra("V-ID", random_articleID);
             startActivity(intent);
 
@@ -353,14 +367,32 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_notes) {
-            Intent intent = new Intent(this, NotesListActivity.class);
-            startActivity(intent);
+            if (interstitialAd != null && interstitialAd.isLoaded()) {
+                interstitialAd.show();
+                startActivityAfterAd("notes");
+            } else {
+                Log.e(TAG,"Ad did not load");
+                Intent intent = new Intent(this, NotesListActivity.class);
+                startActivity(intent);
+            }
         }
         else if (id == R.id.action_favorites) {
+            if (interstitialAd != null && interstitialAd.isLoaded()) {
+                interstitialAd.show();
+                //startActivityAfterAd("favs");
+            } else {
+                Log.e(TAG,"Ad did not load");
+
+            }
             Intent intent = new Intent(this, FavouritesActivity.class);
             startActivity(intent);
         }
         else if (id == R.id.action_random_verse) {
+            if (interstitialAd != null && interstitialAd.isLoaded()) {
+                interstitialAd.show();
+            } else {
+                Log.e(TAG,"Ad did not load");
+            }
             new getRandomVerse().execute();
         }
         else if (id == R.id.action_about) {
@@ -386,12 +418,24 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_notes) {
-            Intent intent = new Intent(this, NotesListActivity.class);
-            startActivity(intent);
+            if (interstitialAd != null && interstitialAd.isLoaded()) {
+                interstitialAd.show();
+                startActivityAfterAd("notes");
+            } else {
+                Log.e(TAG,"Ad did not load");
+                Intent intent = new Intent(this, NotesListActivity.class);
+                startActivity(intent);
+            }
 
         }else if (id == R.id.nav_favourites) {
-            Intent intent = new Intent(this, FavouritesActivity.class);
-            startActivity(intent);
+            if (interstitialAd != null && interstitialAd.isLoaded()) {
+                interstitialAd.show();
+                startActivityAfterAd("favs");
+            } else {
+                Log.e(TAG,"Ad did not load");
+                Intent intent = new Intent(this, FavouritesActivity.class);
+                startActivity(intent);
+            }
 
         } else if (id == R.id.nav_random) {
             new getRandomVerse().execute();
@@ -430,16 +474,7 @@ public class MainActivity extends AppCompatActivity
 
 
     //set up the interstitial ad
-    private void setUpInterstitialAd(){
-        // Create the InterstitialAd and set the adUnitId.
-        interstitialAd = new InterstitialAd(this);
-        // Defined in res/values/strings.xml
-        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
-
-        //request for the ad
-        AdRequest adRequest = new AdRequest.Builder().build();
-        //load it into the object
-        interstitialAd.loadAd(adRequest);
+    private void startActivityAfterAd(String activityName){
 
         interstitialAd.setAdListener(
                 new AdListener() {
@@ -460,6 +495,13 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onAdClosed() {
                         Log.e(TAG,"Interstitial Ad closed");
+                        if (activityName.equals("favs")){
+                            Intent intent = new Intent(MainActivity.this, FavouritesActivity.class);
+                            startActivity(intent);
+                        }else if (activityName.equals("notes")){
+                            Intent intent = new Intent(MainActivity.this, NotesListActivity.class);
+                            startActivity(intent);
+                        }
                     }
                 });
     }
