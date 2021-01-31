@@ -4,6 +4,7 @@ package com.lifeissues.lifeissues.helpers;
  * Created by Emo on 6/17/2017.
  */
 
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,9 +14,8 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.lifeissues.lifeissues.R;
+import androidx.lifecycle.ViewModelProvider;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -23,7 +23,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-import database.DatabaseTable;
+import com.lifeissues.lifeissues.R;
+import com.lifeissues.lifeissues.data.LifeIssuesRepository;
+import com.lifeissues.lifeissues.data.database.DatabaseTable;
+import com.lifeissues.lifeissues.ui.viewmodels.BibleVersesActivityViewModel;
 
 public class OnBootReceiver extends BroadcastReceiver {
 
@@ -35,14 +38,11 @@ public class OnBootReceiver extends BroadcastReceiver {
         ReminderManager reminderMgr = new ReminderManager(context);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-        DatabaseTable dbHelper = new DatabaseTable(context);
+        LifeIssuesRepository issuesRepository = new LifeIssuesRepository((Application) context);
 
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
-        String dateToday = df.format(c.getTime());
+        Cursor cursor = null;
 
-        Cursor cursor = dbHelper.getDailyVerse(dateToday);
-        setReminder(prefs,cursor, reminderMgr);
+        new getDailyVerseOnBootAsync(reminderMgr,prefs,issuesRepository, cursor).execute();
 
 
 
@@ -76,9 +76,6 @@ public class OnBootReceiver extends BroadcastReceiver {
             String ampVerseContent = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_AMP));
 
             switch (version){
-                case "kjv":
-                    dailyVerseNotification(verseID,bibleVerse,kjvVerseContent, preferences,manager);
-                    break;
                 case "msg":
                     dailyVerseNotification(verseID,bibleVerse,msgVerseContent, preferences, manager);
                     break;
@@ -121,5 +118,37 @@ public class OnBootReceiver extends BroadcastReceiver {
             manager.setReminder(verseID, verse, content, c);
         }
 
+    }
+
+    //async task to get daily verse from daily verse table
+    private class getDailyVerseOnBootAsync extends AsyncTask<Void, Void, Void> {
+        private ReminderManager rm;
+        private SharedPreferences pref;
+        private LifeIssuesRepository repo;
+        private Cursor cursor;
+
+        getDailyVerseOnBootAsync(ReminderManager reminderManager, SharedPreferences prefs,
+                                         LifeIssuesRepository issuesRepository, Cursor cursor){
+            this.rm = reminderManager;
+            this.pref = prefs;
+            this.repo = issuesRepository;
+            this.cursor = cursor;
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            Calendar c = Calendar.getInstance();
+            SimpleDateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+            String dateToday = df.format(c.getTime());
+
+            cursor = repo.getDailyVerse(dateToday);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            Log.e(TAG,"In post execute");
+            setReminder(pref,cursor, rm);
+        }
     }
 }

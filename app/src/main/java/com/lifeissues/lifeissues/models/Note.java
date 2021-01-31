@@ -1,5 +1,11 @@
 package com.lifeissues.lifeissues.models;
 
+import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -8,16 +14,42 @@ import java.util.Locale;
  * Created by Emo on 6/7/2017.
  */
 
+@Entity(tableName = "notes")
 public class Note {
+    @PrimaryKey(autoGenerate = true)
+    @NonNull
+    @ColumnInfo(name = "_id")
     private int id;
+
+    @ColumnInfo(name = "title")
     private String title;
+
+    @ColumnInfo(name = "content")
     private String content;
+
+    @ColumnInfo(name = "verse")
+    private String verse;
+
+    @ColumnInfo(name = "life_issue")
+    private String issue;
+
+    @ColumnInfo(name = "date_created")
     private String dateCreated;
-    private Long dataModified;
+
+    @ColumnInfo(name = "date_updated")
+    private String dateModified;
+
+    @Ignore
     private String timestamp;
+    @Ignore
     private String picture;
-    private boolean isImportant;
+
+    @ColumnInfo(name = "favourite")
+    private String important;
+
+    @Ignore
     private boolean isRead;
+    @Ignore
     private int color = -1;
 
     public int getId() {
@@ -52,12 +84,12 @@ public class Note {
         this.dateCreated = dateCreated;
     }
 
-    public Long getDataModified() {
-        return dataModified;
+    public String getDateModified() {
+        return dateModified;
     }
 
-    public void setDataModified(Long dataModified) {
-        this.dataModified = dataModified;
+    public void setDateModified(String dateModified) {
+        this.dateModified = dateModified;
     }
 
     public String getTimestamp() {
@@ -68,12 +100,12 @@ public class Note {
         this.timestamp = timestamp;
     }
 
-    public boolean isImportant() {
-        return isImportant;
+    public String getImportant() {
+        return important;
     }
 
-    public void setImportant(boolean important) {
-        isImportant = important;
+    public void setImportant(String important) {
+        important = important;
     }
 
     public String getPicture() {
@@ -98,6 +130,22 @@ public class Note {
 
     public void setColor(int color) {
         this.color = color;
+    }
+
+    public String getVerse() {
+        return verse;
+    }
+
+    public void setVerse(String verse) {
+        this.verse = verse;
+    }
+
+    public String getIssue() {
+        return issue;
+    }
+
+    public void setIssue(String issue) {
+        this.issue = issue;
     }
 
     public String getReadableModifiedDate(){

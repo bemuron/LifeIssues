@@ -16,7 +16,7 @@ public class AppController extends Application {
         instance = this;
     }
 
-    public static Context getContext() {
+    public static synchronized Context getContext() {
         return instance.getApplicationContext();
     }
 }

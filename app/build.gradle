@@ -3,14 +3,26 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 29
     //buildToolsVersion '28.0.3'
+    //added to support room migrations testing
+    sourceSets {
+        androidTest.assets.srcDirs +=
+                files("$projectDir/schemas".toString())
+    }
 
     defaultConfig {
         applicationId "com.lifeissues.lifeissues"
         minSdkVersion 16
         targetSdkVersion 29
-        versionCode 7
+        versionCode 8
         versionName "1.4.3"
         multiDexEnabled true
+        //location of json files used for testing room migrations
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation":
+                                     "$projectDir/schemas".toString()]
+            }
+        }
     }
     buildTypes {
         release {
@@ -19,49 +31,57 @@ android {
         }
     }
     compileOptions {
-        targetCompatibility 1.8
-        sourceCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    //card view
-    //Recycler View
     implementation files('libs/sqliteassethelper-2.0.1.jar')
-    //glide
-    // volley
-    //circle image view
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.github.bumptech.glide:glide:4.8.0'
     /*implementation 'com.android.volley:volley:1.1.0'*/
-    implementation 'androidx.browser:browser:1.2.0'
+    implementation 'androidx.browser:browser:1.3.0'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
-    androidTestImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'junit:junit:4.13.1'
 
     //firebase
-    implementation 'com.google.firebase:firebase-core:17.5.1'
-    implementation 'com.google.firebase:firebase-ads:19.4.0'
+    implementation 'com.google.firebase:firebase-core:18.0.0'
+    implementation 'com.google.firebase:firebase-ads:19.6.0'
 
     //implementation "androidx.concurrent:concurrent-futures:1.1.0"
 
+    // Room components
+    implementation 'androidx.room:room-runtime:2.2.6'
+    annotationProcessor 'androidx.room:room-compiler:2.2.6'
+    testImplementation 'androidx.room:room-testing:2.2.6'
+
+    //for testing room migrations
+    //androidTestImplementation'androidx.room:room-testing:2.2.5'
+
+    // Lifecycle components
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    //annotationProcessor 'androidx.lifecycle:lifecycle-compiler:2.2.0'
+    // alternately - if using Java8, use the following instead of lifecycle-compiler
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.2.0"
+
+    //Espresso UI testing
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    // Android Testing Support Library's runner and rules
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    //androidTestImplementation "com.android.support.test:rules:$rootProject.ext.rulesVersion"
+
 }
-
-/*allprojects {
-    repositories {
-        jcenter()
-        maven {
-            url "https://maven.google.com"
-        }
-    }
-}*/
-
 
 apply plugin: 'com.google.gms.google-services'

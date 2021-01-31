@@ -12,7 +12,7 @@ import android.content.Intent;
 import androidx.core.app.NotificationCompat;
 import android.util.Log;
 
-import com.lifeissues.lifeissues.activities.MainActivity;
+import com.lifeissues.lifeissues.ui.activities.MainActivity;
 
 import com.lifeissues.lifeissues.R;
 

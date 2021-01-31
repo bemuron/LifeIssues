@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context=".fragments.TodayVerseFragment">
+    tools:context=".ui.fragments.TodayVerseFragment">
 
 <LinearLayout
     android:orientation="vertical"
@@ -137,6 +137,66 @@
                 android:src="@drawable/ic_note_add_black_24dp" />
 
         </RelativeLayout>
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/verse_image_card_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/margin_padding_xxlarge"
+        android:layout_marginRight="@dimen/card_margin"
+        android:layout_marginEnd="@dimen/card_margin"
+        android:layout_marginLeft="@dimen/card_margin"
+        android:layout_marginStart="@dimen/card_margin"
+        android:layout_marginBottom="@dimen/card_margin"
+        android:elevation="3dp"
+        card_view:cardCornerRadius="@dimen/card_album_radius">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/todayVerseImageView"
+                android:layout_width="match_parent"
+                android:paddingBottom="@dimen/margin_padding_normal"
+                android:layout_height="wrap_content"/>
+
+            <RelativeLayout
+                android:id="@+id/today_verse_actions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/todayVerseImageView"
+                android:paddingBottom="@dimen/margin_padding_normal"
+                android:layout_centerHorizontal="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/todaySaveImageButton"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_marginRight="@dimen/margin_padding_small"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:text="Save"
+                    android:layout_marginEnd="@dimen/margin_padding_small" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/todayShareImageButton"
+                    android:layout_toLeftOf="@id/todaySaveImageButton"
+                    android:layout_toStartOf="@id/todaySaveImageButton"
+                    android:layout_marginRight="@dimen/margin_padding_xxnormal"
+                    android:layout_marginEnd="@dimen/margin_padding_xxnormal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:text="Share"/>
+
+            </RelativeLayout>
         </RelativeLayout>
 
     </androidx.cardview.widget.CardView>
