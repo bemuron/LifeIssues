@@ -102,22 +102,46 @@ public class FavouriteNotesListFragment extends Fragment implements
 
         @Override
         protected Void doInBackground(Void... arg0) {
-            //cursor = dbhelper.getAllFavouriteNotes();
             cursor = viewModel.getAllFavouriteNotes();
+            if (cursor != null){
+                cursor.moveToFirst();
+                if (notes != null) {
+                    notes.clear();
+                }
+                while (!cursor.isAfterLast()){
+
+                    Note note = new Note();
+                    note.setId(cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ID)));
+                    note.setTitle(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_NOTE_TITLE)));
+                    note.setContent(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_NOTE_CONTENT)));
+                    note.setDateCreated(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_DATE_CREATED)));
+                    note.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_NOTE_ISSUE)));
+                    note.setVerse(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_NOTE_VERSE)));
+                    String favValue = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_FAVOURITE));
+                    if (favValue.equals("yes")){
+                        note.setImportant(!note.isImportant());
+                    }
+                    note.setColor(getRandomMaterialColor("400"));
+
+                    notes.add(note);
+                    cursor.moveToNext();
+                }
+                cursor.close();
+            }
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
-            getAllGoalNotes();
-
             //check if there is data to show otherwise display the empty view
             if (notes.isEmpty()){
                 recyclerView.setVisibility(View.GONE);
                 emptyView.setVisibility(View.VISIBLE);
+                mAdapter.notifyDataSetChanged();
             }else{
                 recyclerView.setVisibility(View.VISIBLE);
                 emptyView.setVisibility(View.GONE);
+                mAdapter.notifyDataSetChanged();
             }
         }
     }
@@ -176,7 +200,7 @@ public class FavouriteNotesListFragment extends Fragment implements
             //actionMode = getActivity().startSupportActionMode(actionModeCallback);
         }
 
-        toggleSelection(position);
+        //toggleSelection(position);
     }
 
     @Override
@@ -227,7 +251,7 @@ public class FavouriteNotesListFragment extends Fragment implements
         if (actionMode == null) {
             //actionMode = startSupportActionMode(actionModeCallback);
         }
-        toggleSelection(position);
+        //toggleSelection(position);
     }
 
     private void toggleSelection(int position) {

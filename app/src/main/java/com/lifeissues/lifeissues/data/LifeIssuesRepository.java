@@ -129,9 +129,23 @@ public class LifeIssuesRepository {
         });
     }
 
+    //add favorite daily Bible verse
+    public void setFavVerse(int verse_id){
+        mExecutors.diskIO().execute(() ->{
+            dailyVersesDao.setFavourite(verse_id);
+        });
+    }
+
+    //remove favorite daily Bible verse
+    public void removeFavVerse(int verse_id){
+        mExecutors.diskIO().execute(() ->{
+            dailyVersesDao.removeFavourite(verse_id);
+        });
+    }
+
     //add daily verse to db
     public boolean addDailyVerse(int verse_id, String verse, String kjv, String msg, String amp,
-                              String favValue, String issueName, int issue_id, String dateTaken){
+                              int favValue, String issueName, int issue_id, String dateTaken){
         //mExecutors.diskIO().execute(() ->{
             insertedDailyVerseId = dailyVersesDao.addDailyVerse(verse_id, verse, kjv, msg, amp,
                     favValue, issueName, issue_id, dateTaken);
@@ -166,9 +180,9 @@ public class LifeIssuesRepository {
     }
 
     //add a favorite issue
-    public boolean addFavoriteIssue(String issueName, String verses){
+    public boolean addFavoriteIssue(int issueId, String issueName, String verses){
         mExecutors.diskIO().execute(() -> {
-            favIssueId = issuesDao.addFavouriteIssue(issueName, verses);
+            favIssueId = issuesDao.addFavouriteIssue(issueId, issueName, verses);
         });
         return favIssueId > 0;
     }

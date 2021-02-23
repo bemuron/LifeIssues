@@ -16,7 +16,7 @@ public interface DailyVersesDao {
     @Query("INSERT INTO daily_verses (_id, verse, kjv, msg, amp, issue_name, issue_id, favourite, date_taken) " +
             "VALUES(:verse_id, :verse, :kjv, :msg, :amp, :issueName, :issue_id, :favValue, :dateTaken)")
     long addDailyVerse(int verse_id, String verse, String kjv, String msg, String amp,
-                          String favValue, String issueName, int issue_id, String dateTaken);
+                          int favValue, String issueName, int issue_id, String dateTaken);
 
     @Query("select b._id, iv.issue_id, i.suggest_text_1, b.verse, b.kjv, b.msg, b.amp, " +
             "iv.is_favorite from bible_verses b JOIN issues_verses iv on iv.verse_id = b._id JOIN " +
@@ -26,4 +26,12 @@ public interface DailyVersesDao {
     //getting daily verse from the db
     @Query("SELECT * FROM daily_verses WHERE date_taken = :dateToday")
     Cursor getDailyVerse(String dateToday);
+
+    //adding a favourite Bible verse to the db
+    @Query("UPDATE daily_verses set favourite = 1 WHERE _id = :verse_id")
+    int setFavourite(int verse_id);
+
+    //adding a favourite Bible verse to the db
+    @Query("UPDATE daily_verses set favourite = 0 WHERE _id = :verse_id")
+    int removeFavourite(int verse_id);
 }

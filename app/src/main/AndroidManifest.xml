@@ -96,7 +96,7 @@
             android:parentActivityName=".ui.activities.MainActivity"
             android:label="@string/action_settings"/>
 
-        <receiver android:name=".helpers.OnBootReceiver">
+        <!--<receiver android:name=".helpers.OnBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -107,7 +107,7 @@
             android:name=".helpers.ReminderService"
             android:enabled = "true"
             android:exported = "true">
-        </service>
+        </service>-->
     </application>
 
 </manifest>

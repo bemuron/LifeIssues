@@ -54,17 +54,15 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     private AdView mAdView;
     private BibleVersesActivityViewModel viewModel;
     Cursor c,cursor;
-    Random rand;
     private BibleVersesFragment bibleVersesFragment;
     private SharedPreferences prefs;
     public ViewPager mViewPager;
-    private Intent intent;
     private TextView lblCount;
     private InterstitialAd interstitialAd;
     private AdRequest adRequest;
-    private String issueName,issueNameUri, favouriteVerses, favouriteIssueName, randomVerse;
+    private String issueName,issueNameUri, favouriteVerses, favouriteIssueName, randomVerse, favoriteIssue;
     private int selectedPosition = 0, pageCount,currentPage,
-            favVersePos, max,random_articleID,min=1, verseID = 0, issueId = 0;
+            favVersePos, max,random_articleID,min=1, verseID = 0, issueId = 0, favIssueId = 0;
 
 
     //saving the page number
@@ -166,6 +164,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         favouriteVerses = intent.getStringExtra("favourite_verses");
         favouriteIssueName = intent.getStringExtra("fav_issue_name");
         favVersePos = intent.getIntExtra("cursor_position", 0);
+        favoriteIssue = intent.getStringExtra("favouriteIssues");
         issueName = intent.getStringExtra("issue_name");//list click
         issueId = intent.getIntExtra("issue_ID",0);//list click / random verse
         verseID = intent.getIntExtra("V-ID",0);//random verse
@@ -174,17 +173,23 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         * or a click on the search list view
         * or a click on the random verse*/
         if ((issueId > 0) && (verseID == 0)){
+            //user clicked on issue on the list from home screen
             //get content from db by passing id of the category
             Log.e(TAG,"Issue ID in Bible verses activity = "+issueId);
             Log.e(TAG,"Verse ID in Bible verses activity = "+verseID);
             new getBibleVersesAsync(issueId).execute();
         }
-        else if ((verseID > 0) && (favouriteVerses == null)){//user has clicked on random issue/verse
+        else if ((verseID > 0) && (favouriteVerses == null)){
+            //user has clicked on random issue/verse
             new getRandomVerseAsync(verseID).execute();
 
         } else if ((favouriteVerses != null) && (favouriteVerses.equals("favourites"))){
+            //showing the favorite verses
             new getFavouriteVersesAsync(prefs).execute();
-        }
+        }/*else if ((issueId > 0) && (verseID == 0)){
+            //user clicked on issue on the list from favorites list
+            new getBibleVersesAsync(issueId).execute();
+        }*/
         else {//user is coming from a search query
             new getBibleVersesFromSearchAsync().execute();
         }

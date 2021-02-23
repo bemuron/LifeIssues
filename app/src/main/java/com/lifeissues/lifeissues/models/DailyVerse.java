@@ -32,7 +32,7 @@ public class DailyVerse {
     private int mIssueId;
 
     @ColumnInfo(name = "favourite")
-    private String mFav;
+    private int mFav;
 
     @ColumnInfo(name = "date_taken")
     private String mDateTaken;
@@ -93,11 +93,11 @@ public class DailyVerse {
         this.mIssueId = mIssueId;
     }
 
-    public String getFav() {
+    public int getFav() {
         return mFav;
     }
 
-    public void setFav(String mFav) {
+    public void setFav(int mFav) {
         this.mFav = mFav;
     }
 

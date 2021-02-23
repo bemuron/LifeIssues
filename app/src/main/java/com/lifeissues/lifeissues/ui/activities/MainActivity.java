@@ -333,9 +333,6 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected Void doInBackground(Void... arg0) {
-            //max = mainActivityViewModel.countAllBibleVerses();
-            //rand = new Random();
-            //random_articleID = rand.nextInt((max - min) + 1) + min;
             cursor = mainActivityViewModel.getRandomVerseContent();
             if (cursor.moveToFirst()) {
                 random_articleID = cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ID));

@@ -49,7 +49,6 @@ import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRE
 
 public class NoteActivity extends AppCompatActivity {
     private static final String TAG = FavouritesActivity.class.getSimpleName();
-    private DatabaseTable dbhelper;
     private NoteActivityViewModel viewModel;
     private Cursor c;
     private AdView mAdView;
@@ -128,7 +127,6 @@ public class NoteActivity extends AppCompatActivity {
         mAdView.loadAd(adRequest);
 
         viewModel = new ViewModelProvider(this).get(NoteActivityViewModel.class);
-        dbhelper = new DatabaseTable(this);
 
         //extras = getIntent().getExtras();
         //if(extras != null) {

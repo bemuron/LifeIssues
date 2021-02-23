@@ -164,7 +164,7 @@ public class TodayVerseFragment extends Fragment {
             public void onClick(View v) {
                 inFav.setVisibility(View.VISIBLE);
                 notFav.setVisibility(View.INVISIBLE);
-                //dbhelper.addFavourite(vID,iID);
+                viewModel.setFavorite(vID);
                 viewModel.addFavorite(vID,iID);
                 //adapter.notifyDataSetChanged();
                 // new checkFavourite().execute();
@@ -181,8 +181,8 @@ public class TodayVerseFragment extends Fragment {
                 inFav.setVisibility(View.INVISIBLE);
                 notFav.setVisibility(View.VISIBLE);
 
-                //dbhelper.deleteFavourite(vID, iID);
                 viewModel.deleteFavourite(vID,iID);
+                viewModel.removeFavourite(vID);
                 //cursor.requery();
                 //updateStar(favouriteValue);
 
@@ -198,13 +198,11 @@ public class TodayVerseFragment extends Fragment {
 
         @Override
         protected Void doInBackground(Void... arg0) {
-            //max = dbhelper.countAllBibleVerses();
             max = viewModel.getTotNumberOfVerses();
             Log.e(TAG,"tot bible verses = "+ max);
             rand = new Random();//create random generator object
             randomVerseID = (int) (Math.random() * (max - min + 1) + min);
             //randomVerseID = rand.nextInt((max - min) + 1) + min;//get a random  verse id
-            //c1 = dbhelper.getRandomVerse(randomVerseID);
             c1 = viewModel.getRandomVerse();//get the content of that verse id
             Log.e(TAG,"c1 count = "+ c1.getCount());
             Log.e(TAG,"Random verse id 1 = "+ randomVerseID);
@@ -239,7 +237,7 @@ public class TodayVerseFragment extends Fragment {
             String kjvVerseContent = c.getString(c.getColumnIndex(DatabaseTable.KEY_KJV));
             String msgVerseContent = c.getString(c.getColumnIndex(DatabaseTable.KEY_MSG));
             String ampVerseContent = c.getString(c.getColumnIndex(DatabaseTable.KEY_AMP));
-            String favValue = c.getString(c.getColumnIndex(DatabaseTable.KEY_FAVOURITE));
+            int favValue = c.getInt(c.getColumnIndex(DatabaseTable.KEY_FAVOURITE));
             String dateToday = c.getString(c.getColumnIndex(DatabaseTable.KEY_DATE_TAKEN));
 
             Log.e(TAG, "Today Bible verse = "+bibleVerse);
@@ -303,7 +301,7 @@ public class TodayVerseFragment extends Fragment {
             String kjvVerseContent = c1.getString(c1.getColumnIndex(DatabaseTable.KEY_KJV));
             String msgVerseContent = c1.getString(c1.getColumnIndex(DatabaseTable.KEY_MSG));
             String ampVerseContent = c1.getString(c1.getColumnIndex(DatabaseTable.KEY_AMP));
-            String favValue = c1.getString(c1.getColumnIndex(DatabaseTable.KEY_IS_FAVORITE));
+            int favValue = c1.getInt(c1.getColumnIndex(DatabaseTable.KEY_IS_FAVORITE));
 
             Calendar c = Calendar.getInstance();
             System.out.println("Current time => " + c.getTime());
@@ -398,10 +396,10 @@ public class TodayVerseFragment extends Fragment {
     //async task to add daily verse to daily verse table
     private class addDailyVerseAsyncTask extends AsyncTask<Void, Void, Void> {
 
-        private int mVerseId, mIssueId;
-        private String mBibleVerse,mKjv, mMsg, mAmp, mFavValue, mIssueName, mDate;
+        private int mVerseId, mIssueId, mFavValue;
+        private String mBibleVerse,mKjv, mMsg, mAmp, mIssueName, mDate;
         addDailyVerseAsyncTask(int verseID, String bibleVerse, String kjvVerseContent,
-                               String msgVerseContent, String ampVerseContent, String favValue,
+                               String msgVerseContent, String ampVerseContent, int favValue,
                                String issueName, int issueID, String dateToday){
             mVerseId = verseID;
             mIssueId = issueID;
@@ -438,10 +436,10 @@ public class TodayVerseFragment extends Fragment {
     //async task to add daily verse to daily verse table
     private class addTomorrowVerseAsyncTask extends AsyncTask<Void, Void, Void> {
 
-        private int mVerseId, mIssueId;
-        private String mBibleVerse,mKjv, mMsg, mAmp, mFavValue, mIssueName, mDate;
+        private int mVerseId, mIssueId, mFavValue;
+        private String mBibleVerse,mKjv, mMsg, mAmp, mIssueName, mDate;
         addTomorrowVerseAsyncTask(int verseID, String bibleVerse, String kjvVerseContent,
-                               String msgVerseContent, String ampVerseContent, String favValue,
+                               String msgVerseContent, String ampVerseContent, int favValue,
                                String issueName, int issueID, String dateTomorrow){
             mVerseId = verseID;
             mIssueId = issueID;
@@ -540,11 +538,11 @@ public class TodayVerseFragment extends Fragment {
         }
     }
 
-    private void updateStar(String value){
-        if(value.equals("1")){
+    private void updateStar(int value){
+        if(value == 1){
             inFav.setVisibility(View.VISIBLE);
             notFav.setVisibility(View.INVISIBLE);
-        } else if (value.equals("0")) {
+        } else if (value == 0) {
             inFav.setVisibility(View.INVISIBLE);
             notFav.setVisibility(View.VISIBLE);
         }

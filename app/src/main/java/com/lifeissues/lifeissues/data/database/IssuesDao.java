@@ -60,8 +60,8 @@ public interface IssuesDao {
     Cursor getFavouriteIssue(String issueName);
 
     //add a favorite issue
-    @Query("INSERT into favourites (issue_name, issue_verses) values (:issueName, :verses)")
-    long addFavouriteIssue(String issueName, String verses);
+    @Query("INSERT into favourites (_id, issue_name, issue_verses) values (:issueId, :issueName, :verses)")
+    long addFavouriteIssue(int issueId, String issueName, String verses);
 
     //delete a favorite issue
     @Query("DELETE from favourites where issue_name = :issue")

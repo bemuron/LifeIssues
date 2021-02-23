@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +37,7 @@ import com.lifeissues.lifeissues.ui.viewmodels.BibleVersesActivityViewModel;
  */
 
 public class FavouriteIssuesFragment extends Fragment implements IssueListAdapter.IssueListAdapterListener{
+    private static final String TAG = FavouriteIssuesFragment.class.getSimpleName();
     View rootView;
     private RecyclerView recyclerView;
     private List<LifeIssue> issues = new ArrayList<>();
@@ -66,11 +68,11 @@ public class FavouriteIssuesFragment extends Fragment implements IssueListAdapte
 
         viewModel = new ViewModelProvider(this).get(BibleVersesActivityViewModel.class);
 
-        //async to do stuff in background
-        new getLifeIssues().execute();
-
         getAllWidgets(rootView);
         setAdapter();
+
+        //async to do stuff in background
+        new getLifeIssues().execute();
         return rootView;
     }
 /*
@@ -109,17 +111,49 @@ public class FavouriteIssuesFragment extends Fragment implements IssueListAdapte
         @Override
         protected Void doInBackground(Void... arg0) {
             cursor = viewModel.getAllFavoriteIssues();
+            if (cursor != null){
+                cursor.moveToFirst();
+                if (issues != null) {
+                    issues.clear();
+                }
+                while (!cursor.isAfterLast()){
+
+                    lifeIssue = new LifeIssue();
+                    lifeIssue.setId(cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ID)));
+                    lifeIssue.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_FAV_ISSUE_NAME)));
+                    lifeIssue.setVerses(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_FAV_ISSUE_VERSES)));
+                    //get all verses associated with this issue and count them
+                    //c1 = dbhelper.getBibleVerses(lifeIssue.getId());
+                    c1 = viewModel.getBibleVersesForIssue(lifeIssue.getId());
+                    lifeIssue.setNum_of_verses(Integer.toString(c1.getCount()));
+                    //check if the issue is favourite
+                    //checkFavourites(lifeIssue.getIssueName());
+                    //c = dbhelper.getFavouriteIssue(lifeIssue.getIssueName());
+                    c = viewModel.getFavoriteIssue(lifeIssue.getIssueName());
+                    if (c.getCount() == 1) {
+                        //lifeIssue.setImportant(true);
+                        lifeIssue.setImportant(!lifeIssue.isImportant());
+                        //Toast.makeText(getActivity(), "fav ="+c.getCount(), Toast.LENGTH_SHORT).show();
+                    }
+
+
+                    issues.add(lifeIssue);
+                    cursor.moveToNext();
+                }
+                //cursor.close();
+            }
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
-            displayLifeIssues();
             //check if there is data to show otherwise display the empty view
             if (issues.isEmpty()){
+                issuesAdapter.notifyDataSetChanged();
                 recyclerView.setVisibility(View.GONE);
                 emptyView.setVisibility(View.VISIBLE);
             }else{
+                issuesAdapter.notifyDataSetChanged();
                 recyclerView.setVisibility(View.VISIBLE);
                 emptyView.setVisibility(View.GONE);
             }
@@ -184,7 +218,9 @@ public class FavouriteIssuesFragment extends Fragment implements IssueListAdapte
             Intent intent = new Intent(FavouritesActivity.getInstance(), BibleVerses.class);
             //Toast.makeText(getActivity(), "id = "+ issue.getId(), Toast.LENGTH_SHORT).show();
             intent.putExtra("issue_ID", issue.getId());
+        Log.e(TAG,"Issue ID to BibleVerses "+issue.getId());
             intent.putExtra("issue_name", issue.getIssueName().toLowerCase(Locale.US));
+            intent.putExtra("favourite_issues", "favouriteIssues");
             startActivity(intent);
 
         //}
@@ -204,7 +240,7 @@ public class FavouriteIssuesFragment extends Fragment implements IssueListAdapte
             issue.setImportant(!issue.isImportant());
             issues.set(position, issue);
             //dbhelper.addFavouriteIssue(issue.getIssueName(), issue.getVerses());
-            viewModel.addFavIssue(issue.getIssueName(), issue.getVerses());
+            viewModel.addFavIssue(issue.getId(), issue.getIssueName(), issue.getVerses());
         }
         issuesAdapter.notifyDataSetChanged();
     }

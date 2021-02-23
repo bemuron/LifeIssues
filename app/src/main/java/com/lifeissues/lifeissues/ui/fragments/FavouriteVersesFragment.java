@@ -98,13 +98,31 @@ public class FavouriteVersesFragment extends Fragment implements FavouriteVerses
         @Override
         protected Void doInBackground(Void... arg0) {
             cursor = viewModel.getAllFavouriteVerses();
+            if (cursor != null){
+                cursor.moveToFirst();
+                if(verses != null) {
+                    verses.clear();
+                }
+                while (!cursor.isAfterLast()){
+
+                    favouriteVerse = new FavouriteVerse();
+                    favouriteVerse.setId(cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ID)));
+                    favouriteVerse.setIssueId(cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_ID)));
+                    favouriteVerse.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME)));
+                    favouriteVerse.setVerse(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_VERSE)));
+                    favouriteVerse.setCursorPosition(cursor.getPosition());
+
+
+                    verses.add(favouriteVerse);
+                    cursor.moveToNext();
+                }
+                //cursor.close();
+            }
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
-            displayFavouriteVerses();
-
             //check if there is data to show otherwise display the empty view
             if (verses.isEmpty()){
                 recyclerView.setVisibility(View.GONE);
@@ -113,6 +131,7 @@ public class FavouriteVersesFragment extends Fragment implements FavouriteVerses
                 recyclerView.setVisibility(View.VISIBLE);
                 emptyView.setVisibility(View.GONE);
             }
+            versesListAdapter.notifyDataSetChanged();
         }
     }
 

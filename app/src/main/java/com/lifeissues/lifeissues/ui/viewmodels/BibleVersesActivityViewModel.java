@@ -46,6 +46,16 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
         issuesRepository.deleteFavVerse(verse_id, issueID);
     }
 
+    //add a favorite daily verse
+    public void setFavorite(int verse_id){
+        issuesRepository.setFavVerse(verse_id);
+    }
+
+    //remove a favorite daily verse
+    public void removeFavourite(int verse_id){
+        issuesRepository.removeFavVerse(verse_id);
+    }
+
     //get number of all Bible verses in the db
     public int getTotNumberOfVerses(){
         return issuesRepository.countAllBibleVerses();
@@ -53,7 +63,7 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
 
     //adding a daily verse to the db
     public boolean addDailyVerse(int verse_id, String verse, String kjv, String msg, String amp,
-                              String favValue, String issueName, int issue_id, String dateTaken){
+                              int favValue, String issueName, int issue_id, String dateTaken){
         return issuesRepository.addDailyVerse(verse_id, verse, kjv, msg, amp,
                 favValue, issueName, issue_id, dateTaken);
     }
@@ -79,14 +89,15 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
     }
 
     //add a fav issue
-    public boolean addFavIssue(String issueName, String verses){
-        return issuesRepository.addFavoriteIssue(issueName, verses);
+    public boolean addFavIssue(int issueId, String issueName, String verses){
+        return issuesRepository.addFavoriteIssue(issueId, issueName, verses);
     }
 
     //delete fav issue
     public boolean deleteFavIssue(String issue){
         return issuesRepository.deleteFavIssue(issue);
     }
+
 
     //get all favorite issues
     public Cursor getAllFavoriteIssues(){

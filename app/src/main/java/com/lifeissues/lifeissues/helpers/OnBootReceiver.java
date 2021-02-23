@@ -42,7 +42,7 @@ public class OnBootReceiver extends BroadcastReceiver {
 
         Cursor cursor = null;
 
-        new getDailyVerseOnBootAsync(reminderMgr,prefs,issuesRepository, cursor).execute();
+        new getDailyVerseOnBootAsync(reminderMgr,prefs,issuesRepository).execute();
 
 
 
@@ -128,11 +128,11 @@ public class OnBootReceiver extends BroadcastReceiver {
         private Cursor cursor;
 
         getDailyVerseOnBootAsync(ReminderManager reminderManager, SharedPreferences prefs,
-                                         LifeIssuesRepository issuesRepository, Cursor cursor){
+                                         LifeIssuesRepository issuesRepository){
             this.rm = reminderManager;
             this.pref = prefs;
             this.repo = issuesRepository;
-            this.cursor = cursor;
+            //this.cursor = cursor;
         }
 
         @Override

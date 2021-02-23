@@ -351,6 +351,7 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
         //Toast.makeText(getActivity(), "id = "+ issue.getId(), Toast.LENGTH_SHORT).show();
         intent.putExtra("issue_ID", issue.getId());
         Log.e(TAG,"Issue ID to Bible Verses activity = "+issue.getId());
+        intent.putExtra("favourite_issues", "no");
         intent.putExtra("issue_name", issue.getIssueName().toLowerCase(Locale.US));
         startActivity(intent);
 
@@ -373,13 +374,11 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
         if (issue.isImportant()){//issue already a fav
             issue.setImportant(!issue.isImportant());
             issues.set(position, issue);
-            //dbhelper.deleteFavouriteIssue(issue.getIssueName());
             viewModel.deleteFavIssue(issue.getIssueName());
         }else {
             issue.setImportant(!issue.isImportant());
             issues.set(position, issue);
-            //dbhelper.addFavouriteIssue(issue.getIssueName(), issue.getVerses());
-            viewModel.addFavIssue(issue.getIssueName(), issue.getVerses());
+            viewModel.addFavIssue(issue.getId(), issue.getIssueName(), issue.getVerses());
         }
         issuesAdapter.notifyDataSetChanged();
     }
