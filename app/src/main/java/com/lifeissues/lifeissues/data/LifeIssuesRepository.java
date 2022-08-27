@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.provider.BaseColumns;
 import android.util.Log;
 
+import com.lifeissues.lifeissues.data.database.BibleNamesDao;
 import com.lifeissues.lifeissues.data.database.BibleVersesDao;
 import com.lifeissues.lifeissues.data.database.DailyVersesDao;
 import com.lifeissues.lifeissues.data.database.IssuesDao;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 public class LifeIssuesRepository {
     private static final String TAG = LifeIssuesRepository.class.getSimpleName();
     private BibleVersesDao bibleVersesDao;
+    private BibleNamesDao bibleNamesDao;
     private NotesDao notesDao;
     private IssuesDao issuesDao;
     private DailyVersesDao dailyVersesDao;
@@ -35,6 +37,7 @@ public class LifeIssuesRepository {
     public LifeIssuesRepository(Application application) {
         LifeIssuesDatabase db = LifeIssuesDatabase.getDatabase(application);
         bibleVersesDao = db.bibleVersesDao();
+        bibleNamesDao = db.bibleNamesDao();
         notesDao = db.notesDao();
         issuesDao = db.issuesDao();
         dailyVersesDao = db.dailyVersesDao();
@@ -44,6 +47,10 @@ public class LifeIssuesRepository {
 
     public static LifeIssuesRepository getInstance(){
         return  instance;
+    }
+
+    public BibleNamesDao getBibleNamesDao(){
+        return bibleNamesDao;
     }
 
     //count all the bible verses in the db
@@ -247,6 +254,24 @@ public class LifeIssuesRepository {
 
     }
 
+    //get name suggestions
+    public Cursor getNameMatches(String query, String[] columns) {
+        Cursor cursor = null;
+        String selection = issuesDao.KEY_ISSUE_NAME + " MATCH ?";
+        String[] selectionArgs = new String[] {query+"*"};
+        Log.e(TAG, "Search query = "+query);
+
+        cursor = bibleNamesDao.getWordMatches(query+"*");
+
+        if (cursor == null) {
+            return null;
+        } else if (!cursor.moveToFirst()) {
+            cursor.close();
+            return null;
+        }
+        return cursor;
+    }
+
     /**
      * Performs a database query.
      * @param selection The selection clause
@@ -303,6 +328,29 @@ public class LifeIssuesRepository {
      * @return Cursor positioned to matching phrase, or null if not found.
      */
     public Cursor getIssue(String rowId) {
+        String selection = "rowid = ?";
+        String[] selectionArgs = new String[] {rowId};
+        Log.e(TAG, "Search rowid = "+rowId);
+
+        Log.e(TAG, "GetIssue in repo = "+issuesDao.getIssue(rowId).getCount());
+        Cursor cursor1 = issuesDao.getIssue(rowId);
+
+        if (cursor1 == null) {
+            return null;
+        } else if (!cursor1.moveToFirst()) {
+            cursor1.close();
+            return null;
+        }
+        return cursor1;
+        //return query(selection, selectionArgs, columns);
+
+        /* This builds a query that looks like:
+         *     SELECT <columns> FROM <table> WHERE rowid = <rowId>
+         */
+    }
+
+    //get a name
+    public Cursor getName(String rowId) {
         String selection = "rowid = ?";
         String[] selectionArgs = new String[] {rowId};
         Log.e(TAG, "Search rowid = "+rowId);

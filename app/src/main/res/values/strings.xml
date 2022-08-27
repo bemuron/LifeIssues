@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Life Issues</string>
+    <string name="bible_names_activity">Bible Names Dictionay</string>
     <string name="banner_ad_unit_id">ca-app-pub-3075330085087679/2977421942</string>
     <string name="interstitial_ad_unit_id">ca-app-pub-3075330085087679/5226948080</string>
     <!--LI adMob App Id -->
@@ -22,6 +23,7 @@
     <string name="action_bible_version">Select Version</string>
     <string name="action_favourites">Favourites</string>
     <string name="action_notes">Notes</string>
+    <string name="action_bible_names">Bible Names Meanings(Beta)</string>
     <string name="about">About Life Issues</string>
     <string name="life_issue">Life Issue:</string>
     <string name="random">Random Verse</string>
@@ -59,12 +61,15 @@
 
     <!-- The label for use as a searchable item -->
     <string name="search_label">Issue Name</string>
+    <string name="search_name_label">Bible Name</string>
 
     <!-- The hint text that appears in the search box. -->
     <string name="search_hint">Search Life issues</string>
+    <string name="search_names_hint">Search Bible names</string>
 
     <!-- The description that will show up in the search settings for this source.  -->
     <string name="settings_description">Search Life Issues topics</string>
+    <string name="settings_names_description">Search Bible names meanings</string>
 
     <!-- Shown above search results when we receive a search request. -->
     <plurals name="search_results">
@@ -138,6 +143,14 @@
     <string name="key_vibrate">key_vibrate</string>
     <string name="key_daily_verse_time">key_daily_verse_time</string>
     <string name="key_send_feedback">key_send_feedback</string>
+    <string name="menu_bible_names_intro">About</string>
+    <string name="bible_names_intro_title">HITCHCOCK\'S BIBLE NAMES DICTIONARY</string>
+    <string name="bible_names_intro">This dictionary is from "Hitchcock\'s New and Complete Analysis of
+        the Holy Bible," published in the late 1800s.
+
+        \n \nIt contains more than 2,500 Bible and Bible-related proper names and their meanings.
+        Some Hebrew words of uncertain meaning have been left out.
+    </string>
 
     <!-- end Settings Activity -->
 

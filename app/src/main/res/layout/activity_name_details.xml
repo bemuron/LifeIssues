@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".ui.activities.NameDetailsActivity">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/adView">
+
+        <FrameLayout
+            android:id="@+id/article_details_frame"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/Bible_name"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="30sp"
+                    android:padding="15dp"
+                    android:fontFamily="serif"
+                    android:gravity="center_horizontal"
+                    android:text="Name"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/name_details"
+                    android:textColor="@color/from"
+                    android:textSize="20sp"
+                    android:layout_margin="15dp"
+                    android:textIsSelectable="true"
+                    android:autoLink="web"
+                    android:fontFamily="serif"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+        </FrameLayout>
+    </ScrollView>
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/article_bottom_actions"
+        android:layout_centerHorizontal="true"
+        ads:adSize="SMART_BANNER"
+        ads:adUnitId="@string/banner_ad_unit_id" />
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/article_bottom_actions"
+        android:layout_gravity="bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.bottomappbar.BottomAppBar
+            android:background="?android:attr/windowBackground"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom">
+
+            <RelativeLayout
+                android:gravity="center_horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/share_name_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingRight="@dimen/margin_padding_xxnormal"
+                    android:paddingLeft="@dimen/margin_padding_normal"
+                    android:paddingStart="@dimen/margin_padding_normal"
+                    android:paddingEnd="@dimen/margin_padding_xxnormal"
+                    android:paddingTop="@dimen/margin_padding_normal"
+                    android:paddingBottom="@dimen/margin_padding_normal"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:src="@drawable/ic_share_black"
+                    android:focusable="true" />
+
+                <!--<ImageView
+                    android:id="@+id/article_fav_yellow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_star_yellow"
+                    android:layout_toRightOf="@+id/share_article_icon"
+                    android:visibility="invisible"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:paddingRight="@dimen/margin_padding_normal"
+                    android:paddingLeft="@dimen/margin_padding_xxnormal"
+                    android:paddingEnd="@dimen/margin_padding_normal"
+                    android:paddingStart="@dimen/margin_padding_xxnormal"
+                    android:paddingTop="@dimen/margin_padding_normal"
+                    android:paddingBottom="@dimen/margin_padding_normal"
+                    android:layout_toEndOf="@+id/share_article_icon" />-->
+
+                <!--<ImageView
+                    android:id="@+id/article_fav_black_border"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_star_border_black"
+                    android:layout_toRightOf="@+id/share_article_icon"
+                    android:visibility="visible"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:paddingRight="@dimen/margin_padding_normal"
+                    android:paddingLeft="@dimen/margin_padding_xxnormal"
+                    android:paddingEnd="@dimen/margin_padding_normal"
+                    android:paddingStart="@dimen/margin_padding_xxnormal"
+                    android:paddingTop="@dimen/margin_padding_normal"
+                    android:paddingBottom="@dimen/margin_padding_normal"
+                    android:layout_toEndOf="@+id/share_article_icon" />-->
+            </RelativeLayout>
+        </com.google.android.material.bottomappbar.BottomAppBar>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</RelativeLayout>

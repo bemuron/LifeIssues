@@ -14,16 +14,20 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
@@ -41,6 +45,7 @@ import com.lifeissues.lifeissues.data.database.DatabaseTable;
 import com.lifeissues.lifeissues.ui.viewmodels.NoteActivityViewModel;
 
 import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T;
 import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
@@ -56,7 +61,7 @@ public class NoteActivity extends AppCompatActivity {
     private int noteId;
     private Note mCurrentNote = null;
     private String verse, content, issueName;
-    private InterstitialAd interstitialAd;
+    private InterstitialAd mInterstitialAd;
     private AdRequest adRequest;
 
     @Override
@@ -70,8 +75,8 @@ public class NoteActivity extends AppCompatActivity {
 
         RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
                 .toBuilder()
-                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                //.setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
                 .build();
 
         MobileAds.setRequestConfiguration(requestConfiguration);
@@ -118,10 +123,6 @@ public class NoteActivity extends AppCompatActivity {
                 Log.e(TAG, "Ad closed");
             }
 
-            @Override
-            public void onAdLeftApplication() {
-                Log.e(TAG, "Ad left application");
-            }
         });
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
@@ -330,53 +331,47 @@ public class NoteActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    //show the ad
-    private void showInterstitial() {
-        // Show the ad if it's ready. Otherwise toast and restart the game.
-        if (interstitialAd != null && interstitialAd.isLoaded()) {
-            interstitialAd.show();
-        } else {
-            Log.e(TAG,"Ad did not load");
-        }
-    }
+    //set up interstitial ad
+    private void setUpInterstitial(){
+        AdRequest adRequest = new AdRequest.Builder().build();
 
-
-    //set up the interstitial ad
-    private void setUpInterstitialAd(){
-        // Create the InterstitialAd and set the adUnitId.
-        interstitialAd = new InterstitialAd(this);
-        // Defined in res/values/strings.xml
-        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
-
-        //request for the ad
-        adRequest = new AdRequest.Builder().build();
-        //load it into the object
-        interstitialAd.loadAd(adRequest);
-
-        interstitialAd.setAdListener(
-                new AdListener() {
+        InterstitialAd.load(this,getString(R.string.interstitial_ad_unit_id), adRequest, new InterstitialAdLoadCallback() {
+            @Override
+            public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                // The mInterstitialAd reference will be null until
+                // an ad is loaded.
+                NoteActivity.this.mInterstitialAd = interstitialAd;
+                Log.i(TAG, "onAdLoaded");
+                mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
                     @Override
-                    public void onAdLoaded() {
-                        interstitialAd.show();
-                        Log.i(TAG,"onAdLoaded()");
+                    public void onAdDismissedFullScreenContent() {
+                        // Called when fullscreen content is dismissed.
+                        Log.d("TAG", "The ad was dismissed.");
                     }
 
                     @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
-                        String error =
-                                String.format(
-                                        "domain: %s, code: %d, message: %s",
-                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
-                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    public void onAdFailedToShowFullScreenContent(AdError adError) {
+                        // Called when fullscreen content failed to show.
+                        Log.d("TAG", "The ad failed to show.");
                     }
 
                     @Override
-                    public void onAdClosed() {
-                        //request for another ad
-                        adRequest = new AdRequest.Builder().build();
-
-                        Log.e(TAG,"Interstitial Ad closed");
+                    public void onAdShowedFullScreenContent() {
+                        // Called when fullscreen content is shown.
+                        // Make sure to set your reference to null so you don't
+                        // show it a second time.
+                        mInterstitialAd = null;
+                        Log.d("TAG", "The ad was shown.");
                     }
                 });
+            }
+
+            @Override
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                // Handle the error
+                Log.i(TAG, loadAdError.getMessage());
+                mInterstitialAd = null;
+            }
+        });
     }
 }

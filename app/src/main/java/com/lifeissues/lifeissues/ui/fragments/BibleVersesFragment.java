@@ -52,7 +52,8 @@ import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
@@ -83,6 +84,7 @@ import com.lifeissues.lifeissues.ui.viewmodels.BibleVersesActivityViewModel;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T;
 import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
@@ -120,8 +122,8 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
 
         RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
                 .toBuilder()
-                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                //.setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
                 .build();
 
         MobileAds.setRequestConfiguration(requestConfiguration);
@@ -931,7 +933,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     }
 
     //set up the interstitial ad
-    private void doActionAfterAd(String actionName, int verseId){
+/*    private void doActionAfterAd(String actionName, int verseId){
 
         interstitialAd.setAdListener(
                 new AdListener() {
@@ -965,7 +967,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                         }
                     }
                 });
-    }
+    }*/
 
     //method to check for internet connection
     public static boolean isNetworkAvailable(Context context) {

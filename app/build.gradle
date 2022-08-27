@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     //buildToolsVersion '28.0.3'
     //added to support room migrations testing
     sourceSets {
@@ -12,9 +12,9 @@ android {
     defaultConfig {
         applicationId "com.lifeissues.lifeissues"
         minSdkVersion 16
-        targetSdkVersion 29
-        versionCode 9
-        versionName "1.4.4"
+        targetSdkVersion 30
+        versionCode 11
+        versionName "1.4.6"
         multiDexEnabled true
         //location of json files used for testing room migrations
         javaCompileOptions {
@@ -55,8 +55,8 @@ dependencies {
     androidTestImplementation 'junit:junit:4.13.1'
 
     //firebase
-    implementation 'com.google.firebase:firebase-core:18.0.0'
-    implementation 'com.google.firebase:firebase-ads:19.6.0'
+    implementation 'com.google.firebase:firebase-core:19.0.0'
+    implementation 'com.google.firebase:firebase-ads:20.4.0'
 
     //implementation "androidx.concurrent:concurrent-futures:1.1.0"
 
@@ -81,6 +81,9 @@ dependencies {
     // Android Testing Support Library's runner and rules
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     //androidTestImplementation "com.android.support.test:rules:$rootProject.ext.rulesVersion"
+
+    //paging
+    implementation 'androidx.paging:paging-runtime:2.1.2'
 
 }
 

@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -19,9 +21,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
@@ -30,6 +35,7 @@ import com.google.android.gms.ads.initialization.OnInitializationCompleteListene
 import com.lifeissues.lifeissues.helpers.AppExecutors;
 import com.lifeissues.lifeissues.ui.activities.BibleVerses;
 import com.lifeissues.lifeissues.R;
+import com.lifeissues.lifeissues.ui.activities.FavouritesActivity;
 import com.lifeissues.lifeissues.ui.activities.MainActivity;
 import com.lifeissues.lifeissues.ui.adapters.IssueListAdapter;
 import com.lifeissues.lifeissues.app.AppController;
@@ -43,6 +49,7 @@ import com.lifeissues.lifeissues.data.database.DatabaseTable;
 import com.lifeissues.lifeissues.ui.viewmodels.BibleVersesActivityViewModel;
 
 import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T;
 import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
@@ -63,7 +70,7 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
     private BibleVersesActivityViewModel viewModel;
     private ListView mListView;
     private Context context;
-    private InterstitialAd interstitialAd;
+    private InterstitialAd mInterstitialAd;
 
     public IssuesFragment() {
     }
@@ -83,8 +90,8 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
 
         RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
                 .toBuilder()
-                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                //.setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
                 .build();
 
         MobileAds.setRequestConfiguration(requestConfiguration);
@@ -94,17 +101,6 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
             @Override
             public void onInitializationComplete(InitializationStatus initializationStatus) {}
         });
-
-        //setup and initialize the interstitial ads
-        // Create the InterstitialAd and set the adUnitId.
-        interstitialAd = new InterstitialAd(getActivity());
-        // Defined in res/values/strings.xml
-        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
-
-        //request for the ad
-        AdRequest adRequest = new AdRequest.Builder().build();
-        //load it into the object
-        interstitialAd.loadAd(adRequest);
     }
 
     @Override
@@ -400,36 +396,48 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
         startActivity(intent);
     }
 
-    //set up the interstitial ad
-    private void doActionAfterAd(String actionName, int position){
+    //set up interstitial ad
+    private void setUpInterstitial(){
+        AdRequest adRequest = new AdRequest.Builder().build();
 
-        interstitialAd.setAdListener(
-                new AdListener() {
+        InterstitialAd.load(getActivity(),getString(R.string.interstitial_ad_unit_id), adRequest, new InterstitialAdLoadCallback() {
+            @Override
+            public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                // The mInterstitialAd reference will be null until
+                // an ad is loaded.
+                IssuesFragment.this.mInterstitialAd = interstitialAd;
+                Log.i(TAG, "onAdLoaded");
+                mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
                     @Override
-                    public void onAdLoaded() {
-                        Log.i(TAG,"onAdLoaded()");
+                    public void onAdDismissedFullScreenContent() {
+                        // Called when fullscreen content is dismissed.
+                        Log.d("TAG", "The ad was dismissed.");
                     }
 
                     @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
-                        String error =
-                                String.format(
-                                        "domain: %s, code: %d, message: %s",
-                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
-                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
-                        if (actionName.equals("bibleVerses")){
-                            openActivityAfterAd(position);
-                        }
+                    public void onAdFailedToShowFullScreenContent(AdError adError) {
+                        // Called when fullscreen content failed to show.
+                        Log.d("TAG", "The ad failed to show.");
                     }
 
                     @Override
-                    public void onAdClosed() {
-                        Log.e(TAG,"Interstitial Ad closed");
-                        if (actionName.equals("bibleVerses")){
-                            openActivityAfterAd(position);
-                        }
+                    public void onAdShowedFullScreenContent() {
+                        // Called when fullscreen content is shown.
+                        // Make sure to set your reference to null so you don't
+                        // show it a second time.
+                        mInterstitialAd = null;
+                        Log.d("TAG", "The ad was shown.");
                     }
                 });
+            }
+
+            @Override
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                // Handle the error
+                Log.i(TAG, loadAdError.getMessage());
+                mInterstitialAd = null;
+            }
+        });
     }
 
 }

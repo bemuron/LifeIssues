@@ -5,24 +5,24 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
+        android:name=".app.AppController"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:name=".app.AppController"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
+        <activity
+            android:name=".ui.activities.NameDetailsActivity"
+            android:exported="false" />
         <!-- AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="@string/AdMob_App_ID" />
-
-        <!-- MainActivity -->
+            android:value="@string/AdMob_App_ID" /> <!-- MainActivity -->
         <activity
             android:name=".ui.activities.MainActivity"
             android:label="@string/app_name"
@@ -38,76 +38,73 @@
             <!-- Receives the search request. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
-                <!-- No category needed, because the Intent will specify this class component-->
+                <!-- No category needed, because the Intent will specify this class component -->
             </intent-filter>
 
             <!-- Points to searchable meta data. -->
-            <meta-data android:name="android.app.searchable"
+            <meta-data
+                android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
-        </activity>
-
-        <!-- Provides search suggestions for words and their definitions. -->
-        <provider android:name="com.lifeissues.lifeissues.data.database.IssuesProvider"
-            android:authorities="com.lifeissues.lifeissues.data.database.IssuesProvider" />
-
-        <!-- Points to searchable activity so the whole app can invoke search. -->
-        <meta-data android:name="android.app.default_searchable"
+        </activity> <!-- Provides search suggestions for words and their definitions. -->
+        <provider
+            android:name=".data.database.IssuesProvider"
+            android:authorities="com.lifeissues.lifeissues.data.database.IssuesProvider" /> <!-- Points to searchable activity so the whole app can invoke search. -->
+        <meta-data
+            android:name="android.app.default_searchable"
             android:value=".activities.MainActivity" />
 
-        <!-- ArticleList Activity -->
+        <activity
+            android:name=".ui.activities.BibleNamesDictionaryActivity"
+            android:label="@string/bible_names_activity"
+            android:launchMode="singleTop">
 
-        <!-- Note Activity -->
+            <!-- Receives the search request. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+                <!-- No category needed, because the Intent will specify this class component -->
+            </intent-filter>
+
+            <!-- Points to searchable meta data. -->
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/names_searchable" />
+        </activity>
+
+        <provider
+            android:name=".data.database.NamesProvider"
+            android:authorities="com.lifeissues.lifeissues.data.database.NamesProvider" /> <!-- Note Activity -->
         <activity
             android:name=".ui.activities.NoteActivity"
-            android:launchMode="singleTop"
-            android:screenOrientation="portrait"
             android:label="@string/action_notes"
-            android:parentActivityName=".ui.activities.NotesListActivity"/>
-        <!-- Notes List Activity -->
+            android:launchMode="singleTop"
+            android:parentActivityName=".ui.activities.NotesListActivity"
+            android:screenOrientation="portrait" /> <!-- Notes List Activity -->
         <activity
             android:name=".ui.activities.NotesListActivity"
+            android:label="@string/action_notes"
             android:launchMode="singleTop"
             android:noHistory="true"
-            android:screenOrientation="portrait"
-            android:label="@string/action_notes"
-            android:parentActivityName=".ui.activities.MainActivity"/>
-        <!-- Article Activity -->
-
+            android:parentActivityName=".ui.activities.MainActivity"
+            android:screenOrientation="portrait" /> <!-- Article Activity -->
         <!-- Bible Verses Activity -->
         <activity
             android:name=".ui.activities.BibleVerses"
+            android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait"
             android:parentActivityName=".ui.activities.MainActivity"
-            android:label="@string/app_name" />
-
-        <!-- Favourites Activity -->
+            android:screenOrientation="portrait" /> <!-- Favourites Activity -->
         <activity
             android:name=".ui.activities.FavouritesActivity"
-            android:screenOrientation="portrait"
-            android:launchMode="singleTop"
             android:label="@string/action_favourites"
-            android:parentActivityName=".ui.activities.MainActivity"/>
-        <!-- Settings Activity -->
-        <activity
-            android:name=".ui.activities.SettingsActivity"
-            android:screenOrientation="portrait"
             android:launchMode="singleTop"
             android:parentActivityName=".ui.activities.MainActivity"
-            android:label="@string/action_settings"/>
-
-        <!--<receiver android:name=".helpers.OnBootReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
-
-        <receiver android:name=".helpers.OnAlarmReceiver" />
-        <service
-            android:name=".helpers.ReminderService"
-            android:enabled = "true"
-            android:exported = "true">
-        </service>-->
+            android:screenOrientation="portrait" /> <!-- Settings Activity -->
+        <activity
+            android:name=".ui.activities.SettingsActivity"
+            android:label="@string/action_settings"
+            android:launchMode="singleTop"
+            android:parentActivityName=".ui.activities.MainActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:textStyle="bold"
+        android:textSize="@dimen/text_size_xxnormal"
+        android:textColor="@color/from"
+        android:layout_gravity="center_horizontal"
+        android:padding="@dimen/margin_padding_normal"
+        android:layout_marginBottom="@dimen/margin_padding_small"
+        android:text="@string/bible_names_intro_title"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:textSize="@dimen/text_size_xxnormal"
+        android:textColor="@color/from"
+        android:gravity="center_horizontal"
+        android:padding="@dimen/margin_padding_small"
+        android:layout_marginBottom="@dimen/margin_padding_small"
+        android:text="@string/bible_names_intro"/>
+
+</LinearLayout>

@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -28,10 +29,13 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
@@ -40,6 +44,7 @@ import com.google.android.gms.ads.initialization.OnInitializationCompleteListene
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.lifeissues.lifeissues.data.database.IssuesDao;
+import com.lifeissues.lifeissues.data.database.NamesProvider;
 import com.lifeissues.lifeissues.ui.adapters.MainTabsPagerAdapter;
 import com.lifeissues.lifeissues.R;
 
@@ -51,6 +56,8 @@ import com.lifeissues.lifeissues.ui.fragments.IssuesFragment;
 import com.lifeissues.lifeissues.ui.viewmodels.MainActivityViewModel;
 
 import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T;
+import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_UNSPECIFIED;
 import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 public class MainActivity extends AppCompatActivity
@@ -67,7 +74,7 @@ public class MainActivity extends AppCompatActivity
     private ListView mListView;
     private SearchView searchView;
     private SearchManager searchManager;
-    private InterstitialAd interstitialAd;
+    private InterstitialAd mInterstitialAd;
     private AdRequest adRequest;
     private SimpleCursorAdapter words;
     private String privacy_policy_link = "http://www.emtechint.com/life_issues.html", issueID;
@@ -93,8 +100,8 @@ public class MainActivity extends AppCompatActivity
 
         RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
                 .toBuilder()
-                .setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_G)
+                //.setTagForChildDirectedTreatment(TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
+                .setMaxAdContentRating(MAX_AD_CONTENT_RATING_T)
                 .build();
 
         MobileAds.setRequestConfiguration(requestConfiguration);
@@ -105,16 +112,8 @@ public class MainActivity extends AppCompatActivity
             public void onInitializationComplete(InitializationStatus initializationStatus) {}
         });
 
-        //setup and initialize the interstitial ads
-        // Create the InterstitialAd and set the adUnitId.
-        interstitialAd = new InterstitialAd(this);
-        // Defined in res/values/strings.xml
-        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
-
         //request for the ad
         adRequest = new AdRequest.Builder().build();
-        //load it into the object
-        interstitialAd.loadAd(adRequest);
 
         mAdView = findViewById(R.id.adView);
         mAdView.setAdListener(new AdListener() {
@@ -150,13 +149,12 @@ public class MainActivity extends AppCompatActivity
                 Log.e(TAG, "Ad closed");
             }
 
-            @Override
-            public void onAdLeftApplication() {
-                Log.e(TAG, "Ad left application");
-            }
         });
-        adRequest = new AdRequest.Builder().build();
+        AdRequest adRequest = new AdRequest.Builder().build();
+        Log.e(TAG, "is receiving ads "+adRequest.isTestDevice (this));
         mAdView.loadAd(adRequest);
+
+        setUpInterstitial();
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -318,7 +316,7 @@ public class MainActivity extends AppCompatActivity
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         // Build the Intent used to open WordActivity with a specific word Uri
                         Intent wordIntent = new Intent(getApplicationContext(), BibleVerses.class);
-                        Uri data = Uri.withAppendedPath(IssuesProvider.CONTENT_URI,
+                        Uri data = Uri.withAppendedPath(NamesProvider.CONTENT_URI,
                                 String.valueOf(id));
                         wordIntent.setData(data);
                         startActivity(wordIntent);
@@ -406,18 +404,17 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_notes) {
-            if (interstitialAd != null && interstitialAd.isLoaded()) {
-                interstitialAd.show();
-                startActivityAfterAd("notes");
+            if (mInterstitialAd != null) {
+                mInterstitialAd.show(MainActivity.this);
             } else {
                 Log.e(TAG,"Ad did not load");
-                Intent intent = new Intent(this, NotesListActivity.class);
-                startActivity(intent);
             }
+            Intent intent = new Intent(this, NotesListActivity.class);
+            startActivity(intent);
         }
         else if (id == R.id.action_favorites) {
-            if (interstitialAd != null && interstitialAd.isLoaded()) {
-                interstitialAd.show();
+            if (mInterstitialAd != null) {
+                mInterstitialAd.show(MainActivity.this);
                 //startActivityAfterAd("favs");
             } else {
                 Log.e(TAG,"Ad did not load");
@@ -427,8 +424,8 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
         }
         else if (id == R.id.action_random_verse) {
-            if (interstitialAd != null && interstitialAd.isLoaded()) {
-                interstitialAd.show();
+            if (mInterstitialAd != null) {
+                mInterstitialAd.show(MainActivity.this);
             } else {
                 Log.e(TAG,"Ad did not load");
             }
@@ -457,27 +454,34 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_notes) {
-            if (interstitialAd != null && interstitialAd.isLoaded()) {
-                interstitialAd.show();
-                startActivityAfterAd("notes");
+            if (mInterstitialAd != null) {
+                mInterstitialAd.show(MainActivity.this);
             } else {
                 Log.e(TAG,"Ad did not load");
-                Intent intent = new Intent(this, NotesListActivity.class);
-                startActivity(intent);
             }
+            Intent intent = new Intent(this, NotesListActivity.class);
+            startActivity(intent);
 
         }else if (id == R.id.nav_favourites) {
-            if (interstitialAd != null && interstitialAd.isLoaded()) {
-                interstitialAd.show();
-                startActivityAfterAd("favs");
+            if (mInterstitialAd != null) {
+                mInterstitialAd.show(MainActivity.this);
             } else {
                 Log.e(TAG,"Ad did not load");
-                Intent intent = new Intent(this, FavouritesActivity.class);
-                startActivity(intent);
             }
+            Intent intent = new Intent(MainActivity.this, FavouritesActivity.class);
+            startActivity(intent);
 
         } else if (id == R.id.nav_random) {
             new getRandomVerse().execute();
+
+        }else if (id == R.id.nav_bible_names) {
+            if (mInterstitialAd != null) {
+                mInterstitialAd.show(MainActivity.this);
+            } else {
+                Log.e(TAG,"Ad did not load");
+            }
+            Intent intent = new Intent(this, BibleNamesDictionaryActivity.class);
+            startActivity(intent);
 
         } else if (id == R.id.nav_about) {
             AboutLifeIssues.Show(this);
@@ -501,48 +505,48 @@ public class MainActivity extends AppCompatActivity
         startActivity(browserIntent);
     }
 
-    //show the ad
-    private void showInterstitial() {
-        // Show the ad if it's ready. Otherwise toast and restart the game.
-        if (interstitialAd != null && interstitialAd.isLoaded()) {
-            interstitialAd.show();
-        } else {
-            Log.e(TAG,"Ad did not load");
-        }
-    }
+    //set up interstitial ad
+    private void setUpInterstitial(){
+        AdRequest adRequest = new AdRequest.Builder().build();
 
-
-    //set up the interstitial ad
-    private void startActivityAfterAd(String activityName){
-
-        interstitialAd.setAdListener(
-                new AdListener() {
+        InterstitialAd.load(this,getString(R.string.interstitial_ad_unit_id), adRequest, new InterstitialAdLoadCallback() {
+            @Override
+            public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                // The mInterstitialAd reference will be null until
+                // an ad is loaded.
+                MainActivity.this.mInterstitialAd = interstitialAd;
+                Log.i(TAG, "onAdLoaded");
+                mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
                     @Override
-                    public void onAdLoaded() {
-                        Log.i(TAG,"onAdLoaded()");
+                    public void onAdDismissedFullScreenContent() {
+                        // Called when fullscreen content is dismissed.
+                        Log.d("TAG", "The ad was dismissed.");
                     }
 
                     @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
-                        String error =
-                                String.format(
-                                        "domain: %s, code: %d, message: %s",
-                                        loadAdError.getDomain(), loadAdError.getCode(), loadAdError.getMessage());
-                        Log.e(TAG,"onAdFailedToLoad() with error: " + error);
+                    public void onAdFailedToShowFullScreenContent(AdError adError) {
+                        // Called when fullscreen content failed to show.
+                        Log.d("TAG", "The ad failed to show.");
                     }
 
                     @Override
-                    public void onAdClosed() {
-                        Log.e(TAG,"Interstitial Ad closed");
-                        if (activityName.equals("favs")){
-                            Intent intent = new Intent(MainActivity.this, FavouritesActivity.class);
-                            startActivity(intent);
-                        }else if (activityName.equals("notes")){
-                            Intent intent = new Intent(MainActivity.this, NotesListActivity.class);
-                            startActivity(intent);
-                        }
+                    public void onAdShowedFullScreenContent() {
+                        // Called when fullscreen content is shown.
+                        // Make sure to set your reference to null so you don't
+                        // show it a second time.
+                        mInterstitialAd = null;
+                        Log.d("TAG", "The ad was shown.");
                     }
                 });
+            }
+
+            @Override
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                // Handle the error
+                Log.i(TAG, loadAdError.getMessage());
+                mInterstitialAd = null;
+            }
+        });
     }
 
 }

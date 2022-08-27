@@ -13,7 +13,7 @@
 
     </PreferenceCategory>
 
-    <!--<PreferenceCategory android:title="@string/pref_title_notifications">
+    <PreferenceCategory android:title="@string/pref_title_notifications">
 
         <SwitchPreference
             android:defaultValue="false"
@@ -26,7 +26,7 @@
             android:title="@string/mood_entry_reminder"
             android:defaultValue="@string/default_mood_entry_time"
             android:summary="@string/default_mood_entry_time"/>
-&lt;!&ndash;
+<!--
         <RingtonePreference
             android:defaultValue="content://settings/system/notification_sound"
             android:dependency="notifications_new_message"
@@ -40,8 +40,8 @@
             android:key="@string/key_vibrate"
             android:summary="@string/summary_vibrate"
             android:title="@string/title_vibrate" />
-&ndash;&gt;
-    </PreferenceCategory>-->
+-->
+    </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_header_about">
 <!--
