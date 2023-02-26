@@ -248,14 +248,13 @@ public class TodayVerseFragment extends Fragment {
             issue.setText("Life Issue: " + issueName.substring(0, 1).toUpperCase() + issueName.substring(1));
             todayDate.setText(dateToday);
             switch (version){
-                //dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
                 case "msg":
                     verse.setText(bibleVerse);
                     verse.append(" (MSG)");
                     verse_content.setText(msgVerseContent);
                     handleNoteIcon(bibleVerse,issueName,msgVerseContent);
                     handleShareIcon(bibleVerse,msgVerseContent);
-                    //dailyVerseNotification(verseID,bibleVerse,msgVerseContent);
+                    dailyVerseNotification(verseID,bibleVerse,msgVerseContent);
                     break;
                 case "amp":
                     verse.setText(bibleVerse);
@@ -263,7 +262,7 @@ public class TodayVerseFragment extends Fragment {
                     verse_content.setText(ampVerseContent);
                     handleNoteIcon(bibleVerse,issueName,ampVerseContent);
                     handleShareIcon(bibleVerse,ampVerseContent);
-                    //dailyVerseNotification(verseID,bibleVerse,ampVerseContent);
+                    dailyVerseNotification(verseID,bibleVerse,ampVerseContent);
                     break;
                 case "kjv":
                 default:
@@ -272,7 +271,7 @@ public class TodayVerseFragment extends Fragment {
                     verse_content.setText(kjvVerseContent);
                     handleNoteIcon(bibleVerse,issueName,kjvVerseContent);
                     handleShareIcon(bibleVerse,ampVerseContent);
-                    //dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
+                    dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
             }
 
             //if internet is available, load and display image
@@ -308,7 +307,7 @@ public class TodayVerseFragment extends Fragment {
             SimpleDateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             String dateToday = df.format(c.getTime());
             //today's notification
-            //dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
+            dailyVerseNotification(verseID,bibleVerse,kjvVerseContent);
 
             /*if (dbhelper.addDailyVerse(verseID,bibleVerse,kjvVerseContent,msgVerseContent,ampVerseContent,
                     favValue,issueName,issueID,dateToday)){

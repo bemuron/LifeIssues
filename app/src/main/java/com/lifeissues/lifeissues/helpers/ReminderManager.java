@@ -8,6 +8,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
 import java.util.Calendar;
 
@@ -28,7 +29,14 @@ public class ReminderManager {
         i.putExtra("verse", verse);
         i.putExtra("content", content);
 
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        //PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pi;
+        //PendingIntent.FLAG_ONE_SHOT: Flag indicating that this PendingIntent can be used only once.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            pi = PendingIntent.getBroadcast(mContext, 0, i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        } else {
+            pi = PendingIntent.getBroadcast(mContext, 0, i, PendingIntent.FLAG_IMMUTABLE);
+        }
 
         mAlarmManager.set(AlarmManager.RTC_WAKEUP, reminderTime.getTimeInMillis(), pi);
     }

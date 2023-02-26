@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 32
     //buildToolsVersion '28.0.3'
     //added to support room migrations testing
     sourceSets {
@@ -12,9 +12,9 @@ android {
     defaultConfig {
         applicationId "com.lifeissues.lifeissues"
         minSdkVersion 16
-        targetSdkVersion 30
-        versionCode 11
-        versionName "1.4.6"
+        targetSdkVersion 32
+        versionCode 12
+        versionName "1.4.7"
         multiDexEnabled true
         //location of json files used for testing room migrations
         javaCompileOptions {
@@ -31,8 +31,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 
@@ -84,6 +84,9 @@ dependencies {
 
     //paging
     implementation 'androidx.paging:paging-runtime:2.1.2'
+
+    //implementation 'androidx.work:work-runtime:2.7.0-alpha05'
+    implementation 'androidx.work:work-runtime:2.7.1'
 
 }
 

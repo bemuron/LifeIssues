@@ -62,6 +62,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     private BibleVersesFragment bibleVersesFragment;
     private SharedPreferences prefs;
     public ViewPager mViewPager;
+    private ProgressDialog pDialog;
     private TextView lblCount;
     private InterstitialAd mInterstitialAd;
     private AdRequest adRequest;
@@ -141,13 +142,17 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        //Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
         setupActionBar();
 
         viewModel = new ViewModelProvider(this).get(BibleVersesActivityViewModel.class);
 
         bibleVersesFragment = new BibleVersesFragment();
+
+        // Progress dialog
+        pDialog = new ProgressDialog(this);
+        pDialog.setCancelable(true);
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         PreferenceManager.setDefaultValues(this, R.xml.pref_main, false);
@@ -178,20 +183,28 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             //get content from db by passing id of the category
             Log.e(TAG,"Issue ID in Bible verses activity = "+issueId);
             Log.e(TAG,"Verse ID in Bible verses activity = "+verseID);
+            pDialog.setMessage("Fetching Verses ...");
+            showDialog();
             new getBibleVersesAsync(issueId).execute();
         }
         else if ((verseID > 0) && (favouriteVerses == null)){
             //user has clicked on random issue/verse
+            pDialog.setMessage("Fetching Verses ...");
+            showDialog();
             new getRandomVerseAsync(verseID).execute();
 
         } else if ((favouriteVerses != null) && (favouriteVerses.equals("favourites"))){
             //showing the favorite verses
+            pDialog.setMessage("Fetching Verses ...");
+            showDialog();
             new getFavouriteVersesAsync(prefs).execute();
         }/*else if ((issueId > 0) && (verseID == 0)){
             //user clicked on issue on the list from favorites list
             new getBibleVersesAsync(issueId).execute();
         }*/
         else {//user is coming from a search query
+            pDialog.setMessage("Fetching Verses ...");
+            showDialog();
             new getBibleVersesFromSearchAsync().execute();
         }
 
@@ -221,7 +234,6 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             //setCurrentItem(selectedPosition);
             mViewPager.setCurrentItem(favVersePos, false);
         }else
-
         setCurrentItem(currentPage);
     }
 
@@ -376,7 +388,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             if(c.moveToFirst()){
                 setUpAdapter(c, prefs);
             }
-
+            hideDialog();
         }
     }
 
@@ -406,6 +418,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             if(c.moveToFirst()){
                 setUpAdapter(c, prefs);
             }
+            hideDialog();
         }
     }
 
@@ -430,6 +443,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
                 issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
                 setUpAdapter(cursor, prefs);
             }
+            hideDialog();
             //Toast.makeText(getBaseContext(), "ID= "+ intent.getIntExtra("V-ID",0) , Toast.LENGTH_SHORT).show();
         }
     }
@@ -559,7 +573,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             pageCount = c.getCount();
             c.moveToFirst();
             setUpAdapter(c, mPreferences);
-
+            hideDialog();
         }
     }
 
@@ -624,6 +638,16 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             setAdapter(c, mPreferences, mVersion);
 
         }
+    }
+
+    private void showDialog() {
+        if (!pDialog.isShowing())
+            pDialog.show();
+    }
+
+    private void hideDialog() {
+        if (pDialog.isShowing())
+            pDialog.dismiss();
     }
 
     //show the ad

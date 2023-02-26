@@ -9,7 +9,11 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+
+import android.os.Build;
 import android.util.Log;
 
 import com.lifeissues.lifeissues.ui.activities.MainActivity;
@@ -24,6 +28,7 @@ public class ReminderService extends WakeReminderIntentService {
         super("ReminderService");
     }
 
+    //@RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     void doReminderWork(Intent intent) {
         Log.d("ReminderService", "Doing work.");
@@ -39,8 +44,15 @@ public class ReminderService extends WakeReminderIntentService {
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         //notificationIntent.setFlags(Intent. FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        PendingIntent pi = PendingIntent.getActivity(this, vId, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+//        PendingIntent pi = PendingIntent.getActivity(this, vId, notificationIntent,
+//                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pi;
         //PendingIntent.FLAG_ONE_SHOT: Flag indicating that this PendingIntent can be used only once.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            pi = PendingIntent.getActivity(this, vId, notificationIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        } else {
+            pi = PendingIntent.getActivity(this, vId, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+        }
 
         //NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext() , default_notification_channel_id ) ;

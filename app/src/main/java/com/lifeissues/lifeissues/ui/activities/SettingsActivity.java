@@ -57,7 +57,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             bindPreferenceSummaryToValue(findPreference(getString(R.string.key_daily_verse_version)));
 
             // time change listener
-            //bindPreferenceSummaryToValue(findPreference(getString(R.string.key_daily_verse_time)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.key_daily_verse_time)));
 
             // notification preference change listener
             //bindPreferenceSummaryToValue(findPreference(getString(R.string.key_notifications_new_message_ringtone)));
@@ -153,6 +153,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             } else {
                 preference.setSummary(stringValue);
             }
+            preference.setSummary(stringValue);
             return true;
         }
     };
@@ -173,13 +174,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Log.e(TAG,e.getMessage());
             //e.printStackTrace();
         }
-        Intent intent = new Intent(Intent.ACTION_SENDTO);
+        Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setData(Uri.parse("mailto:")); // only email apps should handle this
         intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"contact@emtechint.com"});
         intent.putExtra(Intent.EXTRA_SUBJECT, "Query from Life Issues app user");
         intent.putExtra(Intent.EXTRA_TEXT, body);
-        if (intent.resolveActivity(context.getPackageManager()) != null) {
-            context.startActivity(intent);
-        }
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.choose_email_client)));
+//        if (intent.resolveActivity(context.getPackageManager()) != null) {
+//            context.startActivity(intent);
+//        }
     }
 }

@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity
     private InterstitialAd mInterstitialAd;
     private AdRequest adRequest;
     private SimpleCursorAdapter words;
-    private String privacy_policy_link = "http://www.emtechint.com/life_issues.html", issueID;
+    private String privacy_policy_link = "https://www.emtechint.com/life-issues-app", issueID;
 
     /**
      * The {PagerAdapter} that will provide

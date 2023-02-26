@@ -191,7 +191,7 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
                     lifeIssue = new LifeIssue();
                     lifeIssue.setId(cursor.getInt(cursor.getColumnIndex("rowid")));
                     lifeIssue.setIssueName(cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME)));
-                    Log.e(TAG, "issue name "+cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME))+ "ID = " +lifeIssue.getId());
+                    Log.e(TAG, "issue name "+cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME))+ " ID = " +lifeIssue.getId());
                     //get the number of verses in this issue
                     c1 = viewModel.getBibleVersesForIssue(cursor.getInt(cursor.getColumnIndex("rowid")));
                     c1.moveToFirst();
