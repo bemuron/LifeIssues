@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@color/bg_color_white"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/issue_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        card_view:cardBackgroundColor="@color/bg_color_white"
+        android:layout_gravity="center"
+        android:layout_margin="@dimen/card_margin"
+        card_view:cardCornerRadius="20dp">
+        <RelativeLayout
+            android:id="@+id/heritage_post_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:id="@+id/issue_frame"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/issue_pic_imageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/beards"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:scaleType="fitXY"
+                    android:contentDescription="@string/issue_image_description"/>
+
+                <TextView
+                    android:id="@+id/issue_image_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="L"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-light"
+                    android:textColor="@android:color/white"
+                    android:textSize="120sp" />
+
+                <ImageView
+                    android:id="@+id/icon_star"
+                    android:layout_width="@dimen/icon_star"
+                    android:layout_height="@dimen/icon_star"
+                    android:padding="@dimen/margin_padding_small"
+                    android:layout_margin="@dimen/margin_padding_xtiny"
+                    android:layout_gravity="end"
+                    app:tint="@color/icon_tint_normal" />
+
+                <RelativeLayout
+                    android:id="@+id/issue_name_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:background="@color/black_overlay">
+
+                    <TextView
+                        android:id="@+id/issue_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:textStyle="bold"
+                        android:paddingLeft="@dimen/verse_title_padding"
+                        android:paddingRight="@dimen/verse_title_padding"
+                        android:paddingTop="@dimen/songs_count_padding_bottom"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-light"
+                        android:maxLines="2"
+                        android:textColor="@color/bg_color_white"
+                        android:textSize="@dimen/text_size_header"
+                        android:text="Issue Name"/>
+
+                    <LinearLayout
+                        android:id="@+id/issue_attr_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="@dimen/padding_list_row"
+                        android:layout_below="@id/issue_name"
+                        android:clickable="true"
+                        android:orientation="horizontal"
+                        android:paddingRight="@dimen/padding_list_row">
+
+                        <TextView
+                            android:id="@+id/issue_verses"
+                            android:text="John 3:16, Mark 11:23"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-light"
+                            android:textColor="@color/bg_color_white"
+                            android:ellipsize="end"
+                            android:lines="1"
+                            android:textSize="@dimen/text_size_xnormal" />
+
+                        <TextView
+                            android:id="@+id/num_of_verses"
+                            android:text="30 verses"
+                            android:fontFamily="sans-serif-light"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/colorNumberOfVerses"
+                            android:lines="1"
+                            android:textSize="@dimen/text_size_normal" />
+
+                    </LinearLayout>
+                </RelativeLayout>
+            </FrameLayout>
+
+            <!--<RelativeLayout
+                android:id="@+id/heritage_poster_container"
+                android:layout_toRightOf="@id/heritage_icon_container"
+                android:layout_toEndOf="@id/heritage_icon_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/heritage_frame"
+                android:orientation="vertical"
+                android:layout_marginTop="5dp">
+
+                <TextView
+                    android:id="@+id/heritage_poster_tv"
+                    android:text="LA App User"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lines="1"
+                    android:textColor="@color/text_black"
+                    android:textSize="@dimen/text_size_normal" />
+
+                <TextView
+                    android:id="@+id/heritage_posted_on_tv"
+                    android:text="13 AUG 21 10:21PM"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/heritage_poster_tv"
+                    android:textColor="@color/text_black"
+                    android:textSize="@dimen/text_size_normal" />
+
+            </RelativeLayout>-->
+
+            <!--<RelativeLayout
+                android:id="@+id/heritage_icon_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="4dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:paddingStart="4dp"
+                android:layout_below="@+id/heritage_frame">
+                <RelativeLayout
+                    android:id="@+id/heritage_icon_front"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:id="@+id/heritage_icon_profile"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:src="@drawable/img_layer"
+                        android:scaleType="centerCrop" />
+
+                    <TextView
+                        android:id="@+id/heritage_icon_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:textColor="@android:color/black"
+                        android:textSize="@dimen/icon_text" />
+                </RelativeLayout>
+
+            </RelativeLayout>-->
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
+</LinearLayout>

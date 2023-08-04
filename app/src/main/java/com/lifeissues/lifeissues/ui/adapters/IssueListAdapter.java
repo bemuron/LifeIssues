@@ -1,24 +1,36 @@
 package com.lifeissues.lifeissues.ui.adapters;
 
+import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
+
 import android.content.Context;
 
+import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.Color;
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.lifeissues.lifeissues.R;
+import com.lifeissues.lifeissues.helpers.CircleTransform;
 import com.lifeissues.lifeissues.models.LifeIssue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 
 /**
@@ -42,18 +54,21 @@ public class IssueListAdapter extends RecyclerView.Adapter<IssueListAdapter.MyVi
     private static int currentSelectedIndex = -1;
 
     public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnLongClickListener {
-        public TextView issue_name, versesNumber, issueVerses;
-        public ImageView iconImp;
-        public LinearLayout issueContainer;
-        //public RelativeLayout iconContainer, iconBack, iconFront;
+        public TextView issue_name, versesNumber, issueVerses, issueNameInitial;
+        public ImageView iconImp, issueImage;
+        public CardView issueContainer;
+        public FrameLayout issueFrame;
 
         public MyViewHolder(View view) {
             super(view);
             issue_name = (TextView) view.findViewById(R.id.issue_name);
+            issueNameInitial = (TextView) view.findViewById(R.id.issue_image_text);
             issueVerses = (TextView) view.findViewById(R.id.issue_verses);
             versesNumber = (TextView) view.findViewById(R.id.num_of_verses);
             iconImp = (ImageView) view.findViewById(R.id.icon_star);
-            issueContainer = (LinearLayout) view.findViewById(R.id.issue_container);
+            issueImage = (ImageView) view.findViewById(R.id.issue_pic_imageView);
+            issueFrame = (FrameLayout) view.findViewById(R.id.issue_frame);
+            issueContainer = (CardView) view.findViewById(R.id.issue_container);
             view.setOnLongClickListener(this);
         }
 
@@ -76,7 +91,7 @@ public class IssueListAdapter extends RecyclerView.Adapter<IssueListAdapter.MyVi
     @Override
     public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.issue_list_item, parent, false);
+                .inflate(R.layout.heritage_list_item, parent, false);
 
         return new MyViewHolder(itemView);
     }
@@ -94,6 +109,9 @@ public class IssueListAdapter extends RecyclerView.Adapter<IssueListAdapter.MyVi
 
         // change the row state to activated
         holder.itemView.setActivated(selectedItems.get(position, false));
+
+        //apply the issue image
+        applyIssueImage(holder, issue);
 
         // apply click events
         applyClickEvents(holder, position);
@@ -118,6 +136,29 @@ public class IssueListAdapter extends RecyclerView.Adapter<IssueListAdapter.MyVi
                 listener.onIconImportantClicked(position);
             }
         });
+    }
+
+    private void applyIssueImage(MyViewHolder holder, LifeIssue issue) {
+        if (!TextUtils.isEmpty(issue.getImage())) {
+            Log.e("IssueListAdapter", "Getting image "+ issue.getImage());
+            Glide.with(context).load("https://www.emtechint.com/life_issues/images/issue_images/"+issue.getImage())
+                    .thumbnail(0.5f)
+                    .transition(withCrossFade())
+                    .apply(new RequestOptions().fitCenter()
+                            .transform(new CircleTransform(context)).diskCacheStrategy(DiskCacheStrategy.ALL))
+                    .into(holder.issueImage);
+            holder.issueImage.setColorFilter(null);
+            holder.issueNameInitial.setVisibility(View.INVISIBLE);
+        } else {
+            //get first character of string
+            char initial = issue.getIssueName().charAt(0);
+            holder.issueNameInitial.setText(String.valueOf(initial));
+            Random rnd = new Random();
+            int color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
+            holder.issueFrame.setBackgroundColor(color);
+            holder.issueImage.setVisibility(View.INVISIBLE);
+            holder.issueNameInitial.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

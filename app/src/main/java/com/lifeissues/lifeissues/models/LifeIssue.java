@@ -11,6 +11,8 @@ public class LifeIssue {
     private int id;
     private boolean isImportant;
 
+    private String image;
+
     public String getIssueName() {
         return issueName;
     }
@@ -49,5 +51,13 @@ public class LifeIssue {
 
     public void setImportant(boolean important) {
         isImportant = important;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 }

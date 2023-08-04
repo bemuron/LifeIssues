@@ -244,6 +244,7 @@
     <!-- Notification Bar -->
     <string name="notify_new_task_message">A task needs to be reviewed!</string>
     <string name="notify_new_task_title">Task Reminder!</string>
+    <string name="issue_image_description">issue image</string>
 
     <!-- End of Strings related to Settings -->
 </resources>

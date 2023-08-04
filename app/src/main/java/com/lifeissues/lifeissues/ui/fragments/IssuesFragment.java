@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -167,10 +168,12 @@ public class IssuesFragment extends Fragment implements IssueListAdapter.IssueLi
     //setting up the recycler view adapter
     private void setAdapter()
     {
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(MainActivity.getInstance());
+        //RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(MainActivity.getInstance());
+        StaggeredGridLayoutManager mLayoutManager =
+                new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.addItemDecoration(new DividerItemDecoration(MainActivity.getInstance(), LinearLayoutManager.VERTICAL));
+        //recyclerView.addItemDecoration(new DividerItemDecoration(MainActivity.getInstance(), LinearLayoutManager.VERTICAL));
         issuesAdapter = new IssueListAdapter(MainActivity.getInstance(), issues,this);
         recyclerView.setAdapter(issuesAdapter);
     }

@@ -234,7 +234,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             //setCurrentItem(selectedPosition);
             mViewPager.setCurrentItem(favVersePos, false);
         }else
-        setCurrentItem(currentPage);
+            setCurrentItem(currentPage);
     }
 
     //set up the adapter using version selected
