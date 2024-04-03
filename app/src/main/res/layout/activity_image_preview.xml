@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/black"
+    tools:context=".ui.activities.ImagePreviewActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/image_preview_back_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:padding="@dimen/margin_padding_xtiny"
+            android:focusable="true"
+            android:clickable="true"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            android:background="?android:attr/selectableItemBackground"
+            app:srcCompat="@drawable/ic_baseline_arrow_back_24"
+            android:layout_marginStart="15dp"
+            android:layout_alignParentStart="true" />
+
+        <com.jsibbold.zoomage.ZoomageView
+            android:id="@+id/image_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:keepScreenOn="true"
+            android:scaleType="fitCenter"
+            android:gravity="center"
+            android:layout_below="@id/image_preview_back_arrow"
+            app:zoomage_restrictBounds="false"
+            app:zoomage_animateOnReset="true"
+            app:zoomage_autoResetMode="UNDER"
+            app:zoomage_autoCenter="true"
+            app:zoomage_zoomable="true"
+            app:zoomage_translatable="true"
+            app:zoomage_minScale="0.6"
+            app:zoomage_maxScale="8"
+            />
+
+    </RelativeLayout>
+
+    <!-- This FrameLayout insets its children based on system windows using
+         android:fitsSystemWindows. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
+
+    </FrameLayout>
+
+</FrameLayout>

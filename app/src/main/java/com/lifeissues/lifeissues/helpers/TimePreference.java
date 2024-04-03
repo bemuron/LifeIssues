@@ -7,6 +7,7 @@ import android.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TimePicker;
+//import androidx.preference.DialogPreference;
 
 /**
  * Created by Emo on 7/13/2017.
@@ -37,6 +38,8 @@ public class TimePreference extends DialogPreference {
         setNegativeButtonText("Cancel");
     }
 
+
+
     @Override
     protected View onCreateDialogView() {
         picker=new TimePicker(getContext());
@@ -59,7 +62,6 @@ public class TimePreference extends DialogPreference {
     }
 
     @SuppressWarnings("deprecation")
-    @Override
     protected void onDialogClosed(boolean positiveResult) {
         super.onDialogClosed(positiveResult);
 

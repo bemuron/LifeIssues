@@ -2,36 +2,43 @@ package com.lifeissues.lifeissues.data.database;
 
 import android.database.Cursor;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Query;
+import androidx.room.RoomWarnings;
+
+import com.lifeissues.lifeissues.models.BibleVerse;
+import com.lifeissues.lifeissues.models.BibleVerseResult;
+import com.lifeissues.lifeissues.models.DailyVerse;
+
+import java.util.List;
 
 @Dao
 public interface DailyVersesDao {
 
     //checking if a daily verse for today has already been entered
-    @Query("SELECT * FROM daily_verses WHERE date_taken = :dateToday")
+    @Query("SELECT * FROM daily_verses WHERE notify_date = :dateToday")
     Cursor checkDailyVerse(String dateToday);
 
-    //adding a daily verse to the db
-    @Query("INSERT INTO daily_verses (_id, verse, kjv, msg, amp, issue_name, issue_id, favourite, date_taken) " +
-            "VALUES(:verse_id, :verse, :kjv, :msg, :amp, :issueName, :issue_id, :favValue, :dateTaken)")
-    long addDailyVerse(int verse_id, String verse, String kjv, String msg, String amp,
-                          int favValue, String issueName, int issue_id, String dateTaken);
-
-    @Query("select b._id, iv.issue_id, i.suggest_text_1, b.verse, b.kjv, b.msg, b.amp, " +
-            "iv.is_favorite from bible_verses b JOIN issues_verses iv on iv.verse_id = b._id JOIN " +
-            "issues i on i.ROWID = iv.issue_id WHERE b._id =:verse_id LIMIT 1")
-    Cursor getRandomVerse(int verse_id);
+    @Query("INSERT INTO daily_verses(verse_id, notify_date) VALUES (:verseId, :date)")
+    void insertDailyVerseRecord(int verseId, String date);
 
     //getting daily verse from the db
-    @Query("SELECT * FROM daily_verses WHERE date_taken = :dateToday")
-    Cursor getDailyVerse(String dateToday);
+    //@Query("SELECT * FROM daily_verses WHERE notify_date = :dateToday")
+    //Cursor getDailyVerse(String dateToday);
+
+    //@SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+    @Query("select b._id, iv.issue_id, i.name, b.verse, b.kjv, b.msg, b.amp," +
+            "iv.is_favorite from daily_verses d JOIN bible_verses b ON b._id = d.verse_id " +
+            "JOIN issues_verses iv ON iv.verse_id = b._id JOIN issues i on i.issue_id = iv.issue_id " +
+            "WHERE d.notify_date =:date")
+    LiveData<List<BibleVerseResult>> getDailyVerse(String date);
 
     //adding a favourite Bible verse to the db
-    @Query("UPDATE daily_verses set favourite = 1 WHERE _id = :verse_id")
-    int setFavourite(int verse_id);
+//    @Query("UPDATE daily_verses set favourite = 1 WHERE _id = :verse_id")
+//    int setFavourite(int verse_id);
 
     //adding a favourite Bible verse to the db
-    @Query("UPDATE daily_verses set favourite = 0 WHERE _id = :verse_id")
-    int removeFavourite(int verse_id);
+//    @Query("UPDATE daily_verses set favourite = 0 WHERE _id = :verse_id")
+//    int removeFavourite(int verse_id);
 }

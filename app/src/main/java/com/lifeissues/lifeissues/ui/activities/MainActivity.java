@@ -1,21 +1,21 @@
 package com.lifeissues.lifeissues.ui.activities;
 
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SearchView;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.GravityCompat;
-import androidx.core.view.MenuItemCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
@@ -24,8 +24,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
@@ -41,62 +39,70 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
-import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.tabs.TabLayout;
-import com.lifeissues.lifeissues.data.database.IssuesDao;
-import com.lifeissues.lifeissues.data.database.NamesProvider;
-import com.lifeissues.lifeissues.ui.adapters.MainTabsPagerAdapter;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.lifeissues.lifeissues.app.AppController;
+import com.lifeissues.lifeissues.helpers.SessionManager;
 import com.lifeissues.lifeissues.R;
 
-import java.util.Random;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
-import com.lifeissues.lifeissues.data.database.DatabaseTable;
-import com.lifeissues.lifeissues.data.database.IssuesProvider;
-import com.lifeissues.lifeissues.ui.fragments.IssuesFragment;
+import com.lifeissues.lifeissues.ui.fragments.HomeFragment;
+import com.lifeissues.lifeissues.ui.fragments.PrayerFragment;
+import com.lifeissues.lifeissues.ui.fragments.SettingsFragment;
+import com.lifeissues.lifeissues.ui.fragments.TestimonyFragment;
 import com.lifeissues.lifeissues.ui.viewmodels.MainActivityViewModel;
+import com.lifeissues.lifeissues.ui.viewmodels.UserProfileActivityViewModel;
 
-import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
 import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T;
-import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_UNSPECIFIED;
-import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, IssuesFragment.IssueSelectedListener {
+public class MainActivity extends AppCompatActivity implements HomeFragment.OnViewAllTestimoniesClickListener ,
+        HomeFragment.OnIssueListClickListener, HomeFragment.OnViewAllPrayerClickListener,
+        HomeFragment.OnPrayerListClickListener, HomeFragment.OnTestimonyListClickListener,
+        TestimonyFragment.TestimonyClickedListener, PrayerFragment.PrayerRequestClickListener,
+        PrayerFragment.OnCreateNewRequestClick, TestimonyFragment.OnCreateNewTestimonyClick,
+        HomeFragment.OnViewAllIssuesClickListener, SettingsFragment.OnSettingsItemClickListener{
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    public static MainActivity instance;
+    public static MainActivity mainActivity;
     private MainActivityViewModel mainActivityViewModel;
+    private UserProfileActivityViewModel userProfileActivityViewModel;
     private AdView mAdView;
-    private Random rand;
     private Cursor cursor,c;
+    private ProgressDialog pDialog;
+    private SessionManager session;
     private String query;
-    private int post,counter = 0,max,random_articleID,min=1;
-    private ListView mListView;
+    private SharedPreferences prefs;
+    private int post,counter = 0, userId, max,random_articleID,min=1, currentFragment;
+    //private ListView mListView;
     private SearchView searchView;
+    private static boolean isAppThemeChange;
+    private BottomNavigationView bottomNavigationView;
+    private static final String TAG_FRAGMENT_HOME = "tag_frag_home";
+
+    private static final String TAG_FRAGMENT_ISSUES = "tag_frag_issues";
+
+    private static final String TAG_FRAGMENT_TESTIMONY = "tag_frag_testimonies";
+
+    private static final String TAG_FRAGMENT_PRAYER = "tag_frag_prayer";
+    private static final String TAG_FRAGMENT_ACCOUNT = "tag_frag_account";
+    private List<Fragment> fragments = new ArrayList<>(5);
     private SearchManager searchManager;
     private InterstitialAd mInterstitialAd;
     private AdRequest adRequest;
     private SimpleCursorAdapter words;
     private String privacy_policy_link = "https://www.emtechint.com/life-issues-app", issueID;
-
-    /**
-     * The {PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link androidx.fragment.app.FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory.
-     */
-    private MainTabsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
+    private String app_link = "https://play.google.com/store/apps/details?id=com.lifeissues.lifeissues&hl=en&gl=US";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        instance = this;
+        //Toolbar toolbar = findViewById(R.id.toolbar);
+        //setSupportActionBar(toolbar);
+        mainActivity = this;
 
         RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
                 .toBuilder()
@@ -156,12 +162,22 @@ public class MainActivity extends AppCompatActivity
 
         setUpInterstitial();
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        // session manager
+        session = new SessionManager(getApplicationContext());
 
-        TabLayout tabLayout = findViewById(R.id.tabs);
+        pDialog = new ProgressDialog(this);
+        pDialog.setCancelable(false);
+
+        //check for login status if user
+        //session.checkLogin();
+
+        if (session.isLoggedIn()) {
+            userId = session.getUserId();
+        }
+
+        /*TabLayout tabLayout = findViewById(R.id.tabs);
         tabLayout.addTab(tabLayout.newTab().setText("Today's Verse"));
-        tabLayout.addTab(tabLayout.newTab().setText("Issues"));
+        tabLayout.addTab(tabLayout.newTab().setText("Issues"));*/
         //tabLayout.setupWithViewPager(mViewPager);
         /*
         Calling this during onCreate() ensures that your application is properly
@@ -175,155 +191,298 @@ public class MainActivity extends AppCompatActivity
         * by resetting them to the defaults. However, if you set it to true, you will override
         * any previous values with the defaults
         * */
-        PreferenceManager.setDefaultValues(this, R.xml.pref_main, false);
+        //PreferenceManager.setDefaultValues(this, R.xml.pref_main, false);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        //check the theme the user is using
+        String defaultThemeKey = getString(R.string.pref_app_theme);
+        String defaultTheme = prefs.getString(defaultThemeKey, null);
+
+        if (defaultTheme != null) {
+            if (defaultTheme.equals("System")) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+            }else if(defaultTheme.equals("Light")){
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }else if(defaultTheme.equals("Dark")){
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            }
+            //Log.e(TAG, "defaultTheme: "+defaultTheme);
+            //Toast.makeText(getApplicationContext(), "defaultTheme: "+defaultTheme, Toast.LENGTH_SHORT).show();
+
+            //this.recreate();
+        }
+
         mainActivityViewModel = new ViewModelProvider(this).get(MainActivityViewModel.class);
+        userProfileActivityViewModel = new ViewModelProvider(this).get(UserProfileActivityViewModel.class);
 
+        setUpBottomNavigation();
 
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mSectionsPagerAdapter = new MainTabsPagerAdapter(getSupportFragmentManager(),
-                tabLayout.getTabCount());
-        mViewPager.setOffscreenPageLimit(2);
-        mViewPager.setAdapter(mSectionsPagerAdapter);
+        buildFragmentList();
 
-        mViewPager.addOnPageChangeListener(new
-                TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.addOnTabSelectedListener (new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                mViewPager.setCurrentItem(tab.getPosition());
-                if (mAdView == null){
+        if (isAppThemeChange){
+            currentFragment = 3;
+            switchFragment(3, TAG_FRAGMENT_ACCOUNT);
+            isAppThemeChange = false;
+        }else{
+            //set the 0th Fragment to be displayed by default
+            currentFragment = 0;
+            switchFragment(0, TAG_FRAGMENT_HOME);
+        }
 
-                }
+        // Check that the activity is using the layout version with
+        // the fragment_container FrameLayout
+        if (findViewById(R.id.contentHomeFrame) != null) {
+
+            // However, if we're being restored from a previous state,
+            // then we don't need to do anything and should return or else
+            // we could end up with overlapping fragments.
+            if (savedInstanceState != null) {
+                return;
             }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
-        });
-
-        mListView = (ListView) findViewById(R.id.list);
-
-        handleIntent(getIntent());
-/*
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-*/
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        }
 
     }
 
-    public void onIssueSelection(int position, int issueID, String issueName){
+    public void onPrayerRequestClicked(int position, int issueID, String issueName){
+
+    }
+
+    //save the current fragment position of the bottom nav
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("currentFragPos", currentFragment);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        currentFragment = savedInstanceState.getInt("currentFragPos");
+        switch (currentFragment){
+            case 0:
+                bottomNavigationView.setSelectedItemId(R.id.navigation_home);
+                //switchFragment(0,TAG_FRAGMENT_HOME);
+                break;
+            case 1:
+                bottomNavigationView.setSelectedItemId(R.id.navigation_testimonies);
+                //switchFragment(2,TAG_FRAGMENT_MY_TASKS);
+                break;
+            case 2:
+                bottomNavigationView.setSelectedItemId(R.id.navigation_prayer);
+                //switchFragment(3,TAG_FRAGMENT_MESSAGES);
+                break;
+            case 3:
+                bottomNavigationView.setSelectedItemId(R.id.navigation_account);
+                //switchFragment(4,TAG_FRAGMENT_ACCOUNT);
+                break;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (session.isLoggedIn()) {
+            userId = session.getUserId();
+        }
+
+        String defaultThemeKey = getString(R.string.pref_app_theme);
+        String defaultTheme = prefs.getString(defaultThemeKey, null);
+
+        if (defaultTheme != null) {
+            if (defaultTheme.equals("System")) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+            }else if(defaultTheme.equals("Light")){
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }else{
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            }
+            //this.recreate();
+        }
+    }
+
+    @Override
+    public void issueListClick(int issueId, String issueName, int is_favorite) {
+        Intent intent = new Intent(MainActivity.getInstance(), BibleVerses.class);
+        intent.putExtra("issue_ID", issueId);
+        intent.putExtra("favouriteIssues", is_favorite);
+        intent.putExtra("issue_name", issueName.toLowerCase(Locale.US));
+        startActivity(intent);
+    }
+
+    @Override
+    public void onTestimonyListItemClick(int position, int testimonyID, String title,
+                                         String description,int isLiked,
+                                         String datePosted,int isReported,
+                                         int likesNumber, String posterName,
+                                         String profilePic, int posterId) {
+        Intent intent = new Intent(MainActivity.this, TestimonyDetailsActivity.class);
+        intent.putExtra("title", title);
+        intent.putExtra("description", description);
+        intent.putExtra("testimony_id", testimonyID);
+        intent.putExtra("is_liked", isLiked);
+        intent.putExtra("date_posted", datePosted);
+        intent.putExtra("is_reported", isReported);
+        intent.putExtra("likes_number", likesNumber);
+        intent.putExtra("poster_name", posterName);
+        intent.putExtra("poster_pic", profilePic);
+        intent.putExtra("poster_id", posterId);
+        startActivity(intent);
 
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
-        // Because this activity has set launchMode="singleTop", the system calls this method
-        // to deliver the intent if this activity is currently the foreground activity when
-        // invoked again (when the user executes a search from this activity, we don't create
-        // a new instance of this activity, so the system delivers the search intent here)
-        setIntent(intent);
-        super.onNewIntent(intent);
-        handleIntent(intent);
+    public void onPrayerListItemClick(int position, int prayerID, String title, String description,
+                                      int isPrayedFor, String datePosted, int isReported,
+                                      int prayersReceivedNumber, String posterName,
+                                      String profilePic, int posterId) {
+        Intent intent = new Intent(MainActivity.this, PrayerRequestDetailsActivity.class);
+        intent.putExtra("title", title);
+        intent.putExtra("description", description);
+        intent.putExtra("prayer_id", prayerID);
+        intent.putExtra("is_prayed_for", isPrayedFor);
+        intent.putExtra("date_posted", datePosted);
+        intent.putExtra("is_reported", isReported);
+        intent.putExtra("prayers_got_number", prayersReceivedNumber);
+        intent.putExtra("poster_name", posterName);
+        intent.putExtra("poster_pic", profilePic);
+        intent.putExtra("poster_id", posterId);
+        startActivity(intent);
+
     }
 
-    private void handleIntent(Intent intent) {
-        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-            // handles a click on a search suggestion; launches activity to show word
-            Intent wordIntent = new Intent(this, BibleVerses.class);
-            //intent.putExtra("issue_ID", issue.getId());
-            //intent.putExtra("issue_name", issue.getIssueName());
-            wordIntent.setData(intent.getData());
-            startActivity(wordIntent);
-        } else if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            // handles a search query
-            String query = intent.getStringExtra(SearchManager.QUERY);
-            showResults(query);
-        }
+    @Override
+    public void allIssuesListClick() {
+        Intent intent = new Intent(MainActivity.getInstance(), IssuesActivity.class);
+        startActivity(intent);
     }
 
-    /**
-     * Searches the issues and displays results for the given query.
-     * @param query The search query
-     */
-
-    private void showResults(String query) {
-        //async task to get results from the db in background
-        new getSearchResultsAsyncTask().execute(query);
-    }
-
-    private class getSearchResultsAsyncTask extends AsyncTask<String, Void, Cursor> {
-
-        @Override
-        protected Cursor doInBackground(final String... params) {
-            query = params[0];
-            return getContentResolver().query(IssuesProvider.CONTENT_URI,
-                    null, null, new String[]{params[0]}, null);
-        }
-
-        @Override
-        protected void onPostExecute(Cursor cursor) {
-            if (cursor == null) {
-                // There are no results
-                Toast.makeText(MainActivity.this, "No results found", Toast.LENGTH_LONG).show();
-                Log.e(TAG, "Search returned cursor null");
-            } else {
-                // Display the number of results
-                int count = cursor.getCount();
-                String countString = getResources().getQuantityString(R.plurals.search_results,
-                        count, new Object[] {count, query});
-                //mTextView.setText(countString);
-                Log.e(TAG, "Search returned cursor size"+cursor.getCount());
-                Toast.makeText(MainActivity.this, countString + " results found", Toast.LENGTH_LONG).show();
-
-                // Specify the columns we want to display in the result
-                String[] from = new String[] { IssuesDao.KEY_ISSUE_NAME,
-                        IssuesDao.KEY_ISSUE_VERSES };
-
-                // Specify the corresponding layout elements where we want the columns to go
-                int[] to = new int[] {android.R.id.text1,
-                        android.R.id.text2 };
-
-                // Create a simple cursor adapter for the definitions and apply them to the ListView
-                words = new SimpleCursorAdapter(MainActivity.this,
-                        R.layout.result, cursor, from, to, 0);
-                mListView.setAdapter(words);
-
-                // Define the on-click listener for the list items
-                mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        // Build the Intent used to open WordActivity with a specific word Uri
-                        Intent wordIntent = new Intent(getApplicationContext(), BibleVerses.class);
-                        Uri data = Uri.withAppendedPath(NamesProvider.CONTENT_URI,
-                                String.valueOf(id));
-                        wordIntent.setData(data);
-                        startActivity(wordIntent);
-                    }
-                });
+    @Override
+    public void onSettingsItemClick(String clickedItem) {
+        Intent intent;
+        if (clickedItem.equals(getString(R.string.key_view_profile))){
+            String noticeMsg = "Login or Register to view your profile. ";
+            if (!session.isLoggedIn()) {
+                showLoginNoticeDialog(noticeMsg);
+            }else{
+                intent = new Intent(this, MyProfileActivity.class);//MyProfileActivity
+                intent.putExtra("userId", userId);
+                startActivity(intent);
             }
+
+        }else if (clickedItem.equals(getString(R.string.key_dev_support))){
+            intent = new Intent(this, DeveloperSupportActivity.class);
+            startActivity(intent);
+        }else if (clickedItem.equals(getString(R.string.key_share_lifeissues))){
+
+            Intent sharingIntent = new Intent();
+            sharingIntent.setAction(Intent.ACTION_SEND);
+            String shareBody = "\nTopical Bible Verses, Prayer Requests and Testimonies." +
+                    "\nDownload the Life Issues app now: " +
+                    "\n "+app_link;
+            //sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject Here");
+            sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
+            sharingIntent.setType("text/plain");
+            startActivity(Intent.createChooser(sharingIntent, "Share via"));
+
+        }else if (clickedItem.equals(getString(R.string.key_privacy_policy))){
+            openPrivacyPolicyLink();
+
+        }else if (clickedItem.equals(getString(R.string.key_logout))){
+            if (session.isLoggedIn()) {
+                if (AppController.isNetworkAvailable(this)){
+                    confirmLogoutDialog();
+                }else{
+                    Toast.makeText(this, "Please check your internet connection",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+        }else if (  clickedItem.equals(getString(R.string.pref_app_theme))){
+            isAppThemeChange = true;
+        }else if (clickedItem.equals(getString(R.string.key_about_life_issues))){
+            AboutLifeIssues.Show(this);
+            //intent = new Intent(this, AboutFixAppActivity.class);
+            //startActivity(intent);
+
         }
+    }
+
+    @Override
+    public void onTestimonyClicked(int position, int testimonyID, String title,
+                                   String description,int isLiked,
+                                   String datePosted,int isReported,
+                                   int likesNumber, String posterName,
+                                   String profilePic, int posterId) {
+        Intent intent = new Intent(MainActivity.this, TestimonyDetailsActivity.class);
+        intent.putExtra("title", title);
+        intent.putExtra("description", description);
+        intent.putExtra("testimony_id", testimonyID);
+        intent.putExtra("is_liked", isLiked);
+        intent.putExtra("date_posted", datePosted);
+        intent.putExtra("is_reported", isReported);
+        intent.putExtra("likes_number", likesNumber);
+        intent.putExtra("poster_name", posterName);
+        intent.putExtra("poster_pic", profilePic);
+        intent.putExtra("poster_id", posterId);
+        startActivity(intent);
+
+    }
+
+    @Override
+    public void onCreateNewPrayerRequest() {
+        String noticeMsg = "Login or Register to post your Prayer Request. ";
+        if (!session.isLoggedIn()) {
+            showLoginNoticeDialog(noticeMsg);
+        }else {
+            Intent intent = new Intent(MainActivity.this, PostPrayerRequestActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onCreateNewTestimony() {
+        String noticeMsg = "Login or Register to post your Testimony. ";
+        if (!session.isLoggedIn()) {
+            showLoginNoticeDialog(noticeMsg);
+        }else {
+            Intent intent = new Intent(MainActivity.this, PostTestimonyActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    @Override
+    public void onPrayerRequestClicked(int position, int prayerID, String title, String description,
+                                       int isPrayedFor, String datePosted, int isReported,
+                                       int prayersReceivedNumber, String posterName,
+                                       String profilePic, int posterId) {
+        Intent intent = new Intent(MainActivity.this, PrayerRequestDetailsActivity.class);
+        intent.putExtra("title", title);
+        intent.putExtra("description", description);
+        intent.putExtra("prayer_id", prayerID);
+        intent.putExtra("is_prayed_for", isPrayedFor);
+        intent.putExtra("date_posted", datePosted);
+        intent.putExtra("is_reported", isReported);
+        intent.putExtra("prayers_got_number", prayersReceivedNumber);
+        intent.putExtra("poster_name", posterName);
+        intent.putExtra("poster_pic", profilePic);
+        intent.putExtra("poster_id", posterId);
+        startActivity(intent);
+
+    }
+
+    @Override
+    public void viewAllPrayerClick() {
+        currentFragment = 2;
+        bottomNavigationView.setSelectedItemId(R.id.navigation_prayer);
+        switchFragment(2, TAG_FRAGMENT_PRAYER);
+    }
+
+    @Override
+    public void viewAllTestimoniesClick() {
+        currentFragment = 1;
+        bottomNavigationView.setSelectedItemId(R.id.navigation_testimonies);
+        switchFragment(1, TAG_FRAGMENT_TESTIMONY);
     }
 
     //async task to get random verse from db
@@ -333,7 +492,7 @@ public class MainActivity extends AppCompatActivity
         protected Void doInBackground(Void... arg0) {
             cursor = mainActivityViewModel.getRandomVerseContent();
             if (cursor.moveToFirst()) {
-                random_articleID = cursor.getInt(cursor.getColumnIndex(DatabaseTable.KEY_ID));
+                random_articleID = cursor.getInt(cursor.getColumnIndex("_id"));
             }
             return null;
         }
@@ -349,16 +508,20 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
+        Fragment f = getSupportFragmentManager().findFragmentById(R.id.nav_drawer_fragments_container);
+
+        if(bottomNavigationView.getSelectedItemId () != R.id.navigation_home){
+            bottomNavigationView.setSelectedItemId(R.id.navigation_home);
+        } /*else if(f instanceof BrowseAdvertsFragment){
+            bottomNavigationView.setSelectedItemId(R.id.navigation_home);
+        }*/
+        else {
             super.onBackPressed();
         }
     }
 
     public static MainActivity getInstance() {
-        return instance;
+        return mainActivity;
     }
 
     private class getWordMatchesAsyncTask extends AsyncTask<Void, Void, Void> {
@@ -382,16 +545,6 @@ public class MainActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
-        //async task to get word matches from the db in background
-        new getWordMatchesAsyncTask().execute();
-        //searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        //SearchView searchView = (SearchView) MenuItemCompat.getActionView(menu.findItem(R.id.action_search));
-        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
-        //searchView.setSuggestionsAdapter(words);
-        //searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-        //searchView.setIconifiedByDefault(false);
-        //searchView.setOnQueryTextListener(onQueryTextListener);
-
         return true;
     }
 
@@ -403,16 +556,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_notes) {
-            if (mInterstitialAd != null) {
-                mInterstitialAd.show(MainActivity.this);
-            } else {
-                Log.e(TAG,"Ad did not load");
-            }
-            Intent intent = new Intent(this, NotesListActivity.class);
-            startActivity(intent);
-        }
-        else if (id == R.id.action_favorites) {
+        if (id == R.id.action_favorites) {
             if (mInterstitialAd != null) {
                 mInterstitialAd.show(MainActivity.this);
                 //startActivityAfterAd("favs");
@@ -420,7 +564,8 @@ public class MainActivity extends AppCompatActivity
                 Log.e(TAG,"Ad did not load");
 
             }
-            Intent intent = new Intent(this, FavouritesActivity.class);
+            Intent intent = new Intent(MainActivity.getInstance(), BibleVerses.class);
+            intent.putExtra("favourite_verses", "favourites");
             startActivity(intent);
         }
         else if (id == R.id.action_random_verse) {
@@ -435,8 +580,10 @@ public class MainActivity extends AppCompatActivity
             AboutLifeIssues.Show(this);
         }
         else if (id == R.id.action_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
+            currentFragment = 0;
+            bottomNavigationView.setSelectedItemId(R.id.navigation_account);
+            switchFragment(3, TAG_FRAGMENT_ACCOUNT);
+
         }
         else if (id == R.id.action_privacy_policy){
             openPrivacyPolicyLink();
@@ -448,55 +595,178 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
+    //method to setup bottom navigation
+    private void setUpBottomNavigation() {
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        setUpNavigationContent(bottomNavigationView);
+    }
 
-        if (id == R.id.nav_notes) {
-            if (mInterstitialAd != null) {
-                mInterstitialAd.show(MainActivity.this);
-            } else {
-                Log.e(TAG,"Ad did not load");
+    private void setUpNavigationContent(BottomNavigationView bottomNavigationView) {
+        bottomNavigationView.setOnNavigationItemSelectedListener(
+                new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                        int itemId = item.getItemId();
+
+                        Intent intent;
+                        if (itemId == R.id.navigation_home) {
+                            currentFragment = 0;
+                            switchFragment(0, TAG_FRAGMENT_HOME);
+                            //mTextMessage.setText(R.string.title_home);
+                            return true;
+                        }  else if (itemId == R.id.navigation_testimonies) {
+                            currentFragment = 1;
+                            switchFragment(1, TAG_FRAGMENT_TESTIMONY);
+
+                            return true;
+                        } else if (itemId == R.id.navigation_prayer) {
+                            currentFragment = 2;
+                            switchFragment(2, TAG_FRAGMENT_PRAYER);
+
+                            return true;
+                        } else if (itemId == R.id.navigation_account) {
+                            currentFragment = 3;
+                            switchFragment(3, TAG_FRAGMENT_ACCOUNT);
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+    }
+
+    //method to switch correctly between the bottom navigation fragments
+    private void switchFragment(int pos, String tag) {
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.contentHomeFrame, fragments.get(pos), tag)
+                .commit();
+    }
+
+    private void buildFragmentList() {
+        HomeFragment homeFragment = buildHomeFragment();
+        TestimonyFragment testimonyFragment = buildTestimonyFragment();
+        PrayerFragment prayerFragment = buildPrayerFragment();
+        SettingsFragment settingsFragment = buildSettingsFragment();
+
+        fragments.add(homeFragment);
+        fragments.add(testimonyFragment);
+        fragments.add(prayerFragment);
+        fragments.add(settingsFragment);
+    }
+
+    private HomeFragment buildHomeFragment() {
+        HomeFragment fragment;
+        fragment = HomeFragment.newInstance();
+
+        return fragment;
+    }
+
+    private PrayerFragment buildPrayerFragment() {
+
+        return PrayerFragment.newInstance();
+    }
+
+    private TestimonyFragment buildTestimonyFragment() {
+
+        return TestimonyFragment.newInstance();
+    }
+
+    private SettingsFragment buildSettingsFragment() {
+        return new  SettingsFragment();
+    }
+
+    //user confirm log out
+    private void confirmLogoutDialog(){
+        MaterialAlertDialogBuilder alertDialog = new MaterialAlertDialogBuilder(this, R.style.AlertDialogTheme);
+        //alertDialog.setCancelable(false);
+        alertDialog.setTitle("Log Out");
+        alertDialog.setMessage("Are you sure you want to log out?");
+        alertDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //clear from prefs
+                //delete user from db
+                //start main activity
+                pDialog.setMessage("Logging Out ...");
+                showDialog();
+                //deletes user from sqlite db - room
+                userProfileActivityViewModel.delete();
+
+                //delete the user fcm and access token
+                userProfileActivityViewModel.logOutUser(userId);
+
+
             }
-            Intent intent = new Intent(this, NotesListActivity.class);
-            startActivity(intent);
+        });
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
 
-        }else if (id == R.id.nav_favourites) {
-            if (mInterstitialAd != null) {
-                mInterstitialAd.show(MainActivity.this);
-            } else {
-                Log.e(TAG,"Ad did not load");
             }
-            Intent intent = new Intent(MainActivity.this, FavouritesActivity.class);
-            startActivity(intent);
+        });
+        alertDialog.show();
+    }
 
-        } else if (id == R.id.nav_random) {
-            new getRandomVerse().execute();
+    //called in LoginUser when the user has been logged out
+    public void logOutUser(boolean isLogout, String msg){
+        hideDialog();
+        if(isLogout){
+            session.clearPrefs();
 
-        }else if (id == R.id.nav_bible_names) {
-            if (mInterstitialAd != null) {
-                mInterstitialAd.show(MainActivity.this);
-            } else {
-                Log.e(TAG,"Ad did not load");
-            }
-            Intent intent = new Intent(this, BibleNamesDictionaryActivity.class);
-            startActivity(intent);
+            Toast.makeText(this, msg,
+                    Toast.LENGTH_SHORT).show();
 
-        } else if (id == R.id.nav_about) {
-            AboutLifeIssues.Show(this);
+            Intent i = new Intent(this, MainActivity.class);
+            // Closing all the Activities
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
-        } else if (id == R.id.nav_privacy_policy) {
-            openPrivacyPolicyLink();
+            // Add new Flag to start new Activity
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        }else if (id == R.id.nav_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
+            // Starting Login Activity
+            startActivity(i);
+            finish();
+        }else{
+            Toast.makeText(this, msg,
+                    Toast.LENGTH_SHORT).show();
         }
+    }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
+    private void showLoginNoticeDialog(String noticeMsg){
+        MaterialAlertDialogBuilder alertDialog = new MaterialAlertDialogBuilder(this, R.style.AlertDialogTheme);
+        //AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        alertDialog.setCancelable(false);
+        alertDialog.setTitle("Login or Register");
+        //alertDialog.setMessage("Login to post your task or make offers to posted tasks.");
+        alertDialog.setMessage(noticeMsg);
+        alertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //session.logoutUser();
+                Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                // Closing all the Activities
+                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                // Add new Flag to start new Activity
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                // Starting Login Activity
+                startActivity(i);
+                finish();
+            }
+        });
+        alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                //HomeActivity.this.finish();
+                dialogInterface.dismiss();
+            }
+        });
+        alertDialog.show();
     }
 
     //method to go to the website where the privacy policy resides
@@ -547,6 +817,16 @@ public class MainActivity extends AppCompatActivity
                 mInterstitialAd = null;
             }
         });
+    }
+
+    private void showDialog() {
+        if (!pDialog.isShowing())
+            pDialog.show();
+    }
+
+    private void hideDialog() {
+        if (pDialog.isShowing())
+            pDialog.dismiss();
     }
 
 }

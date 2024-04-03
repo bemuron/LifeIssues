@@ -2,7 +2,6 @@ package com.lifeissues.lifeissues.ui.adapters;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -12,9 +11,11 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.app.AppController;
+import com.lifeissues.lifeissues.models.BibleVerse;
+import com.lifeissues.lifeissues.models.BibleVerseResult;
 import com.lifeissues.lifeissues.ui.fragments.BibleVersesFragment;
 
-import com.lifeissues.lifeissues.data.database.DatabaseTable;
+import java.util.List;
 
 /**
  * Created by Emo on 11/28/2017.
@@ -22,17 +23,18 @@ import com.lifeissues.lifeissues.data.database.DatabaseTable;
 
 public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
     private static final String TAG = BibleVersesPagerAdapter.class.getSimpleName();
-    private Cursor cursorData;
+    private List<BibleVerseResult> bibleVerseList;
+    private BibleVerse bibleVerse;
     private SharedPreferences prefs;
     private String bibleVersion;
-    private int issueID;
+    private int issueID, currentPosition;
 
     Context context = AppController.getContext();
 
-    public BibleVersesPagerAdapter(FragmentManager fm, Cursor cursor,
+    public BibleVersesPagerAdapter(FragmentManager fm, List<BibleVerseResult> versesList,
                                    SharedPreferences sharedPreferences, String version) {
         super(fm);
-        this.cursorData = cursor;
+        this.bibleVerseList = versesList;
         //this.issueID = issueID;
         this.prefs = sharedPreferences;
         this.bibleVersion = version;
@@ -40,6 +42,7 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
+        currentPosition = position;
         // getItem is called to instantiate the fragment for the given page.
         // Return a PlaceholderFragment (defined as a static inner class below).
         BibleVersesFragment bibleVersesFragment = new BibleVersesFragment();
@@ -47,18 +50,16 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
         //check if user set default bible verse version
         String defaultVersionKey = context.getString(R.string.key_daily_verse_version);
         String defaultVersion = prefs.getString(defaultVersionKey, "kjv");
-        Log.e(TAG,"Cursor data in Bibleverse adapter = "+cursorData.getCount());
-
-
-        if (cursorData.moveToPosition(position)){
-            String issueName = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
-            int verseID = cursorData.getInt(cursorData.getColumnIndex(DatabaseTable.KEY_ID));
-            int issueID = cursorData.getInt(cursorData.getColumnIndex(DatabaseTable.KEY_ISSUE_ID));
-            String verse = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_VERSE));
-            String kjvVerseContent = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_KJV));
-            String msgVerseContent = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_MSG));
-            String ampVerseContent = cursorData.getString(cursorData.getColumnIndex(DatabaseTable.KEY_AMP));
-            int favValue = cursorData.getInt(cursorData.getColumnIndex(DatabaseTable.KEY_IS_FAVORITE));
+        if (bibleVerseList != null){
+            bibleVerse = new BibleVerse();
+            String issueName = bibleVerseList.get(position).getName();
+            int verseID = bibleVerseList.get(position).get_id();
+            int issueID = bibleVerseList.get(position).getIssue_id();
+            String verse = bibleVerseList.get(position).getVerse();
+            String kjvVerseContent = bibleVerseList.get(position).getKjv();
+            String msgVerseContent = bibleVerseList.get(position).getMsg();
+            String ampVerseContent = bibleVerseList.get(position).getAmp();
+            int favValue = bibleVerseList.get(position).getIs_favorite();
 
             //check if we are coming from the spinner selection, if null then we are not
             if (bibleVersion == null) {
@@ -118,7 +119,6 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
             data.putString("issueName", issueName);
             data.putInt("favValue", favValue);
             bibleVersesFragment.setArguments(data);
-            //mViewPager.getAdapter().notifyDataSetChanged();
         }
 
         //mViewPager.getAdapter().notifyDataSetChanged();
@@ -129,7 +129,7 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
     public int getItemPosition(Object item){
         BibleVersesFragment bibleVersesFragment = (BibleVersesFragment)item;
         //String title = bibleVersesFragment.title;
-        int position = cursorData.getPosition();
+        //int position = cursorData.getPosition();
 /*
         if (position >= 0){
             return position;
@@ -137,12 +137,13 @@ public class BibleVersesPagerAdapter extends FragmentStatePagerAdapter {
             return POSITION_NONE;
         }
 */
+        return currentPosition;
         //return ((BibleVersesFragment) item).getId();
-        return POSITION_NONE;
+        //return POSITION_NONE;
     }
 
     @Override
     public int getCount() {
-        return cursorData.getCount();
+        return bibleVerseList.size();
     }
 }

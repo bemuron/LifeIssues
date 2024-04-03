@@ -1,0 +1,11 @@
+    <menu xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:context="com.lifeissues.lifeissues.ui.activities.IssuesActivity">
+        <item
+            android:id="@+id/action_issues_search_activity"
+            android:icon="@android:drawable/ic_menu_search"
+            android:title="@string/action_issues_search"
+            app:showAsAction="always"
+            app:actionViewClass="androidx.appcompat.widget.SearchView"/>
+    </menu>

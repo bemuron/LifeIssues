@@ -37,6 +37,8 @@
         android:layout_margin="10dp"
         android:layout_below="@+id/version_spinner"
         android:layout_height="wrap_content"
+        app:backgroundTint="?attr/hintTextColor"
+        android:textColor="@color/whiteTextColor"
         android:text="View"
         android:id="@+id/select_version_button"
         android:layout_gravity="center_horizontal"/>

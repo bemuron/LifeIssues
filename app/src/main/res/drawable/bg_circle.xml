@@ -5,7 +5,11 @@
     android:shape="oval">
 
     <solid
-        android:color="@color/bg_circle_default"/>
+        android:color="@android:color/transparent"/>
+
+    <stroke
+        android:width="2dp"
+        android:color="?attr/textColor" />
 
     <size
         android:width="120dp"

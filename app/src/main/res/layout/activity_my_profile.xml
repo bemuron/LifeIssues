@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/bgColor"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".ui.activities.MyProfileActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="?attr/bgColor"
+        android:padding="@dimen/margin_padding_normal">
+
+        <ImageView
+            android:id="@+id/profile_pic"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_marginTop="@dimen/margin_padding_normal"
+            android:layout_marginBottom="@dimen/margin_padding_normal"
+            android:layout_gravity="center_horizontal"
+            android:adjustViewBounds="true"
+            android:padding="3dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/img_profile_layer" />
+
+        <TextView
+            android:id="@+id/profile_user_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textSize="@dimen/text_size_huge"
+            android:fontFamily="sans-serif-light"
+            android:textStyle="bold"
+            android:textColor="?attr/textColor"
+            android:text="User name"
+            android:layout_marginBottom="@dimen/activity_vertical_margin"
+            android:layout_marginTop="@dimen/activity_vertical_margin"/>
+
+        <TextView
+            android:id="@+id/profile_user_email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/margin_padding_normal"
+            android:textSize="@dimen/text_size_xnormal"
+            android:textStyle="italic"
+            android:textColor="?attr/textColor"
+            android:text="email:"/>
+
+    </LinearLayout>
+</ScrollView>

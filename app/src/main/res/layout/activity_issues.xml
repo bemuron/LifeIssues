@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinatorLayout"
+    android:background="?attr/bgColor"
+    android:layout_below="@id/app_bar"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+  <!-- This layout defines the main screen and will display the list of weather or an error -->
+  <LinearLayout
+      android:orientation="vertical"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/nav_drawer_fragments_container"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/issues_list_instructions"
+        android:textStyle="bold"
+        android:textColor="?attr/textColor"
+        android:textSize="@dimen/text_size_xxnormal"
+        android:padding="@dimen/margin_padding_normal"
+        android:layout_gravity="center_horizontal"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerview_categories"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="8dp"/>
+
+    <ProgressBar
+        android:id="@+id/pb_loading_indicator"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_gravity="center" />
+
+  </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

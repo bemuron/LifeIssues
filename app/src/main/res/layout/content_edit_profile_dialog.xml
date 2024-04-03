@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/add_article_frame"
+    android:background="?attr/bgColor"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/bgColor"
+            android:padding="@dimen/margin_padding_normal">
+
+            <TextView
+                android:id="@+id/edit_profile_instructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/textColor"
+                android:textSize="@dimen/text_size_large"
+                android:paddingBottom="@dimen/margin_padding_normal"
+                android:text="Update Profile" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/edit_profile_first_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="@dimen/margin_padding_normal"
+                app:hintEnabled="true"
+                android:hint="@string/hint_first_name"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                android:layout_below="@id/edit_profile_instructions">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_profile_firstname_et"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="?attr/textColor"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/edit_profile_last_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="@dimen/margin_padding_normal"
+                app:hintEnabled="true"
+                android:hint="@string/hint_last_name"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                android:layout_below="@id/edit_profile_first_name">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_profile_lastname_et"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="?attr/textColor"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/edit_profile_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_padding_normal"
+                app:hintEnabled="true"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                android:layout_below="@id/edit_profile_last_name">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/edit_profile_email_et"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:inputType="textEmailAddress"
+                    android:hint="@string/hint_email"
+                    android:maxLines="1"
+                    android:textColor="?attr/textColor"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/profile_save_details"
+                android:layout_below="@id/edit_profile_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="@dimen/margin_padding_normal"
+                android:paddingTop="@dimen/margin_padding_normal"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                app:backgroundTint="#0B376A"
+                android:textColor="@color/white"
+                android:text="@string/button_save_profile"/>
+
+        </RelativeLayout>
+    </androidx.core.widget.NestedScrollView>
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <ProgressBar
+            android:id="@+id/edit_profile_progress_bar"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </RelativeLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

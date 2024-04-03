@@ -50,11 +50,7 @@ import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
-import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
@@ -62,7 +58,6 @@ import com.google.android.gms.ads.initialization.OnInitializationCompleteListene
 import com.google.android.material.button.MaterialButton;
 import com.lifeissues.lifeissues.R;
 import com.lifeissues.lifeissues.ui.activities.MainActivity;
-import com.lifeissues.lifeissues.ui.activities.NoteActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -79,13 +74,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import com.lifeissues.lifeissues.data.database.DatabaseTable;
 import com.lifeissues.lifeissues.ui.viewmodels.BibleVersesActivityViewModel;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
-import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
 import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T;
-import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
  * Created by Emo on 9/4/2017.
@@ -104,7 +96,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     private String bibleVerse, bibleVerse2, bibleVerse3, verseContent,
             favouriteValue, spinnerVerseSelection,issueName,
             msgVerseContent, kjvVerse, ampVerseContent, compare;
-    private ImageView notFav, inFav, addNoteIcon, shareIcon, verseImageIcon, verseImage;
+    private ImageView notFav, inFav, shareIcon, verseImageIcon, verseImage;
     public VersionSelectedListener versionSelectedListener;
     private TextView verse_content, verse_content2, verse_content3, verse2, verse3, verse;
     private CardView cardView2, cardView3;
@@ -113,6 +105,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     private ProgressBar imageProgressBar;
     private Bitmap bitmap;
     private int isFavorite;
+    private Bundle resumeDataBundle;
     private InterstitialAd interstitialAd;
 
     @Override
@@ -184,6 +177,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.bible_verse_view, container, false);
+        resumeDataBundle = new Bundle();
 
         getAllWidgets(rootView);
         // Load the saved state if there is one
@@ -214,18 +208,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
             public void onClick(View v) {
                 inFav.setVisibility(View.VISIBLE);
                 notFav.setVisibility(View.INVISIBLE);
-                //dbhelper.addFavourite(vID,issueId);
                 viewModel.addFavorite(vID,issueId);
-                //adapter.notifyDataSetChanged();
-                // new checkFavourite().execute();
-                //favouriteValue = cursor.getString(6);
-                //Toast.makeText(getActivity(), favouriteValue,
-                  //      Toast.LENGTH_SHORT).show();
-
-                //updateStar(favouriteValue);
-                Toast.makeText(getActivity(), "Added to favs",
-                        Toast.LENGTH_SHORT).show();
-                //c1.close();
             }
         });
 
@@ -233,31 +216,7 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
             public void onClick(View v) {
                 inFav.setVisibility(View.INVISIBLE);
                 notFav.setVisibility(View.VISIBLE);
-
-                //dbhelper.deleteFavourite(vID,issueId);
                 viewModel.deleteFavourite(vID,issueId);
-                //cursor.requery();
-                //updateStar(favouriteValue);
-
-                Toast.makeText(getActivity(), "Deleted from favs",
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        //note editor with click listener to launch it
-        addNoteIcon = rootView.findViewById(R.id.note_icon);
-        addNoteIcon.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                handleAddNote();
-                /*if (interstitialAd != null && interstitialAd.isLoaded()) {
-                    interstitialAd.show();
-                    //doActionAfterAd("addNote", 0);
-                } else {
-                    Log.e(TAG,"Ad did not load");
-                    handleAddNote();
-                }*/
-
             }
         });
 
@@ -322,6 +281,24 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     @Override
     public void onResume() {
         super.onResume();  // Always call the superclass method first
+        /*if(resumeDataBundle != null) {
+            versionSpinner.setSelection(resumeDataBundle.getInt("currentVerse", 0));
+            issueName = resumeDataBundle.getString("issueName");
+            isFavorite = resumeDataBundle.getInt("favValue");
+            //favouriteValue = savedInstanceState.getString("favValue");
+            verseContent = resumeDataBundle.getString("verseContent");
+            bibleVerse = resumeDataBundle.getString("Verse");
+            vID = resumeDataBundle.getInt("VerseID");
+
+            if (compare != null){
+                msgVerseContent = resumeDataBundle.getString("msgContent");
+                bibleVerse2 = resumeDataBundle.getString("msgVerse");
+                ampVerseContent = resumeDataBundle.getString("ampContent");
+                bibleVerse3 = resumeDataBundle.getString("ampVerse");
+            }
+        }*/
+
+        //updateStar(isFavorite);
     }
 
     public void getAllWidgets(View view){
@@ -355,7 +332,6 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         notFav = (ImageView) view.findViewById(R.id.fav_black);
         inFav = (ImageView) view.findViewById(R.id.fav_yellow);
     }
-
 
     //setting up version spinner adapter
     public void setSpinnerAdapter(){
@@ -391,7 +367,6 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
     {
         inflater.inflate(R.menu.bible_verses_menu, menu);
-
     }
 
     @Override
@@ -551,59 +526,29 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         currentState.putString("Verse", bibleVerse);
         currentState.putInt("VerseID", vID);
 
+        resumeDataBundle.putInt("currentVerse", versionSpinner.getSelectedItemPosition());
+        resumeDataBundle.putString("issueName", issueName);
+        resumeDataBundle.putInt("favValue", isFavorite);
+        //currentState.putString("favValue", favouriteValue);
+        resumeDataBundle.putString("verseContent", verseContent);
+        resumeDataBundle.putString("Verse", bibleVerse);
+        resumeDataBundle.putInt("VerseID", vID);
+
         if (compare != null){
             currentState.putString("msgContent", msgVerseContent);
             currentState.putString("msgVerse", bibleVerse2);
             currentState.putString("ampContent", ampVerseContent);
             currentState.putString("ampVerse", bibleVerse3);
+
+            resumeDataBundle.putString("msgContent", msgVerseContent);
+            resumeDataBundle.putString("msgVerse", bibleVerse2);
+            resumeDataBundle.putString("ampContent", ampVerseContent);
+            resumeDataBundle.putString("ampVerse", bibleVerse3);
         }
 
         //calling super makes the fragment store its state in arrays that are not cleaned up
         //leading to memory leaks
         //super.onSaveInstanceState(currentState);
-    }
-
-    //async task to get the issue name
-    private class getIssueNameAsync extends AsyncTask<Integer, Void, String> {
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected String doInBackground(Integer... arg) {
-            Log.e(TAG, "Issue ID = "+arg[0]);
-            return null;// dbhelper.getIssueName(arg[0]);
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            Log.e(TAG, "Issue name = "+result);
-            issueName = result;
-            //Set title
-            getActivity().setTitle(result.substring(0, 1).toUpperCase() + result.substring(1));
-        }
-    }
-
-    //async task to check if verse is favorite
-    private class isVerseFavoriteAsync extends AsyncTask<Integer, Void, Boolean> {
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected Boolean doInBackground(Integer... arg) {
-            //check if verse is favorite
-            return null;// dbhelper.isVerseFavorite(arg[0],arg[1]);
-        }
-
-        @Override
-        protected void onPostExecute(Boolean result) {
-            Log.e(TAG, "Is verse favorite = "+result);
-            //isFavorite = result;
-            //updateStar(result);
-        }
     }
 
     //async task checks if the image exists
@@ -921,15 +866,6 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody);
         sharingIntent.setType("text/plain");
         startActivity(Intent.createChooser(sharingIntent, "Share verse"));
-    }
-
-    //handle add note
-    private void handleAddNote(){
-        Intent intent = new Intent(MainActivity.getInstance(), NoteActivity.class);
-        intent.putExtra("verse", verse.getText().toString());
-        intent.putExtra("issueName", issueName);
-        intent.putExtra("content", verse_content.getText().toString());
-        startActivity(intent);
     }
 
     //set up the interstitial ad

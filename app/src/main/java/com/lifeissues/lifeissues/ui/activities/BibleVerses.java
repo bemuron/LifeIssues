@@ -14,6 +14,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
@@ -36,19 +37,18 @@ import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.initialization.InitializationStatus;
 import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.lifeissues.lifeissues.R;
+import com.lifeissues.lifeissues.models.BibleVerse;
+import com.lifeissues.lifeissues.models.BibleVerseResult;
+import com.lifeissues.lifeissues.models.Issue;
 import com.lifeissues.lifeissues.ui.adapters.BibleVersesPagerAdapter;
 import com.lifeissues.lifeissues.ui.fragments.BibleVersesFragment;
 import com.lifeissues.lifeissues.helpers.ZoomOutPageTransformer;
 
-import java.util.Locale;
-import java.util.Random;
-
-import com.lifeissues.lifeissues.data.database.DatabaseTable;
+import java.util.ArrayList;
+import java.util.List;
 import com.lifeissues.lifeissues.ui.viewmodels.BibleVersesActivityViewModel;
 
-import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_G;
 import static com.google.android.gms.ads.RequestConfiguration.MAX_AD_CONTENT_RATING_T;
-import static com.google.android.gms.ads.RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
 
 /**
  * Created by Emo on 5/5/2017.
@@ -62,12 +62,13 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     private BibleVersesFragment bibleVersesFragment;
     private SharedPreferences prefs;
     public ViewPager mViewPager;
+    private List<BibleVerseResult> bibleVerseList, favVersesList;
     private ProgressDialog pDialog;
     private TextView lblCount;
     private InterstitialAd mInterstitialAd;
     private AdRequest adRequest;
-    private String issueName,issueNameUri, favouriteVerses, favouriteIssueName, randomVerse, favoriteIssue;
-    private int selectedPosition = 0, pageCount,currentPage,
+    private String issueName,issueNameUri, favouriteVerses, favouriteIssueName, randomVerse;
+    private int selectedPosition = 0, pageCount,currentPage,favoriteIssue,
             favVersePos, max,random_articleID,min=1, verseID = 0, issueId = 0, favIssueId = 0;
 
 
@@ -170,10 +171,12 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         favouriteVerses = intent.getStringExtra("favourite_verses");
         favouriteIssueName = intent.getStringExtra("fav_issue_name");
         favVersePos = intent.getIntExtra("cursor_position", 0);
-        favoriteIssue = intent.getStringExtra("favouriteIssues");
+        favoriteIssue = intent.getIntExtra("favouriteIssues",0);
         issueName = intent.getStringExtra("issue_name");//list click
         issueId = intent.getIntExtra("issue_ID",0);//list click / random verse
         verseID = intent.getIntExtra("V-ID",0);//random verse
+        bibleVerseList = new ArrayList<BibleVerseResult>();
+        favVersesList = new ArrayList<BibleVerseResult>();
         //Toast.makeText(getApplication(), "fav pos = " + favVersePos, Toast.LENGTH_SHORT).show();
         /*check whether the user is coming from a click on the list
         * or a click on the search list view
@@ -185,19 +188,48 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
             Log.e(TAG,"Verse ID in Bible verses activity = "+verseID);
             pDialog.setMessage("Fetching Verses ...");
             showDialog();
-            new getBibleVersesAsync(issueId).execute();
+            //new getBibleVersesAsync(issueId).execute();
+            if (bibleVerseList != null) {
+                bibleVerseList.clear();
+            }
+            viewModel.getIssueBibleVerses(issueId).observe(this, versesList -> {
+                pageCount = versesList.size();
+                if (bibleVerseList.size() == 0) {
+                    bibleVerseList = versesList;
+                    setUpAdapter(bibleVerseList,prefs);
+                }
+                hideDialog();
+            });
+            //mViewPager.setCurrentItem(currentPage, false);
         }
         else if ((verseID > 0) && (favouriteVerses == null)){
             //user has clicked on random issue/verse
             pDialog.setMessage("Fetching Verses ...");
             showDialog();
-            new getRandomVerseAsync(verseID).execute();
+            //new getRandomVerseAsync(verseID).execute();
+            viewModel.getSingleBibleVerse(verseID).observe(this, bibleVerses -> {
+                pageCount = bibleVerses.size();
+                setUpAdapter(bibleVerses, prefs);
+                hideDialog();
+            });
 
         } else if ((favouriteVerses != null) && (favouriteVerses.equals("favourites"))){
+            /*if (favVersesList != null) {
+                favVersesList.clear();
+            }*/
             //showing the favorite verses
             pDialog.setMessage("Fetching Verses ...");
             showDialog();
-            new getFavouriteVersesAsync(prefs).execute();
+            //new getFavouriteVersesAsync(prefs).execute();
+            viewModel.getAllFavoriteVerses().observe(this, bibleVerses -> {
+                pageCount = bibleVerses.size();
+                if (favVersesList.size() == 0) {
+                    favVersesList = bibleVerses;
+                    setUpAdapter(favVersesList,prefs);
+                }
+                //setUpAdapter(bibleVerses, prefs);
+                hideDialog();
+            });
         }/*else if ((issueId > 0) && (verseID == 0)){
             //user clicked on issue on the list from favorites list
             new getBibleVersesAsync(issueId).execute();
@@ -205,7 +237,7 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         else {//user is coming from a search query
             pDialog.setMessage("Fetching Verses ...");
             showDialog();
-            new getBibleVersesFromSearchAsync().execute();
+            //new getBibleVersesFromSearchAsync().execute();
         }
 
         //async to do stuff in background
@@ -221,10 +253,10 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         }
     }
 
-    private void setUpAdapter(Cursor c, SharedPreferences preferences){
-        //mViewPager.setOffscreenPageLimit(3);
+    private void setUpAdapter(List<BibleVerseResult> bibleVerseList, SharedPreferences preferences){
+        mViewPager.setOffscreenPageLimit(pageCount);
         final PagerAdapter adapter = new BibleVersesPagerAdapter
-                (getSupportFragmentManager(), c, preferences, null);
+                (getSupportFragmentManager(), bibleVerseList, preferences, null);
         mViewPager.setAdapter(adapter);
         mViewPager.setPageTransformer(true, new ZoomOutPageTransformer());
         mViewPager.addOnPageChangeListener(pageChangeListener);
@@ -238,10 +270,10 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     }
 
     //set up the adapter using version selected
-    private void setAdapter(Cursor c, SharedPreferences preferences,String version){
-        //mViewPager.setOffscreenPageLimit(c.getCount());
+    private void setAdapter(List<BibleVerseResult> bibleVerseList, SharedPreferences preferences,String version){
+        mViewPager.setOffscreenPageLimit(pageCount);
         final PagerAdapter adapter = new BibleVersesPagerAdapter
-                (getSupportFragmentManager(), c, preferences, version);
+                (getSupportFragmentManager(), bibleVerseList, preferences, version);
         mViewPager.setAdapter(adapter);
         mViewPager.setPageTransformer(true, new ZoomOutPageTransformer());
         mViewPager.addOnPageChangeListener(pageChangeListener);
@@ -256,11 +288,9 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
     @Override
     public void onResume(){
         super.onResume();
-        if (!(mViewPager.getAdapter() == null)) {
-
-            mViewPager.getAdapter().notifyDataSetChanged();
-
-        }
+//        if (!(mViewPager.getAdapter() == null)) {
+//            mViewPager.getAdapter().notifyDataSetChanged();
+//        }
 
     }
 /*
@@ -353,290 +383,39 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         //recreate();
         if ((issueId > 0) && (verseID == 0)){
 
-            new getVersesAsync(versionSelected, prefs, issueId).execute();
+            if (bibleVerseList != null) {
+                bibleVerseList.clear();
+            }
+            //new getVersesAsync(versionSelected, prefs, issueId).execute();
+            viewModel.getIssueBibleVerses(issueId).observe(this, versesList -> {
+                pageCount = versesList.size();
+                if (bibleVerseList.size() == 0) {
+                    bibleVerseList = versesList;
+                    setAdapter(bibleVerseList, prefs, versionSelected);
+                }
+                //setAdapter(versesList, prefs, versionSelected);
+                hideDialog();
+            });
         }
         else if ((verseID > 0) && (favouriteVerses == null)){//user has clicked on random issue/verse
+            viewModel.getSingleBibleVerse(verseID).observe(this, bibleVerses -> {
+                pageCount = bibleVerses.size();
+                setAdapter(bibleVerses, prefs, versionSelected);
+                hideDialog();
+            });
 
-            new getSpinnerRandomVerseAsync(versionSelected, prefs, verseID).execute();
+            //new getSpinnerRandomVerseAsync(versionSelected, prefs, verseID).execute();
 
         } else if ((favouriteVerses != null) && (favouriteVerses.equals("favourites"))){
-            new getSpinnerFavouriteVersesAsync(versionSelected,prefs).execute();
+            viewModel.getAllFavoriteVerses().observe(this, bibleVerses -> {
+                pageCount = bibleVerses.size();
+                setAdapter(bibleVerses, prefs, versionSelected);
+                hideDialog();
+            });
+            //new getSpinnerFavouriteVersesAsync(versionSelected,prefs).execute();
         }
         else {//user is coming from a search query
-            new getSpinnerVersesAsyncFromSearch(versionSelected, prefs).execute();
-        }
-    }
-
-    //async task to get verses for a specific issue from db
-    private class getBibleVersesAsync extends AsyncTask<Void, Void, Void> {
-        private int mIssueId;
-
-        public getBibleVersesAsync(int issueId){
-            this.mIssueId = issueId;
-        }
-
-        @Override
-        protected Void doInBackground(Void... argo) {
-            c = viewModel.getBibleVersesForIssue(mIssueId);
-            Log.e(TAG,"Inside bg async cursor "+c.getCount() );
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = c.getCount();
-            if(c.moveToFirst()){
-                setUpAdapter(c, prefs);
-            }
-            hideDialog();
-        }
-    }
-
-    //async task to get verses for a specific issue from db
-    //when user is coming from search query
-    private class getBibleVersesFromSearchAsync extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... argo) {
-            Uri uri = getIntent().getData();
-            cursor = getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null) {
-                cursor.moveToFirst();
-                int iIndex = cursor.getColumnIndexOrThrow("rowid");
-                issueId = cursor.getInt(iIndex);
-                Log.e(TAG, "rowid " + cursor.getColumnIndexOrThrow("rowid"));
-                Log.e(TAG, "issue name index is " + cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME));
-                Log.e(TAG, "value at _id index is " + cursor.getString(0).toLowerCase(Locale.US));
-                c = viewModel.getBibleVersesForIssue(issueId);
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = c.getCount();
-            if(c.moveToFirst()){
-                setUpAdapter(c, prefs);
-            }
-            hideDialog();
-        }
-    }
-
-    //async task to get random verse
-    private class getRandomVerseAsync extends AsyncTask<Void, Void, Void> {
-        private int verseID;
-
-        public getRandomVerseAsync(int verseId){
-            this.verseID = verseId;
-        }
-
-        @Override
-        protected Void doInBackground(Void... arg0) {
-            cursor = viewModel.getSingleVerse(verseID);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = cursor.getCount();
-            if (cursor.moveToFirst()) {
-                issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
-                setUpAdapter(cursor, prefs);
-            }
-            hideDialog();
-            //Toast.makeText(getBaseContext(), "ID= "+ intent.getIntExtra("V-ID",0) , Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    //async task to get content from db from uri
-    private class getVersesUriAsync extends AsyncTask<Uri, Void, Void> {
-        ProgressDialog pd;
-
-        @Override
-        protected void onPreExecute() {
-            pd = ProgressDialog.show(BibleVerses.this, "",
-                    "Switching version...", true, false);
-        }
-
-        @Override
-        protected Void doInBackground(Uri... uri) {
-            cursor = getContentResolver().query(uri[0], null, null, null, null);
-            pd.dismiss();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            cursor.moveToFirst();
-            int iIndex = cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME);
-            issueNameUri = cursor.getString(iIndex).toLowerCase(Locale.US);
-            //Toast.makeText(getApplication(), "issue = " + issueNameUri, Toast.LENGTH_SHORT).show();
-
-        }
-    }
-
-    //async task to switch bible verse version from spinner callback
-    private class getVersesAsync extends AsyncTask<Void, Void, Void> {
-        private String mVersion;
-        private SharedPreferences mPreferences;
-        private int mIssueId;
-        ProgressDialog pd;
-
-        public getVersesAsync(String versionSelected, SharedPreferences prefs, int issueId){
-            this.mVersion = versionSelected;
-            this.mPreferences = prefs;
-            this.mIssueId = issueId;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            pd = ProgressDialog.show(BibleVerses.this, "",
-                    "Switching version...", true, false);
-        }
-
-        @Override
-        protected Void doInBackground(Void... arg) {
-            c = viewModel.getBibleVersesForIssue(mIssueId);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = c.getCount();
-            c.moveToFirst();
-            setAdapter(c, mPreferences, mVersion);
-            pd.dismiss();
-        }
-    }
-
-    //async task to switch bible verse version from spinner callback
-    //if user initially came from a search query
-    private class getSpinnerVersesAsyncFromSearch extends AsyncTask<Void, Void, Void> {
-        private String mVersion;
-        private SharedPreferences mPreferences;
-        ProgressDialog pd;
-
-        public getSpinnerVersesAsyncFromSearch(String versionSelected, SharedPreferences prefs){
-            this.mVersion = versionSelected;
-            this.mPreferences = prefs;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            pd = ProgressDialog.show(BibleVerses.this, "",
-                    "Switching version...", true, false);
-        }
-
-        @Override
-        protected Void doInBackground(Void... arg) {
-            Uri uri = getIntent().getData();
-            cursor = getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null) {
-                cursor.moveToFirst();
-                int iIndex = cursor.getColumnIndexOrThrow("rowid");
-                issueId = cursor.getInt(iIndex);
-                Log.e(TAG, "rowid " + cursor.getColumnIndexOrThrow("rowid"));
-                Log.e(TAG, "issue name index is " + cursor.getColumnIndexOrThrow(DatabaseTable.KEY_ISSUE_NAME));
-                Log.e(TAG, "value at _id index is " + cursor.getString(0).toLowerCase(Locale.US));
-                c = viewModel.getBibleVersesForIssue(issueId);
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = c.getCount();
-            if(c.moveToFirst()) {
-                setAdapter(c, mPreferences, mVersion);
-            }
-            pd.dismiss();
-        }
-    }
-
-    //async task to get favourite verses from db
-    private class getFavouriteVersesAsync extends AsyncTask<Void, Void, Void> {
-        private SharedPreferences mPreferences;
-
-        public getFavouriteVersesAsync(SharedPreferences prefs){
-            this.mPreferences = prefs;
-        }
-
-        @Override
-        protected Void doInBackground(Void... arg0) {
-            c = viewModel.getAllFavouriteVerses();
-            //c = dbhelper.getAllFavouriteVerses();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = c.getCount();
-            c.moveToFirst();
-            setUpAdapter(c, mPreferences);
-            hideDialog();
-        }
-    }
-
-    //async task to switch bible verse version from spinner callback
-    private class getSpinnerRandomVerseAsync extends AsyncTask<Void, Void, Void> {
-        private String mVersion;
-        private SharedPreferences mPreferences;
-        private int mVerseId;
-        ProgressDialog pd;
-
-        public getSpinnerRandomVerseAsync(String versionSelected, SharedPreferences prefs, int verseID){
-            this.mVersion = versionSelected;
-            this.mPreferences = prefs;
-            this.mVerseId = verseID;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            pd = ProgressDialog.show(BibleVerses.this, "",
-                    "Switching version...", true, false);
-        }
-
-        @Override
-        protected Void doInBackground(Void... arg) {
-            cursor = viewModel.getSingleVerse(mVerseId);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = cursor.getCount();
-            if (cursor.moveToFirst()) {
-                issueName = cursor.getString(cursor.getColumnIndex(DatabaseTable.KEY_ISSUE_NAME));
-                setAdapter(cursor, mPreferences, mVersion);
-            }
-            pd.dismiss();
-        }
-    }
-
-    //async task to get favourite verses from db
-    private class getSpinnerFavouriteVersesAsync extends AsyncTask<Void, Void, Void> {
-        private String mVersion;
-        private SharedPreferences mPreferences;
-
-        public getSpinnerFavouriteVersesAsync(String versionSelected, SharedPreferences prefs){
-            this.mVersion = versionSelected;
-            this.mPreferences = prefs;
-        }
-
-        @Override
-        protected Void doInBackground(Void... arg0) {
-            c = viewModel.getAllFavouriteVerses();
-            //c = dbhelper.getAllFavouriteVerses();
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void result) {
-            pageCount = c.getCount();
-            c.moveToFirst();
-            //issueName = favouriteIssueName;
-            setAdapter(c, mPreferences, mVersion);
-
+            //new getSpinnerVersesAsyncFromSearch(versionSelected, prefs).execute();
         }
     }
 

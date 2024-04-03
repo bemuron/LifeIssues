@@ -1,17 +1,19 @@
 package com.lifeissues.lifeissues.models;
 
-import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "bible_verses")
 public class BibleVerse {
 
     @PrimaryKey
-    @NonNull
     @ColumnInfo(name = "_id")
     private int verseId;
+
+    @Ignore
+    private String name;
 
     @ColumnInfo(name = "verse")
     private String mBibleVerse;
@@ -25,11 +27,11 @@ public class BibleVerse {
     @ColumnInfo(name = "amp")
     private String mAMP;
 
-    @ColumnInfo(name = "issue_id")
-    private int mIssueId;
+    @Ignore
+    private int issue_id;
 
-    @ColumnInfo(name = "favourite")
-    private String mFav;
+    @Ignore
+    private int is_favorite;
 
     public int getVerseId() {
         return verseId;
@@ -37,6 +39,14 @@ public class BibleVerse {
 
     public void setVerseId(int verseId) {
         this.verseId = verseId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getBibleVerse() {
@@ -72,18 +82,18 @@ public class BibleVerse {
     }
 
     public int getIssueId() {
-        return mIssueId;
+        return issue_id;
     }
 
     public void setIssueId(int mIssueId) {
-        this.mIssueId = mIssueId;
+        this.issue_id = mIssueId;
     }
 
-    public String getFav() {
-        return mFav;
+    public int getFav() {
+        return is_favorite;
     }
 
-    public void setFav(String mFav) {
-        this.mFav = mFav;
+    public void setFav(int mFav) {
+        this.is_favorite = mFav;
     }
 }

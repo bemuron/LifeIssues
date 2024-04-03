@@ -99,6 +99,37 @@
     </string-array>
 
     <!--Settings Activity -->
+    <string name="pref_title_general">General</string>
+    <string name="pref_title_app_theme">App Theme</string>
+    <string name="pref_app_theme">pref_app_theme</string>
+    <string name="title_app_theme">Set app theme</string>
+    <string name="default_app_theme">System default</string>
+
+
+    <string name="pref_header_safety">Safety</string>
+    <string name="key_privacy_policy">key_privacy_policy</string>
+    <string name="title_privacy_policy">Privacy Policy</string>
+    <string name="key_about_life_issues">key_about_life_issues</string>
+    <string name="title_about_life_issues">About Life Issues</string>
+    <string name="key_logout">key_logout</string>
+    <string name="title_logout">Logout</string>
+    <string name="key_view_profile">key_view_profile</string>
+    <string name="title_view_profile">View Profile</string>
+    <string name="key_share_lifeissues">key_share_fixapp</string>
+    <string name="title_share_lifeissues">Share Life Issues</string>
+
+    <!-- App themes array -->
+    <string-array name="themes">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System default</item>
+    </string-array>
+
+    <string-array name="themesValues">
+        <item>Light</item>
+        <item>Dark</item>
+        <item>System</item>
+    </string-array>
 
     <string name="pref_title_ringtone">Notification Sound</string>
     <string name="pref_ringtone_silent">Silent</string>
@@ -245,6 +276,114 @@
     <string name="notify_new_task_message">A task needs to be reviewed!</string>
     <string name="notify_new_task_title">Task Reminder!</string>
     <string name="issue_image_description">issue image</string>
+    <string name="title_home">Home</string>
+    <string name="title_issue">Issue</string>
+    <string name="title_testimony">Testimonies</string>
+    <string name="title_prayer">Prayer</string>
+    <string name="home_issues_title">Issues</string>
+    <string name="home_testimonies_title">Testimonies</string>
+    <string name="home_prayer_title">Prayer Requests</string>
+    <string name="account">Account</string>
+    <string name="view_all">View All \u3009</string>
+    <string name="welcome">Hello, %1$s</string>
+    <string name="issues_list_instructions">Select an issue to continue</string>
+    <string name="action_issues_search">Search Issue</string>
+    <string name="search_issues_feedback">Showing results for: %1$s</string>
+    <string name="search_issues_no_results_feedback">No results found for: %1$s</string>
+    <string name="testimony_fab_icon">Add Testimony</string>
+    <string name="post_testimony_instructions">Post Your Testimony: Glorify God And Inspire Someone</string>
+    <string name="post_prayer_instructions">Let Us Stand With You In Prayer.</string>
+    <string name="testimony_images_instructions">Upload up to 4 images of your testimony</string>
+    <string name="post_testimony">Post Testimony</string>
+    <string name="issue_category">Issue Category *</string>
+    <string name="testimony_desc_sample">Description *</string>
+    <string name="testimony_title">Title *</string>
+    <string name="prayer_title">Title *</string>
+    <string name="prayer_desc_sample">Description *</string>
+    <string name="prayer_images_instructions">Upload up to 4 images of your prayer request.</string>
+    <string name="post_prayer">Post Prayer Request</string>
+    <string name="edit_details">Edit Details</string>
+    <string name="menu_delete">Delete</string>
+    <string name="action_stats">Statistics</string>
+    <string name="menu_report_job">Report</string>
+    <string name="report_issue_instruction">Report this post if you think it is not appropriate for viewing like nudity, profanity, does not align with the purpose of the app.</string>
+    <string name="report_issue_input">Brief description</string>
+    <string name="title_activity_image_preview">Image Preview</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="menu_edit_profile">Edit Profile</string>
+    <string name="button_save_profile">Update</string>
+    <string name="login_lifeissues">Login</string>
+    <string name="forgot_password_button">Forgot Password</string>
+    <string name="title_activity_my_profile">My Profile</string>
+    <string name="title_prayer_requests">Prayer Request</string>
+    <string name="title_testimony_activity">Post Testimony</string>
+    <string name="empty_testimonies_list">It looks like there are currently no testimonies for viewing.</string>
+    <string name="empty_requests_list">It looks like there are currently no Prayer Requests for viewing.</string>
+    <string name="pref_title_account">Account</string>
+    <string name="title_dev_support">Ongoing Development</string>
+    <string name="summary_dev_support">"Be part of the story. Support the continuous development of the Life Issues App. "</string>
+    <string name="key_dev_support">key_dev_support</string>
+    <string name="give_with_card">Card Payment</string>
+    <string name="pay_mode_title">Payment Method</string>
+    <string name="give_with_mm">Mobile Money (UGX)</string>
+    <string name="hint_give_amount">Enter Amount</string>
+    <string name="give">Give</string>
+    <string name="dev_support_label">Continuous Development</string>
+    <string name="dev_sup_title">Be Part Of the Story</string>
+    <string name="dev_sup_summary">Contribute Towards The Continuous Development Of The Life Issues App.</string>
+    <string name="verse_of_the_day">Verse of the Day</string>
 
-    <!-- End of Strings related to Settings -->
+    <string-array name="categories_default">
+        <item>0</item>
+    </string-array>
+
+    <string-array name="issue_categories">
+        <item>Other</item>
+        <item>Anger</item>
+        <item>Anxiety</item>
+        <item>Abortion</item>
+        <item>Addiction</item>
+        <item>Adultery</item>
+        <item>Believing</item>
+        <item>Betrayal</item>
+        <item>Change</item>
+        <item>Community</item>
+        <item>Compassion</item>
+        <item>Confidence</item>
+        <item>Contentment</item>
+        <item>Courage</item>
+        <item>Endurance</item>
+        <item>Enemies</item>
+        <item>Evil</item>
+        <item>Faith</item>
+        <item>Family</item>
+        <item>Fasting</item>
+        <item>Fear</item>
+        <item>Food</item>
+        <item>Forgiveness</item>
+        <item>Friendship</item>
+        <item>Generosity</item>
+        <item>Gentleness</item>
+        <item>Giving</item>
+        <item>Goodness</item>
+        <item>Gossip</item>
+        <item>Gratitude</item>
+        <item>Greed</item>
+        <item>Healing</item>
+        <item>Health</item>
+        <item>Heart</item>
+        <item>Heaven</item>
+        <item>Holiness</item>
+        <item>Honesty</item>
+        <item>Hope</item>
+        <item>Humility</item>
+        <item>Idols</item>
+        <item>Jesus</item>
+        <item>Joy</item>
+        <item>Judgement</item>
+        <item>Life</item>
+        <item>Listening</item>
+        <item>Love</item>
+        <item>Marriage</item>
+    </string-array>
 </resources>

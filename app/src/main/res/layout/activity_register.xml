@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/bgColor"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="10dp" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp" >
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:src="@mipmap/ic_launcher" />
+
+            <TextView
+                android:id="@+id/registration_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:padding="@dimen/margin_padding_normal"
+                android:textSize="@dimen/text_size_xxnormal"
+                android:textColor="?attr/textColor"
+                android:text="@string/register_on_lifeissues"/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/name"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/firstName"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:hint="@string/hint_first_name"
+                    android:padding="10dp"
+                    android:singleLine="true"
+                    android:textColor="?attr/textColor"
+                    android:inputType="textCapWords" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/register_last_name"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/lastName"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:hint="@string/hint_last_name"
+                    android:padding="10dp"
+                    android:singleLine="true"
+                    android:inputType="textCapWords"
+                    android:textColor="?attr/textColor" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/register_email"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/edit_text_register_email"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:hint="@string/hint_email"
+                    android:inputType="textEmailAddress"
+                    android:padding="10dp"
+                    android:singleLine="true"
+                    android:textColor="?attr/textColor" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/register_password"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                app:passwordToggleEnabled="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/edit_text_register_password"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:hint="@string/hint_password"
+                    android:inputType="textPassword"
+                    android:padding="10dp"
+                    android:singleLine="true"
+                    android:textColor="?attr/textColor" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/confirm_password"
+                android:textColorHint="?attr/hintTextColor"
+                android:theme="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/edit_text_confirm_password"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:hint="@string/confirm_password"
+                    android:inputType="textPassword"
+                    android:padding="10dp"
+                    android:singleLine="true"
+                    android:textColor="?attr/textColor" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Login Button -->
+
+            <Button
+                android:id="@+id/btnRegister"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dip"
+                android:background="#000000"
+                android:text="@string/btn_register"
+                android:textColor="@color/white" />
+
+            <!-- Link to Login Screen -->
+
+            <Button
+                android:id="@+id/btnLinkToLoginScreen"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="40dip"
+                android:background="?android:attr/selectableItemBackground"
+                android:text="@string/btn_link_to_login"
+                android:textAllCaps="false"
+                android:textColor="@color/secondaryLightColor"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

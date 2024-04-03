@@ -1,36 +1,36 @@
 package com.lifeissues.lifeissues.models;
 
-import android.app.SearchManager;
-
-import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.Fts3;
 import androidx.room.PrimaryKey;
 
 import com.lifeissues.lifeissues.data.database.IssuesDao;
 
-@Fts3
 @Entity(tableName = "issues")
 public class Issue {
 
     @PrimaryKey
-    @NonNull
-    @ColumnInfo(name = "rowid")
-    private int rowId;
+    @ColumnInfo(name = "issue_id")
+    private int issue_id;
 
-    @ColumnInfo(name = IssuesDao.KEY_ISSUE_NAME)//name of issue
+    @ColumnInfo(name = IssuesDao.KEY_ISSUE_NAME)//name
     private String issueName;
 
-    @ColumnInfo(name = IssuesDao.KEY_ISSUE_VERSES)//verses
-    private String issueVerses;
+    @ColumnInfo(name = IssuesDao.KEY_ISSUE_DESCRIPTION)//description
+    private String description;
 
-    public int getRowId() {
-        return rowId;
+    @ColumnInfo(name = "image")//image
+    private String image;
+
+    @ColumnInfo(name = "is_favorite")
+    private int is_favorite;
+
+    public int getIssue_id() {
+        return issue_id;
     }
 
-    public void setRowId(int rowId) {
-        this.rowId = rowId;
+    public void setIssue_id(int issue_id) {
+        this.issue_id = issue_id;
     }
 
     public String getIssueName() {
@@ -41,11 +41,27 @@ public class Issue {
         this.issueName = issueName;
     }
 
-    public String getIssueVerses() {
-        return issueVerses;
+    public String getDescription() {
+        return description;
     }
 
-    public void setIssueVerses(String issueVerses) {
-        this.issueVerses = issueVerses;
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public int getIs_favorite() {
+        return is_favorite;
+    }
+
+    public void setIs_favorite(int is_favorite) {
+        this.is_favorite = is_favorite;
     }
 }

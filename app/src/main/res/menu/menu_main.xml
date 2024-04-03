@@ -4,17 +4,6 @@
     tools:context=".ui.activities.MainActivity">
 
     <item
-        android:id="@+id/action_search"
-        android:icon="@drawable/ic_menu_search"
-        android:title="@string/action_search"
-        app:showAsAction="collapseActionView|ifRoom"
-        app:actionViewClass="androidx.appcompat.widget.SearchView" />
-    <item
-        android:id="@+id/action_notes"
-        android:orderInCategory="95"
-        android:title="@string/action_notes"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/action_favorites"
         android:orderInCategory="96"
         android:title="@string/action_favourites"

@@ -14,7 +14,7 @@
         android:layout_above="@id/adView">
 
         <FrameLayout
-            android:id="@+id/article_details_frame"
+            android:id="@+id/testimony_details_frame"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -53,13 +53,13 @@
         android:id="@+id/adView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/article_bottom_actions"
+        android:layout_above="@id/testimony_bottom_actions"
         android:layout_centerHorizontal="true"
         ads:adSize="SMART_BANNER"
         ads:adUnitId="@string/banner_ad_unit_id" />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:id="@+id/article_bottom_actions"
+        android:id="@+id/testimony_bottom_actions"
         android:layout_gravity="bottom"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/action_edit_ad"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:orderInCategory="103"
+        android:textColor="?attr/textColor"
+        android:title="@string/edit_details"
+        android:visible="false"
+        app:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/action_delete_ad"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:orderInCategory="102"
+        android:textColor="?attr/textColor"
+        android:title="@string/menu_delete"
+        android:visible="false"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_stats"
+        android:orderInCategory="101"
+        android:icon="@drawable/ic_menu_stats"
+        android:title="@string/action_stats"
+        android:visible="false"
+        app:showAsAction="collapseActionView|ifRoom" />
+
+    <item
+        android:id="@+id/action_report"
+        android:orderInCategory="100"
+        android:textColor="?attr/textColor"
+        android:title="@string/menu_report_job"
+        app:showAsAction="never" />
+</menu>

@@ -1,62 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="General">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory android:title="@string/pref_title_account">
+
+        <Preference
+            android:key="@string/key_view_profile"
+            android:icon="@drawable/baseline_account_box_24"
+            android:textColor="?attr/textColor"
+            android:title="@string/title_view_profile" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Default Bible Verse">
 
         <ListPreference
             android:defaultValue="@string/default_daily_verse_version"
             android:dialogTitle="@string/title_default_daily_verse_version"
             android:entries="@array/versions"
             android:entryValues="@array/versionsValues"
+            android:icon="@drawable/ic_bible_version"
+            android:textColor="?attr/textColor"
             android:key="@string/key_daily_verse_version"
             android:summary="@string/summary_daily_verse_version"
             android:title="@string/title_default_daily_verse_version" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/pref_title_notifications">
+    <PreferenceCategory android:title="Daily Verse Notification">
 
         <SwitchPreference
             android:defaultValue="false"
             android:key="@string/notifications_new_message"
             android:title="@string/title_new_notification_sound" />
-
-        <com.lifeissues.lifeissues.helpers.TimePreference
+        <Preference
             android:key="@string/key_daily_verse_time"
             android:dependency="notifications_new_message"
+            android:icon="@drawable/baseline_notifications_24"
+            app:useSimpleSummaryProvider="true"
+            android:textColor="?attr/textColor"
             android:title="@string/mood_entry_reminder"
             android:defaultValue="@string/default_mood_entry_time"
-            android:summary="@string/default_mood_entry_time"/>
-<!--
-        <RingtonePreference
-            android:defaultValue="content://settings/system/notification_sound"
-            android:dependency="notifications_new_message"
-            android:key="@string/key_notifications_new_message_ringtone"
-            android:ringtoneType="notification"
-            android:summary="@string/summary_choose_ringtone"
-            android:title="@string/pref_title_ringtone" />
+            android:summary="@string/default_mood_entry_time" />
+    </PreferenceCategory>
 
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="@string/key_vibrate"
-            android:summary="@string/summary_vibrate"
-            android:title="@string/title_vibrate" />
--->
+    <PreferenceCategory android:title="@string/pref_title_general">
+
+        <ListPreference
+            android:defaultValue="@string/default_app_theme"
+            android:dialogTitle="@string/pref_title_app_theme"
+            android:icon="@drawable/baseline_wb_sunny_24"
+            android:textColor="?attr/textColor"
+            android:entries="@array/themes"
+            android:entryValues="@array/themesValues"
+            android:key="@string/pref_app_theme"
+            android:summary="@string/title_app_theme"
+            android:title="@string/pref_title_app_theme" />
+
+        <Preference
+            android:key="@string/key_share_lifeissues"
+            android:icon="@drawable/baseline_share_24"
+            android:textColor="?attr/textColor"
+            android:title="@string/title_share_lifeissues" />
+
+        <Preference
+            android:key="@string/key_about_life_issues"
+            android:icon="@drawable/baseline_info_24"
+            android:textColor="?attr/textColor"
+            app:isPreferenceVisible="false"
+            android:title="@string/title_about_life_issues" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_header_about">
-<!--
-        <Preference
-            android:selectable="false"
-            android:summary="@string/summary_about" />
 
         <Preference
-            android:summary="@string/app_version"
-            android:title="@string/title_version" />
--->
-        <Preference
             android:key="@string/key_send_feedback"
+            android:textColor="?attr/textColor"
+            android:icon="@drawable/baseline_email_24"
             android:summary="@string/summary_support"
             android:title="@string/title_send_feedback" />
+
+        <Preference
+            android:key="@string/key_dev_support"
+            android:icon="@drawable/support"
+            android:textColor="?attr/textColor"
+            android:title="@string/title_dev_support"
+            android:summary="@string/summary_dev_support" />
 <!--
          preference opens url in browser
         <Preference
@@ -66,19 +95,25 @@
                 android:action="android.intent.action.VIEW"
                 android:data="@string/url_faq" />
         </Preference>
+-->
 
-        <Preference android:title="@string/privacy_policy">
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/pref_header_safety">
+        <Preference android:key="@string/key_privacy_policy"
+            android:title="@string/privacy_policy"
+            android:textColor="?attr/textColor"
+            android:icon="@drawable/baseline_security_24">
             <intent
                 android:action="android.intent.action.VIEW"
                 android:data="@string/url_privacy" />
         </Preference>
 
-        <Preference android:title="@string/title_terms">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="@string/url_terms" />
-        </Preference>
-        -->
+        <Preference
+            android:key="@string/key_logout"
+            android:icon="@drawable/baseline_logout_24"
+            app:backgroundTint="#004FCC"
+            android:title="@string/title_logout" />
     </PreferenceCategory>
 
 </PreferenceScreen>

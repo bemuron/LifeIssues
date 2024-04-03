@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="?attr/bgColor"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Statistics"
+        android:padding="@dimen/margin_padding_xnormal"
+        android:textSize="@dimen/text_size_header"
+        android:textColor="?attr/textColor"
+        android:textStyle="bold"
+        android:id="@+id/dialog_title"/>
+
+    <View
+        android:id="@+id/separator_line"
+        android:layout_width="fill_parent"
+        android:layout_height="3dp"
+        android:background="@color/colorAccent"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:paddingTop="@dimen/margin_padding_xnormal"
+        android:paddingRight="@dimen/margin_padding_xnormal"
+        android:paddingLeft="@dimen/margin_padding_xnormal"
+        android:textSize="@dimen/text_size_xxlarge"
+        android:textColor="?attr/textColor"
+        android:id="@+id/dialog_stat_figure"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:padding="@dimen/margin_padding_xnormal"
+        android:textSize="@dimen/text_size_header"
+        android:textColor="?attr/textColor"
+        android:id="@+id/dialog_stat_desc"/>
+
+    <View
+        android:id="@+id/separator_line2"
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="?attr/textColor"/>
+
+</LinearLayout>

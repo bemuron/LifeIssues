@@ -18,7 +18,6 @@ package com.lifeissues.lifeissues.ui.utilities;
 
 import android.content.Context;
 import com.lifeissues.lifeissues.data.LifeIssuesRepository;
-import com.lifeissues.lifeissues.ui.viewmodels.SearchNamesViewModelFactory;
 
 
 /**
@@ -44,11 +43,6 @@ public class InjectorUtils {
         AppExecutors executors = AppExecutors.getInstance();
         return PostFixAppJob.getInstance(context.getApplicationContext(), executors);
     }*/
-
-    public static SearchNamesViewModelFactory provideSearchJobsViewModelFactory(Context context) {
-        LifeIssuesRepository repository = provideRepository(context.getApplicationContext());
-        return new SearchNamesViewModelFactory(repository);
-    }
 
     /*
      * Dependency injection is the idea that you should make required components available

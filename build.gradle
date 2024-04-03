@@ -2,8 +2,8 @@
 
 buildscript {
     repositories {
+        mavenCentral()
         google()
-        jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.3'
@@ -16,8 +16,9 @@ buildscript {
 
 allprojects {
     repositories {
+        mavenCentral()
         google()
-        jcenter()
+        maven { url 'https://jitpack.io' }//added to implement flutterwave sdk and country code picker
     }
 }
 

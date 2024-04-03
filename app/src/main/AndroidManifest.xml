@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.lifeissues.lifeissues">
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.flash"
+        android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".app.AppController"
-        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:allowBackup="false"
+        tools:replace="android:allowBackup"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".ui.activities.NameDetailsActivity"
-            android:exported="false" />
         <!-- AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
@@ -26,103 +35,76 @@
         <activity
             android:name=".ui.activities.MainActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:exported="true"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Receives the search request. -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-                <!-- No category needed, because the Intent will specify this class component -->
-            </intent-filter>
-
-            <!-- Points to searchable meta data. -->
-            <meta-data
-                android:name="android.app.searchable"
-                android:resource="@xml/searchable" />
-        </activity> <!-- Provides search suggestions for words and their definitions. -->
-        <provider
-            android:name=".data.database.IssuesProvider"
-            android:authorities="com.lifeissues.lifeissues.data.database.IssuesProvider" /> <!-- Points to searchable activity so the whole app can invoke search. -->
-        <meta-data
-            android:name="android.app.default_searchable"
-            android:value=".activities.MainActivity" />
-
-        <activity
-            android:name=".ui.activities.BibleNamesDictionaryActivity"
-            android:label="@string/bible_names_activity"
-            android:exported="false"
-            android:launchMode="singleTop">
-
-            <!-- Receives the search request. -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEARCH" />
-                <!-- No category needed, because the Intent will specify this class component -->
-            </intent-filter>
-
-            <!-- Points to searchable meta data. -->
-            <meta-data
-                android:name="android.app.searchable"
-                android:resource="@xml/names_searchable" />
         </activity>
+        <activity
+            android:name=".ui.activities.DeveloperSupportActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:label="@string/dev_support_label"
+            android:parentActivityName=".ui.activities.MainActivity"/>
 
-        <provider
-            android:name=".data.database.NamesProvider"
-            android:authorities="com.lifeissues.lifeissues.data.database.NamesProvider" /> <!-- Note Activity -->
-        <activity
-            android:name=".ui.activities.NoteActivity"
-            android:label="@string/action_notes"
-            android:launchMode="singleTop"
-            android:parentActivityName=".ui.activities.NotesListActivity"
-            android:screenOrientation="portrait" /> <!-- Notes List Activity -->
-        <activity
-            android:name=".ui.activities.NotesListActivity"
-            android:label="@string/action_notes"
-            android:launchMode="singleTop"
-            android:noHistory="true"
-            android:parentActivityName=".ui.activities.MainActivity"
-            android:screenOrientation="portrait" /> <!-- Article Activity -->
         <!-- Bible Verses Activity -->
         <activity
             android:name=".ui.activities.BibleVerses"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:parentActivityName=".ui.activities.MainActivity"
-            android:screenOrientation="portrait" /> <!-- Favourites Activity -->
-        <activity
-            android:name=".ui.activities.FavouritesActivity"
-            android:label="@string/action_favourites"
-            android:launchMode="singleTop"
-            android:parentActivityName=".ui.activities.MainActivity"
-            android:screenOrientation="portrait" /> <!-- Settings Activity -->
-        <activity
-            android:name=".ui.activities.SettingsActivity"
-            android:label="@string/action_settings"
-            android:launchMode="singleTop"
-            android:parentActivityName=".ui.activities.MainActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.activities.IssuesActivity"
+            android:parentActivityName=".ui.activities.MainActivity" />
+        <activity
+            android:name=".ui.activities.ImagePreviewActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_image_preview"
+            android:theme="@style/FullscreenTheme" />
+        <activity
+            android:name=".ui.activities.PostPrayerRequestActivity"
+            android:label="@string/title_prayer_requests"
+            android:parentActivityName=".ui.activities.MainActivity" />
+        <activity
+            android:name=".ui.activities.PostTestimonyActivity"
+            android:label="@string/title_testimony_activity"
+            android:parentActivityName=".ui.activities.MainActivity" />
+        <activity
+            android:name=".ui.activities.PrayerRequestDetailsActivity"
+            android:parentActivityName=".ui.activities.MainActivity" />
+        <activity
+            android:name=".ui.activities.TestimonyDetailsActivity"
+            android:parentActivityName=".ui.activities.MainActivity" />
+        <activity
+            android:name=".ui.activities.MyProfileActivity"
+            android:label="@string/title_activity_my_profile"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ui.activities.LoginActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ui.activities.RegisterActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustPan" />
 
         <receiver
             android:name=".helpers.OnAlarmReceiver"
             android:enabled="true">
         </receiver>
 
-        <receiver
-            android:name=".helpers.OnBootReceiver"
-            android:enabled="true"
-            android:exported="false">
-
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-
-        </receiver>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
     </application>
 
 </manifest>

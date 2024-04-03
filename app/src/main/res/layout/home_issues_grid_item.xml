@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:id="@+id/homeGridItemContainer"
+    android:background="?attr/bgColor"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:cardCornerRadius="8dp"
+        app:cardUseCompatPadding="true"
+        card_view:cardBackgroundColor="?attr/cardBgColor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:id="@+id/event_frame"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/cat_pic"
+                    android:adjustViewBounds="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:scaleType="fitXY"
+                    android:layout_gravity="center_horizontal"/>
+
+                <RelativeLayout
+                    android:id="@+id/fc_caption_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:background="@color/black_overlay">
+
+                    <TextView
+                        android:id="@+id/cat_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:lines="1"
+                        android:fontFamily="sans-serif-light"
+                        android:textSize="@dimen/text_size_xnormal"
+                        android:textStyle="bold"
+                        android:text="Greetings"
+                        android:padding="10dp"
+                        android:textColor="@color/white" />
+
+                </RelativeLayout>
+
+            </FrameLayout>
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

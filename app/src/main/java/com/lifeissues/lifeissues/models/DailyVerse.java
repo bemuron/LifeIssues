@@ -1,6 +1,5 @@
 package com.lifeissues.lifeissues.models;
 
-import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -8,34 +7,26 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "daily_verses")
 public class DailyVerse {
 
+    //@PrimaryKey(autoGenerate = true)
     @PrimaryKey
-    @NonNull
     @ColumnInfo(name = "_id")
+    private int dailyVerseId;
+
+    /**
+    * Added column verse_id
+    * */
+    @ColumnInfo(name = "verse_id")
     private int verseId;
 
-    @ColumnInfo(name = "verse")
-    private String mBibleVerse;
+    /**
+     * Removed columns verse, kjv, msg, amp, issue_name, issue_id, favourite
+     * */
 
-    @ColumnInfo(name = "kjv")
-    private String mKJV;
-
-    @ColumnInfo(name = "msg")
-    private String mMSG;
-
-    @ColumnInfo(name = "amp")
-    private String mAMP;
-
-    @ColumnInfo(name = "issue_name")
-    private String mIssueName;
-
-    @ColumnInfo(name = "issue_id")
-    private int mIssueId;
-
-    @ColumnInfo(name = "favourite")
-    private int mFav;
-
-    @ColumnInfo(name = "date_taken")
-    private String mDateTaken;
+    /**
+     * changed column name from date_taken to notify_date
+     * */
+    @ColumnInfo(name = "notify_date")
+    private String mNotifyDate;
 
     public int getVerseId() {
         return verseId;
@@ -45,67 +36,19 @@ public class DailyVerse {
         this.verseId = verseId;
     }
 
-    public String getBibleVerse() {
-        return mBibleVerse;
+    public int getDailyVerseId() {
+        return dailyVerseId;
     }
 
-    public void setBibleVerse(String mBibleVerse) {
-        this.mBibleVerse = mBibleVerse;
+    public void setDailyVerseId(int dailyVerseId) {
+        this.dailyVerseId = dailyVerseId;
     }
 
-    public String getKJV() {
-        return mKJV;
+    public String getNotifyDate() {
+        return mNotifyDate;
     }
 
-    public void setKJV(String mKJV) {
-        this.mKJV = mKJV;
-    }
-
-    public String getMSG() {
-        return mMSG;
-    }
-
-    public void setMSG(String mMSG) {
-        this.mMSG = mMSG;
-    }
-
-    public String getAMP() {
-        return mAMP;
-    }
-
-    public void setAMP(String mAMP) {
-        this.mAMP = mAMP;
-    }
-
-    public String getIssueName() {
-        return mIssueName;
-    }
-
-    public void setIssueName(String mIssueName) {
-        this.mIssueName = mIssueName;
-    }
-
-    public int getIssueId() {
-        return mIssueId;
-    }
-
-    public void setIssueId(int mIssueId) {
-        this.mIssueId = mIssueId;
-    }
-
-    public int getFav() {
-        return mFav;
-    }
-
-    public void setFav(int mFav) {
-        this.mFav = mFav;
-    }
-
-    public String getDateTaken() {
-        return mDateTaken;
-    }
-
-    public void setDateTaken(String mDateTaken) {
-        this.mDateTaken = mDateTaken;
+    public void setNotifyDate(String mNotifyDate) {
+        this.mNotifyDate = mNotifyDate;
     }
 }

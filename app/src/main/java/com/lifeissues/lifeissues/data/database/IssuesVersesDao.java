@@ -9,6 +9,10 @@ import androidx.room.Query;
 public interface IssuesVersesDao {
 
     //deleting a favourite note from the db
-    @Query("UPDATE notes set favourite = :favVal WHERE _id = :verse_id")
-    int deleteFavouriteNote(String favVal, int verse_id);
+    /*@Query("UPDATE notes set favourite = :favVal WHERE _id = :verse_id")
+    int deleteFavouriteNote(String favVal, int verse_id);*/
+
+    //get the verse ids. For inserting into the daily verse table
+    @Query("SELECT DISTINCT _id, * FROM bible_verses ORDER by random()")
+    Cursor verseIds();
 }

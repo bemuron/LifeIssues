@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/bgColor"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="15dp"
+        android:background="@color/bg_main" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-light"
+        android:textSize="@dimen/text_size_small"
+        android:textColor="?attr/textColor"
+        android:layout_gravity="center_horizontal"
+        android:padding="@dimen/margin_padding_normal"
+        android:textStyle="bold"
+        android:layout_marginBottom="@dimen/margin_padding_small"
+        android:text="@string/report_issue_instruction"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/text_input_report"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="@dimen/margin_padding_normal"
+        android:paddingRight="@dimen/margin_padding_normal"
+        android:textColor="?attr/textColor"
+        app:counterEnabled="true"
+        android:paddingBottom="@dimen/margin_padding_normal"
+        android:paddingTop="@dimen/margin_padding_normal"
+        app:counterMaxLength="500"
+        app:hintEnabled="true">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_report_issue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:hint="@string/report_issue_input"
+            android:inputType="textMultiLine"
+            android:scrollbars="vertical"
+            android:textColor="?attr/textColor"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+</LinearLayout>

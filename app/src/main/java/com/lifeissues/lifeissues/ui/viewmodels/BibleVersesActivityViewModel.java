@@ -5,8 +5,16 @@ import android.database.Cursor;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 
 import com.lifeissues.lifeissues.data.LifeIssuesRepository;
+import com.lifeissues.lifeissues.models.BibleVerse;
+import com.lifeissues.lifeissues.models.BibleVerseResult;
+import com.lifeissues.lifeissues.models.DailyVerse;
+import com.lifeissues.lifeissues.models.Issue;
+import com.lifeissues.lifeissues.models.LifeIssue;
+
+import java.util.List;
 
 public class BibleVersesActivityViewModel extends AndroidViewModel {
     private LifeIssuesRepository issuesRepository;
@@ -21,6 +29,10 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
         return issuesRepository.getBibleVersesForIssue(issueId);
     }
 
+    public LiveData<List<BibleVerseResult>> getIssueBibleVerses(int issueId){
+        return issuesRepository.getIssueBibleVerses(issueId);
+    }
+
     //get a random verse
     public Cursor getRandomVerse(){
         return issuesRepository.getRandomVerse();
@@ -31,9 +43,17 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
         return issuesRepository.getAllFavouriteVerses();
     }
 
+    public LiveData<List<BibleVerseResult>> getAllFavoriteVerses(){
+        return issuesRepository.getAllFavoriteVerses();
+    }
+
     //get a single Bible verse
     public Cursor getSingleVerse(int verseId){
         return issuesRepository.getSingleVerse(verseId);
+    }
+
+    public LiveData<List<BibleVerseResult>> getSingleBibleVerse(int issueId){
+        return issuesRepository.getSingleBibleVerse(issueId);
     }
 
     //add a favorite verse
@@ -46,15 +66,19 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
         issuesRepository.deleteFavVerse(verse_id, issueID);
     }
 
-    //add a favorite daily verse
-    public void setFavorite(int verse_id){
-        issuesRepository.setFavVerse(verse_id);
+    public LiveData<List<BibleVerseResult>> getDailyVerse(String date){
+        return issuesRepository.getDailyVerse(date);
     }
 
+    //add a favorite daily verse
+    /*public void setFavorite(int verse_id){
+        issuesRepository.setFavVerse(verse_id);
+    }*/
+
     //remove a favorite daily verse
-    public void removeFavourite(int verse_id){
+    /*public void removeFavourite(int verse_id){
         issuesRepository.removeFavVerse(verse_id);
-    }
+    }*/
 
     //get number of all Bible verses in the db
     public int getTotNumberOfVerses(){
@@ -62,16 +86,16 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
     }
 
     //adding a daily verse to the db
-    public boolean addDailyVerse(int verse_id, String verse, String kjv, String msg, String amp,
+    /*public boolean addDailyVerse(int verse_id, String verse, String kjv, String msg, String amp,
                               int favValue, String issueName, int issue_id, String dateTaken){
         return issuesRepository.addDailyVerse(verse_id, verse, kjv, msg, amp,
                 favValue, issueName, issue_id, dateTaken);
-    }
+    }*/
 
     //get daily verse
-    public Cursor getDailyVerse(String dateToday){
-        return issuesRepository.getDailyVerse(dateToday);
-    }
+//    public Cursor getDailyVerse(String dateToday){
+//        return issuesRepository.getDailyVerse(dateToday);
+//    }
 
     //check daily verse
     public Cursor checkDailyVerse(String dateToday){
@@ -79,12 +103,16 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
     }
 
     //get issues
-    public Cursor getIssues(){
+    /*public Cursor getIssues(){
+        return issuesRepository.getIssues();
+    }*/
+
+    public LiveData<List<Issue>> getIssues(){
         return issuesRepository.getIssues();
     }
 
     //getting a favourite issue from db
-    public Cursor getFavoriteIssue(String issueName){
+    /*public Cursor getFavoriteIssue(String issueName){
         return issuesRepository.getFavouriteIssue(issueName);
     }
 
@@ -102,20 +130,5 @@ public class BibleVersesActivityViewModel extends AndroidViewModel {
     //get all favorite issues
     public Cursor getAllFavoriteIssues(){
         return issuesRepository.getAllFavoriteIssues();
-    }
-
-    //get all the favourite notes
-    public Cursor getAllFavouriteNotes(){
-        return issuesRepository.getAllFavoriteNotes();
-    }
-
-    //delete favourite note
-    public void deleteFavouriteNote(String favValue, int verseId){
-        issuesRepository.deleteFavNote(favValue,verseId);
-    }
-
-    //add favourite note
-    public void addFavouriteNote(String favValue, int verseId){
-        issuesRepository.deleteFavNote(favValue,verseId);
-    }
+    }*/
 }
