@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -104,6 +104,7 @@
                         android:paddingRight="@dimen/margin_padding_xnormal"
                         android:layout_alignParentLeft="true"
                         android:layout_alignParentStart="true"
+                        app:tint="?attr/textColor"
                         android:src="@drawable/ic_share_black" />
 
                     <ImageView
@@ -128,6 +129,7 @@
                         android:layout_alignParentEnd="true"
                         android:paddingLeft="@dimen/margin_padding_large"
                         android:paddingRight="@dimen/margin_padding_large"
+                        app:tint="?attr/textColor"
                         android:src="@drawable/ic_star_border_black_24dp" />
 
                     <ImageView

@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="?attr/bgColor"
     android:layout_gravity="center_horizontal"
+    android:clipToPadding="false"
     android:paddingLeft="@dimen/margin_padding_normal"
     android:paddingRight="@dimen/margin_padding_normal"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"

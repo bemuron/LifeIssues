@@ -71,6 +71,7 @@
                         app:backgroundTint="?attr/hintTextColor"
                         android:paddingLeft="@dimen/margin_padding_xnormal"
                         android:paddingRight="@dimen/margin_padding_xnormal"
+                        app:tint="?attr/textColor"
                         android:src="@drawable/ic_share_black" />
 
                     <ImageView
@@ -95,6 +96,7 @@
                         android:layout_alignParentEnd="true"
                         android:paddingLeft="@dimen/margin_padding_large"
                         android:paddingRight="@dimen/margin_padding_large"
+                        app:tint="?attr/textColor"
                         android:src="@drawable/ic_star_border_black_24dp" />
 
                     <ImageView

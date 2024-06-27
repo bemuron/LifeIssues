@@ -115,7 +115,7 @@
     <string name="title_logout">Logout</string>
     <string name="key_view_profile">key_view_profile</string>
     <string name="title_view_profile">View Profile</string>
-    <string name="key_share_lifeissues">key_share_fixapp</string>
+    <string name="key_share_lifeissues">key_share_lifeissues</string>
     <string name="title_share_lifeissues">Share Life Issues</string>
 
     <!-- App themes array -->

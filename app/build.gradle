@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
+    compileSdk 33
     //buildToolsVersion '28.0.3'
     //added to support room migrations testing
     sourceSets {
@@ -13,8 +13,8 @@ android {
         applicationId "com.lifeissues.lifeissues"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 14
-        versionName "1.4.8"
+        versionCode 16
+        versionName "1.5.0"
         multiDexEnabled true
         //location of json files used for testing room migrations
         javaCompileOptions {
@@ -39,18 +39,18 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation files('libs/sqliteassethelper-2.0.1.jar')
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.0'
     /*implementation 'com.android.volley:volley:1.1.0'*/
-    implementation 'androidx.browser:browser:1.3.0'
+    implementation 'androidx.browser:browser:1.5.0'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.vectordrawable:vectordrawable:1.1.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.multidex:multidex:2.0.1'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'junit:junit:4.13.1'
 
     //firebase
@@ -68,9 +68,9 @@ dependencies {
     //implementation "androidx.concurrent:concurrent-futures:1.1.0"
 
     // Room components
-    implementation 'androidx.room:room-runtime:2.2.6'
-    annotationProcessor 'androidx.room:room-compiler:2.2.6'
-    testImplementation 'androidx.room:room-testing:2.2.6'
+    implementation 'androidx.room:room-runtime:2.5.0'
+    annotationProcessor 'androidx.room:room-compiler:2.5.0'
+    testImplementation 'androidx.room:room-testing:2.5.0'
 
     //retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.4.0'
@@ -92,17 +92,17 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     // Android Testing Support Library's runner and rules
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     //androidTestImplementation "com.android.support.test:rules:$rootProject.ext.rulesVersion"
 
     //flutterwave dependency provides the drop in ui
     implementation 'com.github.flutterwave.rave-android:rave_android:2.1.39'
 
     //paging
-    implementation 'androidx.paging:paging-runtime:2.1.2'
+    implementation 'androidx.paging:paging-runtime:3.1.1'
 
     //implementation 'androidx.work:work-runtime:2.7.0-alpha05'
-    implementation 'androidx.work:work-runtime:2.7.1'
+    implementation 'androidx.work:work-runtime:2.8.0'
     implementation 'androidx.preference:preference:1.2.1'
 
     // volley

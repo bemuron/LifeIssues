@@ -54,6 +54,8 @@ public abstract class LifeIssuesDatabase extends RoomDatabase {
         if (INSTANCE == null){
             synchronized (LOCK){
                 if (INSTANCE == null){
+                    //delete db
+                    context.deleteDatabase("Life_Issues.db");
                     //create db here
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             LifeIssuesDatabase.class, "Life_Issues.db")

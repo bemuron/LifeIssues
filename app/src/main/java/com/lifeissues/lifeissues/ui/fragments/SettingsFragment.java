@@ -21,7 +21,6 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreference;
 import com.lifeissues.lifeissues.R;
-import com.lifeissues.lifeissues.helpers.TimePreference;
 
 import java.util.Calendar;
 
@@ -57,6 +56,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         findPreference(getString(R.string.key_logout)).setOnPreferenceClickListener(this);
         findPreference(getString(R.string.pref_app_theme)).setOnPreferenceClickListener(this);
         findPreference(getString(R.string.key_about_life_issues)).setOnPreferenceClickListener(this);
+        findPreference(getString(R.string.key_share_lifeissues)).setOnPreferenceClickListener(this);
     }
 
     @Override
@@ -265,6 +265,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             return true;
         }else if (preference.getKey().equals(getString(R.string.key_about_life_issues))){
             clickListener.onSettingsItemClick( getString(R.string.key_about_life_issues));
+            return true;
+        }else if (preference.getKey().equals(getString(R.string.key_share_lifeissues))){
+            clickListener.onSettingsItemClick( getString(R.string.key_share_lifeissues));
+            return true;
+        }else if (preference.getKey().equals(getString(R.string.notifications_new_message))){
+            Log.e(TAG, "Notifications clicked 2");
+            clickListener.onSettingsItemClick( getString(R.string.notifications_new_message));
             return true;
         }
         return false;

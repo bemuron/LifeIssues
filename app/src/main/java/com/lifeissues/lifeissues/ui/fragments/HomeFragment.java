@@ -485,6 +485,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         String notificationEnabledKey = "notifications_new_message";
         boolean isNotify = prefs.getBoolean(notificationEnabledKey, false);
         if (isNotify){
+            //Log.e(TAG, "Notify flag is set");
 
             String verseTimeKey = "key_daily_verse_time";
             String defaultTime = prefs.getString(verseTimeKey, "06:00");
@@ -493,6 +494,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
             Calendar c = Calendar.getInstance();
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
             SimpleDateFormat dateTimeFormat = new SimpleDateFormat("MMM dd, yyyy - hh:mm", Locale.getDefault());
+            SimpleDateFormat hourFormat = new SimpleDateFormat("hh", Locale.getDefault());
+            SimpleDateFormat minFormat = new SimpleDateFormat("mm", Locale.getDefault());
             String currentDate = dateFormat.format(c.getTime());
 
             String reminderDateTime;
@@ -511,7 +514,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
             }
 
             if (c.before(Calendar.getInstance())) {
-                Log.e(TAG,"Time Updated");
+                //Log.e(TAG,"Time Updated");
                 c.add(Calendar.DAY_OF_YEAR, 1);
             }
 

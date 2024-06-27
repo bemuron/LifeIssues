@@ -1,20 +1,26 @@
 package com.lifeissues.lifeissues.ui.activities;
 
+import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.preference.PreferenceManager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
@@ -103,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
         //Toolbar toolbar = findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
         mainActivity = this;
+        createNotificationChannel();
+        checkAndRequestPermissions();
 
         RequestConfiguration requestConfiguration = MobileAds.getRequestConfiguration()
                 .toBuilder()
@@ -241,6 +249,57 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
             }
         }
 
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel( "10002", "DAILY_VERSE_NOTIFICATION", importance);
+            channel.setDescription("Daily Verse Notification");
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private boolean checkAndRequestPermissions(){
+
+        //checking for marshmallow devices and above in order to execute runtime
+        //permissions
+        int currentAPIVersion = Build.VERSION.SDK_INT;
+        if (currentAPIVersion >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (this.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.POST_NOTIFICATIONS}, 22);
+
+                return false;
+            }else{
+                return true;
+            }
+
+        }else {
+            return true;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 22) {
+            if (grantResults.length > 0)
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.e(TAG,"Permission granted");
+                    // permission granted, perform required code
+
+                } else {
+                    Log.e(TAG,"Permission not granted");
+                    Toast.makeText(getApplicationContext(), "Please accept notifications to get a Daily Fresh Verse",
+                            Toast.LENGTH_LONG).show();
+                }
+        }
     }
 
     public void onPrayerRequestClicked(int position, int issueID, String issueName){
@@ -398,13 +457,19 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
                 }
             }
 
-        }else if (  clickedItem.equals(getString(R.string.pref_app_theme))){
+        }else if (clickedItem.equals(getString(R.string.pref_app_theme))){
             isAppThemeChange = true;
         }else if (clickedItem.equals(getString(R.string.key_about_life_issues))){
             AboutLifeIssues.Show(this);
             //intent = new Intent(this, AboutFixAppActivity.class);
             //startActivity(intent);
 
+        }else if (clickedItem.equals(getString(R.string.notifications_new_message))){
+            //Log.e(TAG, "Notifications clicked");
+            if(!checkAndRequestPermissions()){
+                Toast.makeText(getApplicationContext(), "Please accept notifications to get a Daily Fresh Verse",
+                        Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -747,16 +812,8 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
             public void onClick(DialogInterface dialog, int which) {
                 //session.logoutUser();
                 Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                // Closing all the Activities
-                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
-                // Add new Flag to start new Activity
-                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
                 // Starting Login Activity
                 startActivity(i);
-                finish();
             }
         });
         alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -785,18 +842,18 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
                 // The mInterstitialAd reference will be null until
                 // an ad is loaded.
                 MainActivity.this.mInterstitialAd = interstitialAd;
-                Log.i(TAG, "onAdLoaded");
+                //Log.i(TAG, "onAdLoaded");
                 mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback(){
                     @Override
                     public void onAdDismissedFullScreenContent() {
                         // Called when fullscreen content is dismissed.
-                        Log.d("TAG", "The ad was dismissed.");
+                        //Log.d("TAG", "The ad was dismissed.");
                     }
 
                     @Override
                     public void onAdFailedToShowFullScreenContent(AdError adError) {
                         // Called when fullscreen content failed to show.
-                        Log.d("TAG", "The ad failed to show.");
+                        //Log.d("TAG", "The ad failed to show.");
                     }
 
                     @Override
@@ -805,7 +862,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
                         // Make sure to set your reference to null so you don't
                         // show it a second time.
                         mInterstitialAd = null;
-                        Log.d("TAG", "The ad was shown.");
+                        //Log.d("TAG", "The ad was shown.");
                     }
                 });
             }
@@ -813,7 +870,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 // Handle the error
-                Log.i(TAG, loadAdError.getMessage());
+                //Log.i(TAG, loadAdError.getMessage());
                 mInterstitialAd = null;
             }
         });
