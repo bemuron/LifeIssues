@@ -1,0 +1,169 @@
+<resources>
+
+    <!-- Base application theme adding material design components to inherit from a DayNight theme:
+    This ties the app's main theme to the system-controlled night mode flags
+    and gives the app a default dark theme when it is enabled.-->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="bgColor">@color/black</item>
+        <item name="hintTextColor">@color/colorAccent</item>
+        <!--     Our app's background changes to black when dark mode is activated -->
+        <item name="textColor">@color/white</item>
+        <!--     text and button color change to white to contrast with the app's background-->
+        <item name="buttonColor">@color/white</item>
+        <item name="cardBgColor">@color/dark_card_bg_color</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="AlertDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="buttonBarNegativeButtonStyle">@style/NegativeButtonStyle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveButtonStyle</item>
+    </style>
+
+    <style name="NegativeButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="PositiveButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="MySearchViewStyle" parent="Widget.AppCompat.Light.SearchView">
+        <item name="suggestionRowLayout">@layout/result</item>
+        <item name="android:textColor">@android:color/primary_text_light</item>
+    </style>
+
+    <style name="Widget.MaterialComponents.TextInputLayout.OutlinedBox.MyStyle">
+        <item name="boxStrokeColor">@color/white</item>
+        <item name="hintTextColor">@color/secondaryLightColor</item>
+        <item name="colorControlActivated">@color/colorAccent</item>
+    </style>
+
+    <!-- This style is to make the make edit profile dialog fragment appear as full screen-->
+    <style name="AppTheme.FullScreenDialog" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowBackground">@color/black</item>
+        <item name="actionMenuTextColor">@color/black</item>
+    </style>
+
+    <style name="EditTextTheme" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <!--used to make the image preview appear in fullscreen-->
+    <style name="FullscreenTheme" parent="AppTheme">
+        <item name="android:actionBarStyle">@style/FullscreenActionBarStyle</item>
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowBackground">@null</item>
+        <item name="metaButtonBarStyle">?android:attr/buttonBarStyle</item>
+        <item name="metaButtonBarButtonStyle">?android:attr/buttonBarButtonStyle</item>
+    </style>
+
+    <style name="FullscreenActionBarStyle" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/black_overlay</item>
+    </style>
+
+    <!-- This creates an animation when the dialog is opened and closed -->
+    <style name="AppTheme.Slide">
+        <item name="android:windowEnterAnimation">@anim/slide_up</item>
+        <item name="android:windowExitAnimation">@anim/slide_down</item>
+    </style>
+
+    <style name="myAutoCompleteTextViewStyle" parent="Widget.AppCompat.ListView.DropDown">
+        <item name="android:popupBackground">@color/colorPrimary</item>
+    </style>
+
+    <style name="mySearchResult" parent="TextAppearance.AppCompat.SearchResult.Title">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="suggestionsTheme" parent="TextAppearance.AppCompat.Light.SearchResult.Subtitle">
+        <item name="android:background">@color/colorPrimary</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="ButtonTheme" parent="Theme.AppCompat">
+        <item name="colorButtonNormal">@color/colorPrimaryDark</item>
+        <item name="colorControlHighlight">@color/colorPrimary</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" >
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <declare-styleable name="CheckableImageButton">
+        <attr name="is_checked" format="boolean" />
+
+        <attr name="personality">
+            <enum name="radio" value="0" />
+            <enum name="check" value="1" />
+        </attr>
+    </declare-styleable>
+
+    <!-- Flutterwave customized UI appearance -->
+    <style name="FlutterwaveCustomTheme" parent="AppTheme">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/secondaryLightColor</item>
+        <item name="OTPButtonStyle">@style/myOtpBtnStyle</item>
+        <item name="PayButtonStyle">@style/myBtnStyle</item>
+        <item name="PinButtonStyle">@style/myPinButtonStyle</item>
+        <item name="OTPHeaderStyle">@style/myPinHeaderStyle</item>
+        <item name="TabLayoutStyle">@style/myTabLayoutStyle</item>
+        <item name="PinHeaderStyle">@style/myPinHeaderStyle</item>
+        <item name="PaymentTileStyle">@style/myPaymentTileStyle</item>
+        <item name="PaymentTileTextStyle">@style/myPaymentTileTextStyle</item>
+        <item name="PaymentTileDividerStyle">@style/myPaymentTileDividerStyle</item>
+    </style>
+
+    <style name="myPaymentTileTextStyle">
+        <item name="android:textColor">#000000</item>
+    </style>
+
+    <style name="myPaymentTileDividerStyle">
+        <item name="android:textColor">#4a4a4a</item>
+    </style>
+
+    <style name="myPaymentTileStyle">
+        <item name="android:background">#99DCDBDB</item>
+    </style>
+
+    <style name="myTabLayoutStyle">
+        <item name="android:background">#37474f</item>
+    </style>
+
+    <style name="myPinButtonStyle" parent="@android:style/Widget.Button">
+        <item name="android:background">@drawable/black_rounded_corner_button</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="myOtpBtnStyle" parent="@android:style/Widget.Button">
+        <item name="android:background">@drawable/black_rounded_corner_button</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="myBtnStyle" parent="@android:style/Widget.Button">
+        <item name="android:background">@drawable/black_rounded_corner_button</item>
+        <item name="android:textColor">#ffffff</item>
+    </style>
+
+    <style name="myPinHeaderStyle">
+        <item name="android:background">#37474f</item>
+    </style>
+
+</resources>

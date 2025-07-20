@@ -94,20 +94,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         }
     }
 
-    /*@Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-        mListPreference = (ListPreference)  getPreferenceManager().findPreference("preference_key");
-        mListPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                // your code here
-            }
-        });
-
-        return inflater.inflate(R.layout.fragment_settings, container, false);
-    }*/
-
     private void bindPreferenceSummaryToValue(Preference preference) {
         preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
 

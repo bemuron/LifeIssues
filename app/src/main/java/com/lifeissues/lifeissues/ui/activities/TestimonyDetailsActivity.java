@@ -406,34 +406,26 @@ public class TestimonyDetailsActivity extends AppCompatActivity implements View.
     @Override
     public void onClick(View view) {
         int id = view.getId();
-        switch (id){
-            case R.id.share_testimony_icon:
-                shareTestimony();
-                break;
-            case R.id.testimony_fav_yellow:
-                if (!session.isLoggedIn()) {
-                    showLoginNoticeDialog();
-                }else{
-                    mViewModel.unLikeContent(userId, testimonyId, 1);
-                    updateLikeIcon(0);
-                }
-
-                break;
-            case R.id.testimony_fav_black_border:
-                if (session.isLoggedIn()) {
-                    mViewModel.likeContent(userId, testimonyId, 1);
-                    updateLikeIcon(1);
-                }else {
-                    showLoginNoticeDialog();
-                }
-
-                break;
-            case R.id.testimony_details_image:
-                Intent intent = new Intent(this,ImagePreviewActivity.class);
-                intent.putExtra("imageURL", "https://vottademo.emtechint.com/public/assets/images/content/"+imagesList.get(0).getImage_name());
-                startActivity(intent);
-                break;
-
+        if (id == R.id.share_testimony_icon) {
+            shareTestimony();
+        } else if (id == R.id.testimony_fav_yellow) {
+            if (!session.isLoggedIn()) {
+                showLoginNoticeDialog();
+            } else {
+                mViewModel.unLikeContent(userId, testimonyId, 1);
+                updateLikeIcon(0);
+            }
+        } else if (id == R.id.testimony_fav_black_border) {
+            if (session.isLoggedIn()) {
+                mViewModel.likeContent(userId, testimonyId, 1);
+                updateLikeIcon(1);
+            } else {
+                showLoginNoticeDialog();
+            }
+        } else if (id == R.id.testimony_details_image) {
+            Intent intent = new Intent(this, ImagePreviewActivity.class);
+            intent.putExtra("imageURL", "https://vottademo.emtechint.com/public/assets/images/content/" + imagesList.get(0).getImage_name());
+            startActivity(intent);
         }
     }
 

@@ -439,13 +439,8 @@ public class DeveloperSupportActivity extends AppCompatActivity implements Radio
         RadioButton radioButton = radioGroup.findViewById(radioButtonId);
         //payModeSelected = (String)radioButton.getText();
         //Log.i(TAG, "radio selected = "+payModeSelected);
-        switch(checkedId){
-            case R.id.card_payment_radio_button:
-                // do operations specific to this selection
-                break;
-            case R.id.mm_radio_button:
-                // do operations specific to this selection
-                break;
+        if (checkedId == R.id.card_payment_radio_button) {// do operations specific to this selection
+        } else if (checkedId == R.id.mm_radio_button) {// do operations specific to this selection
         }
 
     }

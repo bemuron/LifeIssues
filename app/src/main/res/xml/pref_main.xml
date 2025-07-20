@@ -84,6 +84,7 @@
             android:key="@string/key_dev_support"
             android:icon="@drawable/support"
             android:textColor="?attr/textColor"
+            app:isPreferenceVisible="false"
             app:tint="?attr/textColor"
             android:title="@string/title_dev_support"
             android:summary="@string/summary_dev_support" />

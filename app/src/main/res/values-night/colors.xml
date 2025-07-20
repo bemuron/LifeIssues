@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <color name="colorPrimary">#3e2723</color>
+    <color name="colorPrimaryDark">#1b0000</color>
+    <color name="colorAccent">#870000</color>
+    <color name="primaryLightColor">#6a4f4b</color>
+    <color name="secondaryColor">#bf360c</color>
+    <color name="secondaryLightColor">#f9683a</color>
+    <color name="secondaryDarkColor">#870000</color>
+
+    <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">#fff</color>
+
+<!--    <color name="background_color">#F5F5F5</color>-->
+    <color name="card_bg_color">#ffffff</color>
+    <color name="dark_card_bg_color">#3e2723</color>
+    <color name="whiteTextColor">#ffffff</color>
+
+    <color name="viewBg">#f1f5f8</color>
+    <color name="icon_tint_normal">#7a7a7a</color>
+    <color name="icon_tint_selected">#fed776</color>
+    <color name="black_overlay">#66000000</color>
+    <color name="text_black">#000000</color>
+    <color name="colorNumberOfVerses">#4285f4</color>
+
+    <color name="rounded_button_color">#0B376A</color>
+
+    <color name="bg_login">#26ae90</color>
+    <color name="bg_register">#2e3237</color>
+    <color name="bg_main">#428bca</color>
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="input_login">#222222</color>
+    <color name="input_login_hint">#999999</color>
+    <color name="input_register">#888888</color>
+    <color name="input_register_bg">#3b4148</color>
+    <color name="input_register_hint">#5e6266</color>
+    <color name="btn_login">#26ae90</color>
+    <color name="btn_login_bg">#eceef1</color>
+    <color name="lbl_name">#ffffff</color>
+    <color name="btn_logut_bg">#ff6861</color>
+    <color name="btn_link">#004fcc</color>
+</resources>
