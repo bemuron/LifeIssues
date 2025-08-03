@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
 
     private static final String TAG_FRAGMENT_PRAYER = "tag_frag_prayer";
     private static final String TAG_FRAGMENT_ACCOUNT = "tag_frag_account";
-    private List<Fragment> fragments = new ArrayList<>(5);
+    private List<Fragment> fragments = new ArrayList<>(3);
     private SearchManager searchManager;
     private InterstitialAd mInterstitialAd;
     private AdRequest adRequest;
@@ -320,19 +320,19 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
         switch (currentFragment){
             case 0:
                 bottomNavigationView.setSelectedItemId(R.id.navigation_home);
-                //switchFragment(0,TAG_FRAGMENT_HOME);
                 break;
-            case 1:
+
+            case 2:
+                bottomNavigationView.setSelectedItemId(R.id.navigation_favorites);
+                break;
+            /*case 1:
                 bottomNavigationView.setSelectedItemId(R.id.navigation_testimonies);
-                //switchFragment(2,TAG_FRAGMENT_MY_TASKS);
                 break;
             case 2:
                 bottomNavigationView.setSelectedItemId(R.id.navigation_prayer);
-                //switchFragment(3,TAG_FRAGMENT_MESSAGES);
-                break;
+                break;*/
             case 3:
                 bottomNavigationView.setSelectedItemId(R.id.navigation_account);
-                //switchFragment(4,TAG_FRAGMENT_ACCOUNT);
                 break;
         }
     }
@@ -539,14 +539,14 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
     @Override
     public void viewAllPrayerClick() {
         currentFragment = 2;
-        bottomNavigationView.setSelectedItemId(R.id.navigation_prayer);
+        //bottomNavigationView.setSelectedItemId(R.id.navigation_prayer);
         switchFragment(2, TAG_FRAGMENT_PRAYER);
     }
 
     @Override
     public void viewAllTestimoniesClick() {
         currentFragment = 1;
-        bottomNavigationView.setSelectedItemId(R.id.navigation_testimonies);
+        //bottomNavigationView.setSelectedItemId(R.id.navigation_testimonies);
         switchFragment(1, TAG_FRAGMENT_TESTIMONY);
     }
 
@@ -674,25 +674,31 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
                     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                         int itemId = item.getItemId();
 
-                        Intent intent;
+                        //Intent intent;
                         if (itemId == R.id.navigation_home) {
                             currentFragment = 0;
                             switchFragment(0, TAG_FRAGMENT_HOME);
                             //mTextMessage.setText(R.string.title_home);
                             return true;
-                        }  else if (itemId == R.id.navigation_testimonies) {
+                        }  else if(itemId == R.id.navigation_favorites){
+                            Intent intent = new Intent(MainActivity.getInstance(), BibleVerses.class);
+                            intent.putExtra("favourite_verses", "favourites");
+                            startActivity(intent);
+                        }
+                        /*else if (itemId == R.id.navigation_testimonies) {
                             currentFragment = 1;
-                            switchFragment(1, TAG_FRAGMENT_TESTIMONY);
-
+                            //switchFragment(1, TAG_FRAGMENT_TESTIMONY);
                             return true;
-                        } else if (itemId == R.id.navigation_prayer) {
+                        }
+                        else if (itemId == R.id.navigation_prayer) {
                             currentFragment = 2;
                             switchFragment(2, TAG_FRAGMENT_PRAYER);
 
                             return true;
-                        } else if (itemId == R.id.navigation_account) {
-                            currentFragment = 3;
-                            switchFragment(3, TAG_FRAGMENT_ACCOUNT);
+                        }*/
+                        else if (itemId == R.id.navigation_account) {
+                            currentFragment = 2;
+                            switchFragment(2, TAG_FRAGMENT_ACCOUNT);
                             return true;
                         }
                         return false;
@@ -716,7 +722,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
         SettingsFragment settingsFragment = buildSettingsFragment();
 
         fragments.add(homeFragment);
-        fragments.add(testimonyFragment);
+        //fragments.add(testimonyFragment);
         fragments.add(prayerFragment);
         fragments.add(settingsFragment);
     }

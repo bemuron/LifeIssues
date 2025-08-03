@@ -166,8 +166,10 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
         //isVerseFavoriteAsync tsk = new isVerseFavoriteAsync();
         //tsk.execute(vID, issueId);
 
+        /*Log.d("Favourite Verse", "Current Verse is "+issueName);
+
         //Set title
-        getActivity().setTitle(issueName.substring(0, 1).toUpperCase() + issueName.substring(1));
+        getActivity().setTitle(issueName.substring(0, 1).toUpperCase() + issueName.substring(1));*/
     }
 
     public BibleVersesFragment() {
@@ -244,6 +246,12 @@ public class BibleVersesFragment extends Fragment implements AdapterView.OnItemS
                 verseImageDialog.show();
             }
         });
+
+        Log.d("Favourite Verse", "Current Issue is "+issueName);
+
+        //Set title
+        //getActivity().setTitle(issueName.substring(0, 1).toUpperCase() + issueName.substring(1));
+        //Log.d("Favourite Verse", "Current Issue 2 "+issueName.substring(0, 1).toUpperCase() + issueName.substring(1));
 
         //set the texts
         //if we are in compare mode, display all versions

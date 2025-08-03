@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     card_view:cardBackgroundColor="?attr/cardBgColor"
+    android:fitsSystemWindows="true"
     android:layout_margin="@dimen/card_margin"
     card_view:cardCornerRadius="@dimen/card_margin">
 

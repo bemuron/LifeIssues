@@ -29,7 +29,7 @@ public interface PrayerRequestsDao {
     int prayerRequestsNumber();
 
     @Query("SELECT prayer_id,category_id,prayer_status,prayer_title,prayers_received," +
-            "is_prayed_for,profile_pic,posted_on,posted_by,poster_name,user_name,is_reported" +
+            "is_prayed_for,profile_pic,posted_on,description, image_name,posted_by,poster_name,user_name,is_reported" +
             " FROM prayer_requests ORDER BY posted_on DESC")
     DataSource.Factory<Integer, PrayerRequest> getAllPrayerRequests();
 }

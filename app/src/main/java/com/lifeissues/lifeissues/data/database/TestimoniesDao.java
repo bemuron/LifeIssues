@@ -28,7 +28,7 @@ public interface TestimoniesDao {
     int testimoniesNumber();
 
     @Query("SELECT testimony_id,category_id,testimony_name,content,image_name,posted_by,posted_on," +
-            "is_liked,profile_pic,testimony_status,is_reported,testimony_likes,user_name FROM testimonies " +
+            "is_liked,profile_pic,poster_name,testimony_status,is_reported,testimony_likes,user_name FROM testimonies " +
             "ORDER BY posted_on DESC")
     DataSource.Factory<Integer, Testimony> getAllTestimonies();
 }

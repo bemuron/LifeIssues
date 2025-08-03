@@ -4,6 +4,7 @@ import android.app.Application;
 import android.app.SearchManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.os.AsyncTask;
 import android.provider.BaseColumns;
 import android.util.Log;
 
@@ -32,9 +33,14 @@ import com.lifeissues.lifeissues.ui.activities.PostPrayerRequestActivity;
 import com.lifeissues.lifeissues.ui.activities.PostTestimonyActivity;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 public class LifeIssuesRepository {
     private static final String TAG = LifeIssuesRepository.class.getSimpleName();
@@ -71,9 +77,10 @@ public class LifeIssuesRepository {
         recentRequestsList = testimonyPrayerNetworkActions.getRecentPostedPrayerRequests();
         authenticateUser = AuthenticateUser.getInstance(application,mExecutors);
         instance = this;
+        initializeDailyVerses(db);
 
-        fetchRecentTestimonies();
-        fetchRecentPrayerRequests();
+        //fetchRecentTestimonies();
+        //fetchRecentPrayerRequests();
     }
 
     public static LifeIssuesRepository getInstance(){
@@ -373,6 +380,110 @@ public class LifeIssuesRepository {
             //issuesCursor = issuesDao.getIssues2();
         //});
         return issuesList;
+    }
+
+    // initialize the daily verses
+    public void initializeDailyVerses(LifeIssuesDatabase db) {
+
+        mExecutors.diskIO().execute(() -> {
+            // Define the date format used in your database
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+
+            // Get the current date as a Date object
+            Date today = new Date();
+
+            // Get the latest date from the database
+            String latestDateString = db.dailyVersesDao().getLatestDailyVerseDate();
+
+            // If the table is empty, or the latest date is older than today,
+            // then the table needs to be populated.
+            if (latestDateString == null) {
+                // Table is empty, populate it
+                Log.d("AppInitializer", "Daily verses table is empty. Populating now.");
+                new PopulateDbAsync(db).execute();
+                return;
+            }
+
+            try {
+                Date latestDbDate = dateFormat.parse(latestDateString);
+
+                // Compare the latest date in the DB with today's date
+                if (latestDbDate.before(today)) {
+                    // The last verse is from a past date. Repopulate the table.
+                    Log.d("AppInitializer", "Daily verses are outdated. Repopulating now.");
+                    // Your AsyncTask or other background task to populate the table
+                    new PopulateDbAsync(db).execute();
+                } else {
+                    Log.d("AppInitializer", "Daily verses are up to date.");
+                }
+            } catch (Exception e) {
+                Log.e("AppInitializer", "Error parsing date string", e);
+                // In case of an error, assume it needs repopulation for safety
+                new PopulateDbAsync(db).execute();
+            }
+        });
+    }
+
+    private static class PopulateDbAsync extends AsyncTask<Void, Void, Void> {
+
+        private final LifeIssuesDatabase lifeIssuesDatabase;
+
+        PopulateDbAsync(LifeIssuesDatabase db){
+            lifeIssuesDatabase = db;
+        }
+
+        @Override
+        protected Void doInBackground(final Void... params){
+
+            try {
+                //loadNames(lifeIssuesDatabase);
+                loadDailyVerses(lifeIssuesDatabase);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            Log.d(TAG, "Database content inserted");
+
+            return null;
+        }
+    }
+
+    private static void loadDailyVerses(LifeIssuesDatabase issuesDatabase) throws IOException {
+
+        Log.d(TAG, "Started loading daily verse.");
+
+        Calendar c = Calendar.getInstance();
+        SimpleDateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+
+        //truncate the daily verse table
+        //issuesDatabase.dailyVersesDao().truncateDailyVersesTable();
+
+        //get all the issue ids
+        try (Cursor issueCursor = issuesDatabase.issuesVersesDao().verseIds()) {
+            if (issueCursor != null) {
+                issueCursor.moveToFirst();
+                while (!issueCursor.isAfterLast()) {
+                    String date = df.format(c.getTime());
+                    addDailyVerse(issuesDatabase,
+                            issueCursor.getInt(issueCursor.getColumnIndex("_id")),
+                            date);
+                    c.add(Calendar.DAY_OF_YEAR, 1);
+
+                    issueCursor.moveToNext();
+                }
+
+            }
+        }catch (Exception e){
+            Log.e(TAG, e.getMessage());
+        }
+        Log.d(TAG, "Completed loading daily verse...");
+    }
+
+    private static void addDailyVerse(LifeIssuesDatabase db, int verse_id, String date){
+        DailyVerse dailyVerse = new DailyVerse();
+        dailyVerse.setVerseId(verse_id);
+        dailyVerse.setNotifyDate(date);
+        //db.dailyVersesDao().insertDailyVerseRecord(verse_id, date);
+        db.dailyVersesDao().insertDailyVerse(dailyVerse);
     }
 
     public LiveData<List<Testimony>> getHomeTestimonies(){

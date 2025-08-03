@@ -6,12 +6,11 @@
     xmlns:ads="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".ui.activities.NameDetailsActivity">
+    android:fitsSystemWindows="true"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior">
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/adView">
+        android:layout_height="match_parent">
 
         <FrameLayout
             android:id="@+id/testimony_details_frame"
@@ -48,15 +47,6 @@
             </LinearLayout>
         </FrameLayout>
     </ScrollView>
-
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/testimony_bottom_actions"
-        android:layout_centerHorizontal="true"
-        ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_ad_unit_id" />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/testimony_bottom_actions"

@@ -7,14 +7,20 @@
         android:title="@string/title_home" />
 
     <item
-        android:id="@+id/navigation_testimonies"
-        android:icon="@drawable/ic_action_testimony"
-        android:title="@string/title_testimony" />
+        android:id="@+id/navigation_favorites"
+        android:icon="@android:drawable/star_big_on"
+        android:iconTint="@color/black"
+        android:title="@string/action_favourites" />
 
-    <item
-        android:id="@+id/navigation_prayer"
-        android:icon="@drawable/pray"
-        android:title="@string/title_prayer" />
+<!--    <item-->
+<!--        android:id="@+id/navigation_testimonies"-->
+<!--        android:icon="@drawable/ic_action_testimony"-->
+<!--        android:title="@string/title_testimony" />-->
+
+<!--    <item-->
+<!--        android:id="@+id/navigation_prayer"-->
+<!--        android:icon="@drawable/pray"-->
+<!--        android:title="@string/title_prayer" />-->
 
     <item
         android:id="@+id/navigation_account"

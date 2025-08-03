@@ -1,5 +1,6 @@
 package com.lifeissues.lifeissues.models;
 
+import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
@@ -8,9 +9,13 @@ import androidx.room.PrimaryKey;
 public class DailyVerse {
 
     //@PrimaryKey(autoGenerate = true)
-    @PrimaryKey
-    @ColumnInfo(name = "_id")
-    private int dailyVerseId;
+    /*@ColumnInfo(name = "_id")
+    private int dailyVerseId;*/
+
+    @PrimaryKey()
+    @NonNull
+    @ColumnInfo(name = "notify_date")
+    private String mNotifyDate;
 
     /**
     * Added column verse_id
@@ -25,8 +30,7 @@ public class DailyVerse {
     /**
      * changed column name from date_taken to notify_date
      * */
-    @ColumnInfo(name = "notify_date")
-    private String mNotifyDate;
+
 
     public int getVerseId() {
         return verseId;
@@ -36,13 +40,13 @@ public class DailyVerse {
         this.verseId = verseId;
     }
 
-    public int getDailyVerseId() {
+    /*public int getDailyVerseId() {
         return dailyVerseId;
     }
 
     public void setDailyVerseId(int dailyVerseId) {
         this.dailyVerseId = dailyVerseId;
-    }
+    }*/
 
     public String getNotifyDate() {
         return mNotifyDate;

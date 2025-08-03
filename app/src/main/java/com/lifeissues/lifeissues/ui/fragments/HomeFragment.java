@@ -185,9 +185,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         }
 
         setupIssuesHorizontalAdapter(rootView);
-        setTestimonyAdapter(rootView);
-        setPrayerAdapter(rootView);
-        //setEventsAdapter(rootView);
+        //setTestimonyAdapter(rootView);
+        //setPrayerAdapter(rootView);
 
         viewModel.getIssues().observe(getActivity(),
                 new Observer<List<Issue>>() {
@@ -199,8 +198,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
                     }
                 });
 
-        fetchTestimonyList();
-        fetchPrayerList();
+        //fetchTestimonyList();
+        //fetchPrayerList();
 
         return  rootView;
     }
@@ -235,11 +234,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         viewAllIssues = view.findViewById(R.id.home_issues_view_all_title_tv);
         viewAllIssues.setOnClickListener(this);
 
-        TextView viewAllPrayer = view.findViewById(R.id.home_prayer_view_all_tv);
+        /*TextView viewAllPrayer = view.findViewById(R.id.home_prayer_view_all_tv);
         viewAllPrayer.setOnClickListener(this);
 
         TextView viewAllTestimonies = view.findViewById(R.id.home_testimony_view_all_tv);
-        viewAllTestimonies.setOnClickListener(this);
+        viewAllTestimonies.setOnClickListener(this);*/
 
         verse = (TextView) view.findViewById(R.id.verse);
         //shareImageButton.setClickable(false);
@@ -279,11 +278,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         int id = view.getId();
         if (id == R.id.home_issues_view_all_title_tv) {
             onViewAllIssuesClickListener.allIssuesListClick();
-        }else if(id == R.id.home_testimony_view_all_tv){
+        }
+        /*else if(id == R.id.home_testimony_view_all_tv){
             onViewAllTestimoniesClickListener.viewAllTestimoniesClick();
         } else if (id == R.id.home_prayer_view_all_tv) {
             onViewAllPrayerClickListener.viewAllPrayerClick();
-        }
+        }*/
     }
 
     public interface OnIssueListClickListener {
@@ -309,7 +309,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         });
     }
 
-    private void setTestimonyAdapter(View view)
+    /*private void setTestimonyAdapter(View view)
     {
         testimoniesRecyclerView = view.findViewById(R.id.home_testimonies_rv);
         testimonyAdapter = new HomeTestimonyAdapter(getActivity(),this);
@@ -319,7 +319,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         testimoniesRecyclerView.setLayoutManager(mLayoutManager);
         testimoniesRecyclerView.setItemAnimator(new DefaultItemAnimator());
         testimoniesRecyclerView.setAdapter(testimonyAdapter);
-    }
+    }*/
 
     @Override
     public void onTestimonyRowClicked(int position) {
@@ -350,7 +350,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         });
     }
 
-    private void setPrayerAdapter(View view)
+    /*private void setPrayerAdapter(View view)
     {
         prayerRecyclerView = view.findViewById(R.id.home_prayer_rv);
         homePrayerAdapter = new HomePrayerAdapter(getActivity(),this);
@@ -360,7 +360,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener,
         prayerRecyclerView.setLayoutManager(mLayoutManager);
         prayerRecyclerView.setItemAnimator(new DefaultItemAnimator());
         prayerRecyclerView.setAdapter(homePrayerAdapter);
-    }
+    }*/
 
     @Override
     public void onPrayerRowClicked(int position) {

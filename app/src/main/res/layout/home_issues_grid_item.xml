@@ -36,7 +36,7 @@
                     android:id="@+id/cat_pic"
                     android:adjustViewBounds="true"
                     android:layout_width="match_parent"
-                    android:layout_height="100dp"
+                    android:layout_height="250dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:scaleType="fitXY"
                     android:layout_gravity="center_horizontal"/>

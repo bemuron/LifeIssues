@@ -374,6 +374,12 @@ public class BibleVerses extends AppCompatActivity implements BibleVersesFragmen
         public void onPageSelected(int position) {
             displayMetaInfo(position);
             currentPage = position;
+
+            if (favouriteVerses != null){
+                String issueName = favVersesList.get(position).getName();
+                setTitle(issueName);
+            }
+
         }
 
         @Override

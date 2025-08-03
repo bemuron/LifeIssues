@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <PreferenceCategory android:title="@string/pref_title_account">
+    <PreferenceCategory
+        app:isPreferenceVisible="false"
+        android:title="@string/pref_title_account">
 
         <Preference
             android:key="@string/key_view_profile"
@@ -112,6 +114,7 @@
         </Preference>
 
         <Preference
+            app:isPreferenceVisible="false"
             android:key="@string/key_logout"
             android:icon="@drawable/baseline_logout_24"
             app:backgroundTint="#004FCC"

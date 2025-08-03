@@ -29,11 +29,12 @@ import java.util.Locale;
  * Increased version from 1 - 2 to migrate from db v1(sqlite) to v2(room)
  * Increased version from 2 - 3 to cater for new db structure
  * Increased version from 3 - 4 to add the user table
+ * Increased version from 4 - 5 to modify daily verses table, removing _id, making notify_date primary key
  * */
 @Database(entities = {BibleVerse.class, DailyVerse.class,
         Issue.class, IssueVerse.class, Testimony.class, PrayerRequest.class,
         User.class},
-        version = 4, exportSchema = false)
+        version = 5, exportSchema = false)
 public abstract class LifeIssuesDatabase extends RoomDatabase {
     private static final String TAG = LifeIssuesDatabase.class.getSimpleName();
 
@@ -55,7 +56,7 @@ public abstract class LifeIssuesDatabase extends RoomDatabase {
             synchronized (LOCK){
                 if (INSTANCE == null){
                     //delete db
-                    context.deleteDatabase("Life_Issues.db");
+                    //context.deleteDatabase("Life_Issues.db");
                     //create db here
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                             LifeIssuesDatabase.class, "Life_Issues.db")
@@ -65,6 +66,7 @@ public abstract class LifeIssuesDatabase extends RoomDatabase {
                             .addMigrations(MIGRATION_1_2)
                             .addMigrations(MIGRATION_2_3)
                             .addMigrations(MIGRATION_3_4)
+                            .addMigrations(MIGRATION_4_5)
 
                             //.fallbackToDestructiveMigrationFrom()// used if we dnt want to provide migrations
                             /**
@@ -89,19 +91,19 @@ public abstract class LifeIssuesDatabase extends RoomDatabase {
                 public void onCreate (@NonNull SupportSQLiteDatabase db){
                     super.onCreate(db);
                     Log.e(TAG, "DB onCreate");
-                    /*Log.e(TAG, "starting populating db");
-                    new PopulateDbAsync(INSTANCE).execute();
-                    Log.e(TAG, "populating db");*/
-                }
-
-                @Override
-                public void onOpen(@NonNull SupportSQLiteDatabase db) {
-                    super.onOpen(db);
-                    Log.e(TAG, "DB onOpen");
                     Log.e(TAG, "starting populating db");
                     new PopulateDbAsync(INSTANCE).execute();
                     Log.e(TAG, "populating db");
                 }
+
+                /*@Override
+                public void onOpen(@NonNull SupportSQLiteDatabase db) {
+                    super.onOpen(db);
+                    *//*Log.e(TAG, "DB onOpen");
+                    Log.e(TAG, "starting populating db");
+                    new PopulateDbAsync(INSTANCE).execute();
+                    Log.e(TAG, "populating db");*//*
+                }*/
             };
 
     //migrating from db v1(sqlite) to v2(room)
@@ -176,6 +178,23 @@ public abstract class LifeIssuesDatabase extends RoomDatabase {
         }
     };
 
+    public static final Migration MIGRATION_4_5 = new Migration(4,5) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Step 1: Create a new temporary table with the correct schema
+            database.execSQL("CREATE TABLE `daily_verses_new` (`notify_date` TEXT NOT NULL, `verse_id` INTEGER NOT NULL, PRIMARY KEY(`notify_date`))");
+
+            // Step 2: Copy data from the old table to the new one
+            database.execSQL("INSERT INTO `daily_verses_new` (`notify_date`, `verse_id`) SELECT `notify_date`, `verse_id` FROM `daily_verses`");
+
+            // Step 3: Remove the old table
+            database.execSQL("DROP TABLE `daily_verses`");
+
+            // Step 4: Rename the new table
+            database.execSQL("ALTER TABLE `daily_verses_new` RENAME TO `daily_verses`");
+        }
+    };
+
     //adds the names to the bible_names table
     private static void loadDailyVerses(LifeIssuesDatabase issuesDatabase) throws IOException {
 
@@ -183,6 +202,9 @@ public abstract class LifeIssuesDatabase extends RoomDatabase {
 
         Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+
+        //truncate the daily verse table
+        //issuesDatabase.dailyVersesDao().truncateDailyVersesTable();
 
         //get all the issue ids
         try (Cursor issueCursor = issuesDatabase.issuesVersesDao().verseIds()) {
@@ -207,9 +229,10 @@ public abstract class LifeIssuesDatabase extends RoomDatabase {
 
     private static void addDailyVerse(LifeIssuesDatabase db, int verse_id, String date){
         DailyVerse dailyVerse = new DailyVerse();
-        dailyVerse.setDailyVerseId(verse_id);;
+        dailyVerse.setVerseId(verse_id);
         dailyVerse.setNotifyDate(date);
-        db.dailyVersesDao().insertDailyVerseRecord(verse_id, date);
+        //db.dailyVersesDao().insertDailyVerseRecord(verse_id, date);
+        db.dailyVersesDao().insertDailyVerse(dailyVerse);
     }
 
     //AsyncTask that populates the database
