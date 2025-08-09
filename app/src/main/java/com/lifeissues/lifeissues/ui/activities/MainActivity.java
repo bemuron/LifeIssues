@@ -228,8 +228,8 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnVi
         buildFragmentList();
 
         if (isAppThemeChange){
-            currentFragment = 3;
-            switchFragment(3, TAG_FRAGMENT_ACCOUNT);
+            currentFragment = 2;
+            switchFragment(2, TAG_FRAGMENT_ACCOUNT);
             isAppThemeChange = false;
         }else{
             //set the 0th Fragment to be displayed by default

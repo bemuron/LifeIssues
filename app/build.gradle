@@ -13,8 +13,8 @@ android {
         applicationId "com.lifeissues.lifeissues"
         minSdkVersion 23
         targetSdkVersion 35
-        versionCode 18
-        versionName "1.5.2"
+        versionCode 19
+        versionName "1.5.3"
         multiDexEnabled true
         //location of json files used for testing room migrations
         javaCompileOptions {
