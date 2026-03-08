@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Other app strings ... -->
+
+    <string name="widget_description">Shows a daily verse on your home screen.</string>
+</resources>
