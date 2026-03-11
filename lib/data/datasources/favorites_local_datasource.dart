@@ -19,10 +19,13 @@ class FavoritesLocalDataSourceImpl implements FavoritesLocalDataSource {
           v.${DatabaseHelper.columnKjv},
           v.${DatabaseHelper.columnMsg},
           v.${DatabaseHelper.columnAmp},
-          1 as is_favorite
+          1 as is_favorite,
+          i.${DatabaseHelper.columnName} as issue_name,
+          i.${DatabaseHelper.columnIssueId}
         FROM ${DatabaseHelper.tableBibleVerses} v
         INNER JOIN ${DatabaseHelper.tableIssuesVerses} iv 
           ON v.${DatabaseHelper.columnId} = iv.${DatabaseHelper.columnVerseId}
+        LEFT JOIN ${DatabaseHelper.tableIssues} i ON iv.${DatabaseHelper.columnIssueIdFk} = i.${DatabaseHelper.columnIssueId}
         WHERE iv.${DatabaseHelper.columnIsFavoriteVerse} = 1
         GROUP BY v.${DatabaseHelper.columnId}
         ORDER BY v.${DatabaseHelper.columnVerse} ASC

@@ -115,7 +115,7 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          'Daily Verse',
+                          'Verse of The Day',
                           style:
                           Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: Theme.of(context)
@@ -167,6 +167,30 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
                     maxLines: 6,
                     overflow: TextOverflow.ellipsis,
                   ),
+
+                  // Issue/Category Chip
+                  if (widget.verse.issueName != null) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        Chip(
+                          avatar: Icon(
+                            Icons.category,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          ),
+                          label: Text(widget.verse.issueName!),
+                          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                          labelStyle: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
                   const SizedBox(height: 16),
 
                   // Footer

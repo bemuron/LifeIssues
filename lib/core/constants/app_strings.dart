@@ -14,6 +14,7 @@ class AppStrings {
   static const String randomVerse = 'Get Random Verse';
   static const String browseByIssue = 'Browse by Issue';
   static const String seeAll = 'See All';
+  static const String issues = 'Issues';
 
   // Favorites
   static const String noFavorites = 'No favorites yet';

@@ -101,6 +101,13 @@ class VerseListItem extends StatelessWidget {
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
+
+                  if (verse.issueName != null)
+                    Chip(
+                      label: Text(verse.issueName!, style: TextStyle(fontSize: 11)),
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                    ),
                   const SizedBox(height: 12),
 
                   // Footer

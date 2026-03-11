@@ -52,7 +52,7 @@ class RandomVerseBloc extends Bloc<RandomVerseEvent, RandomVerseState> {
     on<LoadRandomVerse>(_onLoadRandomVerse);
   }
 
-  Future<void> _onLoadRandomVerse(
+  /*Future<void> _onLoadRandomVerse(
       LoadRandomVerse event,
       Emitter<RandomVerseState> emit,
       ) async {
@@ -64,5 +64,19 @@ class RandomVerseBloc extends Bloc<RandomVerseEvent, RandomVerseState> {
           (failure) => emit(RandomVerseError(message: 'Failed to load random verse')),
           (verse) => emit(RandomVerseLoaded(verse: verse)),
     );
+  }*/
+
+  Future<void> _onLoadRandomVerse(
+      LoadRandomVerse event,
+      Emitter<RandomVerseState> emit,
+      ) async {
+    emit(RandomVerseLoading());
+    try {
+      final verse = await getRandomVerse();
+      emit(RandomVerseLoaded(verse: verse));
+    } catch (e) {
+      emit(RandomVerseError(message: 'Failed to load random verse: ${e.toString()}'));
+    }
   }
+
 }

@@ -19,9 +19,9 @@ class VerseRepositoryImpl implements VerseRepository {
     return model.toEntity();
   }
 
-  @override
+  /*@override
   Future<Verse> getRandomVerse() async {
     final model = await localDataSource.getRandomVerse();
     return model.toEntity();
-  }
+  }*/
 }

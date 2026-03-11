@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../domain/entities/issue.dart';
 import '../blocs/issues/issues_bloc.dart';
+import '../widgets/ad_banner_widget.dart';
 import '../widgets/issue_card.dart';
 
 class AllIssuesPage extends StatefulWidget {
@@ -11,23 +13,14 @@ class AllIssuesPage extends StatefulWidget {
   State<AllIssuesPage> createState() => _AllIssuesPageState();
 }
 
-class _AllIssuesPageState extends State<AllIssuesPage>
-    with SingleTickerProviderStateMixin {
+class _AllIssuesPageState extends State<AllIssuesPage> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  late TabController _tabController;
   bool _isGridView = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -86,87 +79,95 @@ class _AllIssuesPageState extends State<AllIssuesPage>
           ),
         ),
       ),
-      body: BlocBuilder<IssuesBloc, IssuesState>(
-        builder: (context, state) {
-          if (state is IssuesLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is IssuesLoaded) {
-            final filteredIssues = _filterIssues(state.issues);
+      body: Column(  // ← WRAP in Column
+        children: [
+          Expanded(  // ← WRAP BlocBuilder in Expanded
+            child: BlocBuilder<IssuesBloc, IssuesState>(
+              builder: (context, state) {
+                if (state is IssuesLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is IssuesLoaded) {
+                  final filteredIssues = _filterIssues(state.issues);
 
-            if (filteredIssues.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.search_off,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No issues found',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Try a different search term',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  if (filteredIssues.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No issues found',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Try a different search term',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }
+                    );
+                  }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<IssuesBloc>().add(LoadIssuesEvent());
-              },
-              child: _isGridView
-                  ? _buildGridView(filteredIssues)
-                  : _buildListView(filteredIssues),
-            );
-          } else if (state is IssuesError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(state.message),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
+                  return RefreshIndicator(
+                    onRefresh: () async {
                       context.read<IssuesBloc>().add(LoadIssuesEvent());
                     },
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        },
+                    child: _isGridView
+                        ? _buildGridView(filteredIssues)
+                        : _buildListView(filteredIssues),
+                  );
+                } else if (state is IssuesError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text(state.message),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.read<IssuesBloc>().add(LoadIssuesEvent());
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+          const AdBannerWidget(), // ← ADD AD BANNER HERE
+        ],
       ),
     );
   }
 
   Widget _buildGridView(List<Issue> issues) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.0,
+    return MasonryGridView.count(
+      crossAxisCount: 3,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 8,
+        bottom: 72, // Space for bottom padding + ad banner
       ),
       itemCount: issues.length,
       itemBuilder: (context, index) {
-        final issue = issues[index];
         return IssueCard(
-          issue: issue,
+          issue: issues[index],
           index: index,
           isGridView: true,
         );
@@ -176,16 +177,20 @@ class _AllIssuesPageState extends State<AllIssuesPage>
 
   Widget _buildListView(List<Issue> issues) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 8,
+        bottom: 72, // Space for bottom padding + ad banner
+      ),
       itemCount: issues.length,
       itemBuilder: (context, index) {
-        final issue = issues[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: SizedBox(
             height: 120,
             child: IssueCard(
-              issue: issue,
+              issue: issues[index],
               index: index,
               isGridView: false,
             ),

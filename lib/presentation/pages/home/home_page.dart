@@ -1,18 +1,36 @@
 // lib/presentation/pages/home/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/services/notification_storage.dart';
 import '../../blocs/daily_verse/daily_verse_bloc.dart';
 import '../../blocs/issues/issues_bloc.dart';
 import '../../blocs/random_verse/random_verse_bloc.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_state.dart';
 import '../../widgets/daily_verse_card.dart';
 import '../../widgets/issue_card.dart';
 import '../../widgets/random_verse_dialog.dart';
+import '../../widgets/community_strip.dart';
 import '../all_issues_page.dart';
+import '../profile/profile_page.dart';
+import '../notifications/notifications_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  Future<int> _getUnreadCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storage = NotificationStorage(prefs);
+    return await storage.getUnreadCount();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +38,53 @@ class HomePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(AppStrings.appName),
         actions: [
+          // Notifications icon (only for authenticated users)
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, authState) {
+              if (authState is Authenticated) {
+                return FutureBuilder<int>(
+                  future: _getUnreadCount(),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data ?? 0;
+
+                    return IconButton(
+                      icon: unreadCount > 0
+                          ? Badge(
+                        label: Text('$unreadCount'),
+                        child: const Icon(Icons.notifications),
+                      )
+                          : const Icon(Icons.notifications),
+                      tooltip: 'Notifications',
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsPage(),
+                          ),
+                        );
+                        // Refresh to update badge
+                        if (mounted) setState(() {});
+                      },
+                    );
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+
+          // Profile icon (always visible)
           IconButton(
-            icon: const Icon(Icons.shuffle),
-            tooltip: 'Random Verse',
-            onPressed: () => _showRandomVerse(context),
+            icon: const Icon(Icons.person),
+            tooltip: 'Profile',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ProfilePage(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -37,6 +98,29 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Greeting Section
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, authState) {
+                    if (authState is Authenticated) {
+                      return Text(
+                        'Hello, ${authState.user.name}',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }
+                    return Text(
+                      'Hello,',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                ),
+              ),
+
               // Daily Verse Section
               BlocBuilder<DailyVerseBloc, DailyVerseState>(
                 builder: (context, state) {
@@ -46,6 +130,21 @@ class HomePage extends StatelessWidget {
                     return DailyVerseCard(verse: state.verse);
                   } else if (state is DailyVerseError) {
                     return _buildErrorCard(context, state.message);
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Community Strip (only for authenticated users)
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, authState) {
+                  if (authState is Authenticated) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: CommunityStrip(),
+                    );
                   }
                   return const SizedBox.shrink();
                 },
@@ -81,7 +180,7 @@ class HomePage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      AppStrings.seeAll,
+                      AppStrings.issues,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -110,16 +209,16 @@ class HomePage extends StatelessWidget {
                     return _buildLoadingIssues();
                   } else if (state is IssuesLoaded) {
                     return SizedBox(
-                      height: 180,
+                      height: 140,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         itemCount: state.issues.length,
                         itemBuilder: (context, index) {
                           return IssueCard(
-                            issue: state.issues[index],
-                            index: index,
-                            isGridView: false
+                              issue: state.issues[index],
+                              index: index,
+                              isGridView: false
                           );
                         },
                       ),
@@ -140,10 +239,26 @@ class HomePage extends StatelessWidget {
   }
 
   void _showRandomVerse(BuildContext context) {
-    context.read<RandomVerseBloc>().add(LoadRandomVerse());
+    // Load a random verse and show it
+    context.read<DailyVerseBloc>().add(LoadRandomVerseEvent());
+
+    // Show dialog with the random verse
     showDialog(
       context: context,
-      builder: (context) => const RandomVerseDialog(),
+      builder: (dialogContext) => BlocBuilder<DailyVerseBloc, DailyVerseState>(
+        builder: (context, state) {
+          if (state is DailyVerseLoaded && state.isRandom) {
+            return RandomVerseDialog(verse: state.verse);
+          }
+
+          return const AlertDialog(
+            content: SizedBox(
+              height: 100,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        },
+      ),
     );
   }
 

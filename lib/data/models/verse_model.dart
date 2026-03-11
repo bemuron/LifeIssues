@@ -5,6 +5,7 @@ class VerseModel extends Verse {
   const VerseModel({
     required super.id,
     required super.reference,
+    super.issueName,
     required super.kjv,
     super.msg,
     super.amp,
@@ -29,6 +30,8 @@ class VerseModel extends Verse {
       msg: msgText ?? fallbackText,
       amp: ampText ?? fallbackText,
       isFavorite: (map['is_favorite'] as int?) == 1,
+      issueName: map['issue_name'] as String? ?? fallbackText,
+      imageUrl: map['image_url'] as String?,
     );
   }
 
@@ -36,55 +39,21 @@ class VerseModel extends Verse {
     return {
       '_id': id,
       'verse': reference,
-      'kjv': kjv,
-      'msg': msg,
-      'amp': amp,
-      'is_favorite': isFavorite ? 1 : 0,
-    };
-  }
-
-  /*factory VerseModel.fromJson(Map<String, dynamic> json) {
-    return VerseModel(
-      id: json['_id'] as String,
-      reference: json['reference'] as String,
-      kjv: json['kjv'] as String,
-      msg: json['msg'] as String?,
-      amp: json['amp'] as String?,
-      imageUrl: json['image_url'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      isFavorite: json['is_favorite'] == 1,
-    );
-  }
-
-  factory VerseModel.fromMap(Map<String, dynamic> map) {
-    return VerseModel(
-      id: map['id'] as String,
-      reference: map['verse'] as String,
-      kjv: map['kjv'] as String,
-      msg: map['msg'] as String,
-      amp: map['amp'] as String,
-      isFavorite: (map['is_favorite'] as int?) == 1,
-      createdAt: DateTime.parse(map['created_at'] as String),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'reference': reference,
+      'issue_name': issueName,
       'kjv': kjv,
       'msg': msg,
       'amp': amp,
       'image_url': imageUrl,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
       'is_favorite': isFavorite ? 1 : 0,
     };
-  }*/
+  }
 
-  /*Verse toEntity() {
+  Verse toEntity() {
     return Verse(
       id: id,
       reference: reference,
+      issueName: issueName,
       kjv: kjv,
       msg: msg,
       amp: amp,
@@ -98,33 +67,12 @@ class VerseModel extends Verse {
     return VerseModel(
       id: verse.id,
       reference: verse.reference,
+      issueName: verse.issueName,
       kjv: verse.kjv,
       msg: verse.msg,
       amp: verse.amp,
       imageUrl: verse.imageUrl,
       createdAt: verse.createdAt,
-      isFavorite: verse.isFavorite,
-    );
-  }*/
-
-  Verse toEntity() {
-    return Verse(
-      id: id,
-      reference: reference,
-      kjv: kjv,
-      msg: msg,
-      amp: amp,
-      isFavorite: isFavorite,
-    );
-  }
-
-  factory VerseModel.fromEntity(Verse verse) {
-    return VerseModel(
-      id: verse.id,
-      reference: verse.reference,
-      kjv: verse.kjv,
-      msg: verse.msg,
-      amp: verse.amp,
       isFavorite: verse.isFavorite,
     );
   }

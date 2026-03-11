@@ -12,9 +12,14 @@ import 'package:life_issues_flutter/presentation/pages/settings/settings_page.da
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_strings.dart';
 import 'core/di/injection_container.dart' as di;
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Mobile Ads SDK
+  await MobileAds.instance.initialize();
+
   await di.init();
   runApp(const LifeIssuesApp());
 }

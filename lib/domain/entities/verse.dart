@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class Verse extends Equatable {
   final int id;
   final String reference;
+  final String? issueName;
   final String kjv;
   final String? msg;
   final String? amp;
@@ -14,6 +15,7 @@ class Verse extends Equatable {
   const Verse({
     required this.id,
     required this.reference,
+    this.issueName,
     required this.kjv,
     this.msg,
     this.amp,
@@ -28,6 +30,7 @@ class Verse extends Equatable {
   Verse copyWith({
     int? id,
     String? reference,
+    String? issueName,
     String? kjv,
     String? msg,
     String? amp,
@@ -38,6 +41,7 @@ class Verse extends Equatable {
     return Verse(
       id: id ?? this.id,
       reference: reference ?? this.reference,
+      issueName: issueName ?? this.issueName,
       kjv: kjv ?? this.kjv,
       msg: msg ?? this.msg,
       amp: amp ?? this.amp,
@@ -51,6 +55,7 @@ class Verse extends Equatable {
   List<Object?> get props => [
     id,
     reference,
+    issueName,
     kjv,
     msg,
     amp,

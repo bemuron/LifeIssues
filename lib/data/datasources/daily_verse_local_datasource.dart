@@ -140,10 +140,15 @@ class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
           v.${DatabaseHelper.columnKjv},
           v.${DatabaseHelper.columnMsg},
           v.${DatabaseHelper.columnAmp},
-          0 as is_favorite
+          0 as is_favorite,
+          i.${DatabaseHelper.columnName} as issue_name,
+          i.${DatabaseHelper.columnIssueId}
         FROM ${DatabaseHelper.tableDailyVerses} dv
         INNER JOIN ${DatabaseHelper.tableBibleVerses} v 
           ON dv.${DatabaseHelper.columnVerseId} = v.${DatabaseHelper.columnId}
+        LEFT JOIN ${DatabaseHelper.tableIssuesVerses} iv 
+          ON v.${DatabaseHelper.columnId} = iv.${DatabaseHelper.columnVerseId}
+        LEFT JOIN ${DatabaseHelper.tableIssues} i ON iv.${DatabaseHelper.columnIssueIdFk} = i.${DatabaseHelper.columnIssueId}
         WHERE dv.${DatabaseHelper.columnNotifyDate} = ?
         LIMIT 1
       ''', [today]);
@@ -184,8 +189,13 @@ class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
           v.${DatabaseHelper.columnKjv},
           v.${DatabaseHelper.columnMsg},
           v.${DatabaseHelper.columnAmp},
-          0 as is_favorite
+          0 as is_favorite,
+          i.${DatabaseHelper.columnName} as issue_name,
+          i.${DatabaseHelper.columnIssueId}
         FROM ${DatabaseHelper.tableBibleVerses} v
+        LEFT JOIN ${DatabaseHelper.tableIssuesVerses} iv 
+          ON v.${DatabaseHelper.columnId} = iv.${DatabaseHelper.columnVerseId}
+        LEFT JOIN ${DatabaseHelper.tableIssues} i ON iv.${DatabaseHelper.columnIssueIdFk} = i.${DatabaseHelper.columnIssueId}
         WHERE v.${DatabaseHelper.columnKjv} IS NOT NULL
         ORDER BY RANDOM()
         LIMIT 1

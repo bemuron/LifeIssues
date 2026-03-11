@@ -6,6 +6,7 @@ import '../../../core/constants/bible_versions.dart';
 import '../../../domain/entities/verse.dart';
 import '../../blocs/favorites/favorites_bloc.dart';
 import '../../blocs/settings/settings_bloc.dart';
+import '../../widgets/ad_banner_widget.dart';
 
 class VerseDetailsPage extends StatefulWidget {
   final Verse verse;
@@ -105,107 +106,152 @@ class _VerseDetailsPageState extends State<VerseDetailsPage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Version Selector
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      body: Column(  // ← WRAP in Column
+        children: [
+          Expanded(  // ← WRAP ScrollView in Expanded
+            child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SegmentedButton<String>(
-                          segments: BibleVersions.versions.entries
-                              .map(
-                                (e) => ButtonSegment(
-                              value: e.key,
-                              label: Text(e.key.toUpperCase()),
+                  // Version Selector
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SegmentedButton<String>(
+                                segments: BibleVersions.versions.entries
+                                    .map(
+                                      (e) => ButtonSegment(
+                                    value: e.key,
+                                    label: Text(e.key.toUpperCase()),
+                                  ),
+                                )
+                                    .toList(),
+                                selected: {_selectedVersion},
+                                onSelectionChanged: (Set<String> newSelection) {
+                                  setState(() {
+                                    _selectedVersion = newSelection.first;
+                                  });
+                                },
+                              ),
                             ),
-                          )
-                              .toList(),
-                          selected: {_selectedVersion},
-                          onSelectionChanged: (Set<String> newSelection) {
-                            setState(() {
-                              _selectedVersion = newSelection.first;
-                            });
-                          },
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                BibleVersions.getVersionName(_selectedVersion),
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                            TextButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _showComparison = !_showComparison;
+                                });
+                              },
+                              icon: Icon(
+                                _showComparison ? Icons.compress : Icons.compare_arrows,
+                                size: 18,
+                              ),
+                              label: Text(_showComparison ? 'Hide' : 'Compare All'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          BibleVersions.getVersionName(_selectedVersion),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _showComparison = !_showComparison;
-                          });
-                        },
-                        icon: Icon(
-                          _showComparison ? Icons.compress : Icons.compare_arrows,
-                          size: 18,
-                        ),
-                        label: Text(_showComparison ? 'Hide' : 'Compare All'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
 
-            // Main Verse Display
-            if (!_showComparison) ...[
-              Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.verse.reference,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
+                  // Issue/Category Display
+                  if (widget.verse.issueName != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.category,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Category',
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  widget.verse.issueName!,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    SelectableText(
-                      _getVerseText(),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        height: 1.6,
-                        fontSize: 18,
+
+                  // Main Verse Display
+                  if (!_showComparison) ...[
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.verse.reference,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SelectableText(
+                            _getVerseText(),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              height: 1.6,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
+
+                  // Comparison View
+                  if (_showComparison) ...[
+                    _buildComparisonSection('King James Version (KJV)', widget.verse.kjv),
+                    const Divider(height: 1),
+                    _buildComparisonSection('The Message (MSG)', widget.verse.msg!),
+                    const Divider(height: 1),
+                    _buildComparisonSection('Amplified Bible (AMP)', widget.verse.amp!),
+                  ],
+
+                  const SizedBox(height: 16), // Space before ad
+                ],
               ),
-            ],
-
-            // Comparison View
-            if (_showComparison) ...[
-              _buildComparisonSection('King James Version (KJV)', widget.verse.kjv),
-              const Divider(height: 1),
-              _buildComparisonSection('The Message (MSG)', widget.verse.msg!),
-              const Divider(height: 1),
-              _buildComparisonSection('Amplified Bible (AMP)', widget.verse.amp!),
-            ],
-
-            const SizedBox(height: 24),
-          ],
-        ),
+            ),
+          ),
+          const AdBannerWidget(), // ← ADD AD BANNER HERE
+        ],
       ),
     );
   }
