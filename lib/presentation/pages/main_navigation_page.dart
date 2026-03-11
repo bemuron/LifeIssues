@@ -2,26 +2,32 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/di/injection_container.dart' as di;
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/auth/auth_event.dart';
 import '../blocs/subscription/subscription_bloc.dart';
 import '../blocs/subscription/subscription_event.dart';
 import 'home/home_page.dart';
-import '../pages/all_issues_page.dart';
+import 'all_issues_page.dart';
 import 'prayers/prayer_feed_page.dart';
 import 'testimonies/testimony_feed_page.dart';
 import 'profile/profile_page.dart';
 
 class MainNavigationPageUpdated extends StatefulWidget {
-  const MainNavigationPageUpdated({Key? key}) : super(key: key);
+  final int initialIndex;
+  final Function(int)? onTabSelected;
+
+  const MainNavigationPageUpdated({
+    Key? key,
+    this.initialIndex = 0,
+    this.onTabSelected,
+  }) : super(key: key);
 
   @override
   State<MainNavigationPageUpdated> createState() => _MainNavigationPageUpdatedState();
 }
 
 class _MainNavigationPageUpdatedState extends State<MainNavigationPageUpdated> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
 
   final List<Widget> _pages = const [
     HomePage(),
@@ -34,9 +40,31 @@ class _MainNavigationPageUpdatedState extends State<MainNavigationPageUpdated> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
+
     // Check auth status and subscription on app launch
     context.read<AuthBloc>().add(CheckAuthStatusEvent());
     context.read<SubscriptionBloc>().add(LoadSubscriptionStatusEvent());
+  }
+
+  @override
+  void didUpdateWidget(MainNavigationPageUpdated oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update selected index when it changes from parent
+    if (widget.initialIndex != oldWidget.initialIndex) {
+      setState(() {
+        _selectedIndex = widget.initialIndex;
+      });
+    }
+  }
+
+  void _onDestinationSelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Notify parent if callback provided
+    widget.onTabSelected?.call(index);
   }
 
   @override
@@ -48,11 +76,7 @@ class _MainNavigationPageUpdatedState extends State<MainNavigationPageUpdated> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+        onDestinationSelected: _onDestinationSelected,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),

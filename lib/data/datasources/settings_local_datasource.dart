@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:life_issues_flutter/core/services/notification_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class SettingsLocalDataSource {
@@ -54,6 +55,23 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
       final prefs = await SharedPreferences.getInstance();
       final current = prefs.getBool(_keyNotificationsEnabled) ?? false;
       final newValue = !current;
+
+      // Get notification time
+      final hour = prefs.getInt(_keyNotificationHour) ?? 9;
+      final minute = prefs.getInt(_keyNotificationMinute) ?? 0;
+      final time = TimeOfDay(hour: hour, minute: minute);
+
+      // Enable or disable notifications with NotificationService
+      if (newValue) {
+        final success = await NotificationHandler().enableDailyNotifications(time);
+        if (!success) {
+          // Permission denied or scheduling failed
+          return false;
+        }
+      } else {
+        await NotificationHandler().disableDailyNotifications();
+      }
+
       await prefs.setBool(_keyNotificationsEnabled, newValue);
       return newValue;
     } catch (e) {
@@ -67,6 +85,12 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_keyNotificationHour, time.hour);
       await prefs.setInt(_keyNotificationMinute, time.minute);
+
+      // Update notification schedule if notifications are enabled
+      final isEnabled = prefs.getBool(_keyNotificationsEnabled) ?? false;
+      if (isEnabled) {
+        await NotificationHandler().updateNotificationTime(time);
+      }
     } catch (e) {
       throw Exception('Failed to save notification time: $e');
     }

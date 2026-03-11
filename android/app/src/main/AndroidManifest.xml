@@ -1,4 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Boot completed permission (for notifications after device restart) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- Wake lock permission (for notifications when device is sleeping) -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
+    <!-- CRITICAL: Schedule exact alarms permission (Android 12+) -->
+    <!-- This is what fixes the "exact_alarms_not_permitted" error -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+    <!-- Alternative permission for apps targeting Android 14+ -->
+    <!--    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>-->
+
+    <!-- Internet permission (usually already present) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="life_issues"
         android:name="${applicationName}"
@@ -25,6 +42,18 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <!-- Daily Verse Widget -->
+        <receiver
+            android:name="com.example.life_issues.DailyVerseWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/daily_verse_widget_info" />
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

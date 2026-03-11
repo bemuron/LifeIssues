@@ -61,7 +61,7 @@ dependencies:
   sign_in_with_apple: ^7.0.1
 
   # Subscriptions (Qonversion instead of RevenueCat)
-  qonversion_flutter: ^5.3.0
+  qonversion_flutter: ^11.3.1
 
   # HTTP & API
   dio: ^5.4.0
@@ -71,6 +71,9 @@ dependencies:
 
   # Utils
   timeago: ^3.6.0
+
+  # Google Fonts
+  google_fonts: ^8.0.2
 
 dev_dependencies:
   flutter_test:

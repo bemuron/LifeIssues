@@ -10,6 +10,7 @@ import '../../blocs/issues/issues_bloc.dart';
 import '../../blocs/random_verse/random_verse_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../../blocs/verses/verses_bloc.dart';
 import '../../widgets/daily_verse_card.dart';
 import '../../widgets/issue_card.dart';
 import '../../widgets/random_verse_dialog.dart';
@@ -240,14 +241,14 @@ class _HomePageState extends State<HomePage> {
 
   void _showRandomVerse(BuildContext context) {
     // Load a random verse and show it
-    context.read<DailyVerseBloc>().add(LoadRandomVerseEvent());
+    context.read<VersesBloc>().add(LoadRandomVerseForHomeEvent());
 
     // Show dialog with the random verse
     showDialog(
       context: context,
-      builder: (dialogContext) => BlocBuilder<DailyVerseBloc, DailyVerseState>(
+      builder: (dialogContext) => BlocBuilder<VersesBloc, VersesState>(
         builder: (context, state) {
-          if (state is DailyVerseLoaded && state.isRandom) {
+          if (state is RandomVerseForHomeLoaded && state.isRandom) {
             return RandomVerseDialog(verse: state.verse);
           }
 

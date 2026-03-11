@@ -3,9 +3,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'dart:io';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../../blocs/settings/settings_bloc.dart';
+import '../../../core/constants/app_strings.dart';
+import '../../../core/constants/bible_versions.dart';
 import '../subscription/subscription_page.dart';
+import '../widget_config_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -15,33 +23,27 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _notificationsEnabled = true;
   bool _prayerNotifications = true;
   bool _testimonyNotifications = true;
-  String _selectedBibleVersion = 'KJV';
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    _loadNotificationSettings();
   }
 
-  Future<void> _loadSettings() async {
+  Future<void> _loadNotificationSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
       _prayerNotifications = prefs.getBool('prayer_notifications') ?? true;
       _testimonyNotifications = prefs.getBool('testimony_notifications') ?? true;
-      _selectedBibleVersion = prefs.getString('bible_version') ?? 'KJV';
     });
   }
 
-  Future<void> _saveSettings() async {
+  Future<void> _saveNotificationSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notifications_enabled', _notificationsEnabled);
     await prefs.setBool('prayer_notifications', _prayerNotifications);
     await prefs.setBool('testimony_notifications', _testimonyNotifications);
-    await prefs.setString('bible_version', _selectedBibleVersion);
   }
 
   @override
@@ -50,259 +52,400 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: ListView(
-        children: [
-          // General Section
-          _buildSectionHeader('General'),
-          ListTile(
-            leading: const Icon(Icons.book),
-            title: const Text('Default Bible Version'),
-            subtitle: Text(_selectedBibleVersion),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _showBibleVersionPicker,
-          ),
-          const Divider(),
-
-          // Notifications Section
-          BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, authState) {
-              if (authState is! Authenticated) {
-                return const SizedBox.shrink();
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionHeader('Notifications'),
-                  SwitchListTile(
-                    secondary: const Icon(Icons.notifications),
-                    title: const Text('Enable Notifications'),
-                    subtitle: const Text('Receive push notifications'),
-                    value: _notificationsEnabled,
-                    onChanged: (value) {
-                      setState(() {
-                        _notificationsEnabled = value;
-                        if (!value) {
-                          _prayerNotifications = false;
-                          _testimonyNotifications = false;
-                        }
-                      });
-                      _saveSettings();
-                    },
-                  ),
-                  if (_notificationsEnabled) ...[
-                    SwitchListTile(
-                      secondary: const Icon(Icons.favorite),
-                      title: const Text('Prayer Notifications'),
-                      subtitle: const Text('When someone prays for you'),
-                      value: _prayerNotifications,
-                      onChanged: (value) {
-                        setState(() {
-                          _prayerNotifications = value;
-                        });
-                        _saveSettings();
-                      },
-                    ),
-                    SwitchListTile(
-                      secondary: const Icon(Icons.auto_awesome),
-                      title: const Text('Testimony Notifications'),
-                      subtitle: const Text('When someone praises your testimony'),
-                      value: _testimonyNotifications,
-                      onChanged: (value) {
-                        setState(() {
-                          _testimonyNotifications = value;
-                        });
-                        _saveSettings();
-                      },
-                    ),
-                  ],
-                  const Divider(),
-                ],
-              );
-            },
-          ),
-
-          // Account Section
-          BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, authState) {
-              if (authState is! Authenticated) {
-                return const SizedBox.shrink();
-              }
-
-              return Column(
-                children: [
-                  _buildSectionHeader('Account'),
-                  ListTile(
-                    leading: const Icon(Icons.stars),
-                    title: const Text('Subscription'),
-                    subtitle: const Text('Manage your subscription'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SubscriptionPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                ],
-              );
-            },
-          ),
-
-          // Support Section
-          _buildSectionHeader('Support'),
-          ListTile(
-            leading: const Icon(Icons.share),
-            title: const Text('Share Life Issues'),
-            subtitle: const Text('Tell others about this app'),
-            onTap: _shareApp,
-          ),
-          ListTile(
-            leading: const Icon(Icons.feedback),
-            title: const Text('Send Feedback'),
-            subtitle: const Text('Help us improve the app'),
-            onTap: _sendFeedback,
-          ),
-          ListTile(
-            leading: const Icon(Icons.privacy_tip),
-            title: const Text('Privacy Policy'),
-            trailing: const Icon(Icons.open_in_new),
-            onTap: _openPrivacyPolicy,
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About Life Issues'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _showAbout,
-          ),
-          const Divider(),
-
-          // App Info
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+      body: BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, state) {
+          if (state is SettingsLoaded) {
+            return ListView(
               children: [
-                Text(
-                  'Life Issues',
-                  style: Theme.of(context).textTheme.titleMedium,
+                const SizedBox(height: 16),
+
+                // General Section
+                _buildSectionHeader(context, 'General'),
+                _buildBibleVersionTile(context, state),
+                _buildThemeTile(context, state),
+                _buildShareAppTile(context),
+
+                const SizedBox(height: 24),
+
+                // Widget Section
+                _buildSectionHeader(context, 'Home Screen Widget'),
+                _buildWidgetConfigTile(context),
+
+                const SizedBox(height: 24),
+
+                // Notifications Section
+                _buildSectionHeader(context, 'Notifications'),
+                _buildDailyVerseNotificationTile(context, state),
+                if (state.notificationsEnabled)
+                  _buildNotificationTimeTile(context, state),
+
+                // Community notifications (for authenticated users)
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, authState) {
+                    if (authState is! Authenticated) {
+                      return const SizedBox.shrink();
+                    }
+
+                    if (!state.notificationsEnabled) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Column(
+                      children: [
+                        SwitchListTile(
+                          secondary: const Icon(Icons.favorite),
+                          title: const Text('Prayer Notifications'),
+                          subtitle: const Text('When someone prays for you'),
+                          value: _prayerNotifications,
+                          onChanged: (value) {
+                            setState(() {
+                              _prayerNotifications = value;
+                            });
+                            _saveNotificationSettings();
+                          },
+                        ),
+                        SwitchListTile(
+                          secondary: const Icon(Icons.auto_awesome),
+                          title: const Text('Testimony Notifications'),
+                          subtitle: const Text('When someone praises your testimony'),
+                          value: _testimonyNotifications,
+                          onChanged: (value) {
+                            setState(() {
+                              _testimonyNotifications = value;
+                            });
+                            _saveNotificationSettings();
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Version 2.0.0',
-                  style: Theme.of(context).textTheme.bodySmall,
+
+                const SizedBox(height: 24),
+
+                // Account Section (for authenticated users)
+                BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, authState) {
+                    if (authState is! Authenticated) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return Column(
+                      children: [
+                        _buildSectionHeader(context, 'Account'),
+                        ListTile(
+                          leading: const Icon(Icons.stars),
+                          title: const Text('Subscription'),
+                          subtitle: const Text('Manage your subscription'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SubscriptionPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Bible verses for life\'s challenges',
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
+
+                // Support Section
+                _buildSectionHeader(context, 'Support'),
+                _buildSendFeedbackTile(context),
+                _buildPrivacyPolicyTile(context),
+                _buildAboutTile(context),
+
+                const SizedBox(height: 24),
+
+                // App Info
+                _buildAppInfo(context),
+
+                const SizedBox(height: 24),
               ],
-            ),
-          ),
-        ],
+            );
+          }
+
+          return const Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
         ),
       ),
     );
   }
 
-  void _showBibleVersionPicker() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              'Select Bible Version',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          _buildVersionOption('KJV', 'King James Version'),
-          _buildVersionOption('MSG', 'The Message'),
-          _buildVersionOption('AMP', 'Amplified Bible'),
-          const SizedBox(height: 16),
-        ],
+  Widget _buildBibleVersionTile(BuildContext context, SettingsLoaded state) {
+    return ListTile(
+      leading: const Icon(Icons.menu_book),
+      title: const Text('Default Bible Version'),
+      subtitle: Text(BibleVersions.getVersionName(state.bibleVersion)),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _showBibleVersionDialog(context, state),
+    );
+  }
+
+  Widget _buildThemeTile(BuildContext context, SettingsLoaded state) {
+    final String themeText = state.isDarkMode ? 'Dark' : 'Light';
+
+    return ListTile(
+      leading: Icon(state.isDarkMode ? Icons.dark_mode : Icons.light_mode),
+      title: const Text('App Theme'),
+      subtitle: Text(themeText),
+      trailing: Switch(
+        value: state.isDarkMode,
+        onChanged: (value) {
+          context.read<SettingsBloc>().add(ToggleThemeEvent());
+        },
       ),
     );
   }
 
-  Widget _buildVersionOption(String code, String name) {
-    final isSelected = _selectedBibleVersion == code;
+  Widget _buildShareAppTile(BuildContext context) {
     return ListTile(
-      title: Text(name),
-      subtitle: Text(code),
-      trailing: isSelected ? const Icon(Icons.check, color: Colors.green) : null,
+      leading: const Icon(Icons.share),
+      title: const Text('Share Life Issues'),
+      subtitle: const Text('Share the app with friends'),
       onTap: () {
-        setState(() {
-          _selectedBibleVersion = code;
-        });
-        _saveSettings();
-        Navigator.pop(context);
+        Share.share(
+          'Check out Life Issues - Bible verses for life situations\n\n'
+              'https://play.google.com/store/apps/details?id=com.lifeissues.lifeissues',
+        );
       },
     );
   }
 
-  void _shareApp() {
-    // TODO: Implement share functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Share functionality coming soon')),
+  Widget _buildWidgetConfigTile(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.widgets),
+      title: const Text('Configure Widget'),
+      subtitle: const Text('Add daily verse to home screen'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const WidgetConfigPage(),
+          ),
+        );
+      },
     );
   }
 
-  void _sendFeedback() {
-    // TODO: Implement feedback functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Feedback functionality coming soon')),
+  Widget _buildDailyVerseNotificationTile(
+      BuildContext context,
+      SettingsLoaded state,
+      ) {
+    return SwitchListTile(
+      secondary: const Icon(Icons.notifications),
+      title: const Text('Daily Verse Notification'),
+      subtitle: const Text('Get a daily Bible verse notification'),
+      value: state.notificationsEnabled,
+      onChanged: (value) {
+        context.read<SettingsBloc>().add(ToggleNotificationsEvent());
+      },
     );
   }
 
-  void _openPrivacyPolicy() {
-    // TODO: Implement privacy policy link
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening privacy policy...')),
+  Widget _buildNotificationTimeTile(
+      BuildContext context,
+      SettingsLoaded state,
+      ) {
+    final time = state.notificationTime;
+    final timeString =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
+    return ListTile(
+      leading: const SizedBox(width: 40), // Indent to align with switch tiles
+      title: const Text('Notification Time'),
+      subtitle: Text(timeString),
+      trailing: const Icon(Icons.access_time),
+      onTap: () => _showTimePicker(context, state),
     );
   }
 
-  void _showAbout() {
-    showAboutDialog(
-      context: context,
-      applicationName: 'Life Issues',
-      applicationVersion: '2.0.0',
-      applicationIcon: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(
-          Icons.menu_book,
-          size: 32,
-          color: Colors.white,
-        ),
+  Widget _buildSendFeedbackTile(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.feedback),
+      title: const Text('Send Feedback'),
+      subtitle: const Text('Help us improve the app'),
+      onTap: () => _sendFeedback(context),
+    );
+  }
+
+  Widget _buildPrivacyPolicyTile(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.privacy_tip),
+      title: const Text('Privacy Policy'),
+      subtitle: const Text('View our privacy policy'),
+      trailing: const Icon(Icons.open_in_new),
+      onTap: () => _openPrivacyPolicy(),
+    );
+  }
+
+  Widget _buildAboutTile(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.info),
+      title: const Text('About Life Issues'),
+      subtitle: const Text('App information and credits'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () {
+        showAboutDialog(
+          context: context,
+          applicationName: AppStrings.appName,
+          applicationVersion: '2.0.0',
+          applicationIcon: const Icon(Icons.menu_book, size: 48),
+          children: [
+            const Text(
+              'Life Issues provides Bible verses for various life situations, '
+                  'helping you find guidance and comfort in God\'s Word. '
+                  'Share prayers and inspire others with your testimony.',
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildAppInfo(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          Text(
+            AppStrings.appName,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Version 2.0.0',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
-      children: [
-        const Text(
-          'Bible verses for life\'s challenges. Find hope, share prayers, and inspire others with your testimony.',
-        ),
-      ],
     );
+  }
+
+  void _showBibleVersionDialog(BuildContext context, SettingsLoaded state) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Select Bible Version'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: BibleVersions.versions.entries.map((entry) {
+            return RadioListTile<String>(
+              title: Text(entry.value),
+              subtitle: Text(entry.key.toUpperCase()),
+              value: entry.key,
+              groupValue: state.bibleVersion,
+              onChanged: (String? value) {
+                if (value != null) {
+                  context.read<SettingsBloc>().add(
+                    UpdateBibleVersionEvent(value),
+                  );
+                  Navigator.pop(dialogContext);
+                }
+              },
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showTimePicker(
+      BuildContext context,
+      SettingsLoaded state,
+      ) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: state.notificationTime,
+    );
+
+    if (picked != null && context.mounted) {
+      context.read<SettingsBloc>().add(
+        UpdateNotificationTimeEvent(picked),
+      );
+    }
+  }
+
+  Future<void> _sendFeedback(BuildContext context) async {
+    // Get device information
+    final deviceInfo = DeviceInfoPlugin();
+    String deviceDetails = '';
+
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceDetails = '''
+Device: ${androidInfo.model}
+Android Version: ${androidInfo.version.release}
+SDK: ${androidInfo.version.sdkInt}
+''';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceDetails = '''
+Device: ${iosInfo.model}
+iOS Version: ${iosInfo.systemVersion}
+''';
+      }
+    } catch (e) {
+      deviceDetails = 'Unable to get device information';
+    }
+
+    final emailUri = Uri(
+      scheme: 'mailto',
+      path: 'support@lifeissues.app',
+      query: Uri.encodeQueryComponent(
+        'subject=Life Issues Feedback&'
+            'body=\n\n\n'
+            '--- Device Information ---\n'
+            '$deviceDetails'
+            'App Version: 2.0.0',
+      ).replaceAll('+', '%20'),
+    );
+
+    if (await canLaunchUrl(emailUri)) {
+      await launchUrl(emailUri);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open email app'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openPrivacyPolicy() async {
+    final Uri url = Uri.parse('https://lifeissues.app/privacy-policy');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
   }
 }

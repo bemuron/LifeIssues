@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:life_issues_flutter/domain/usecases/get_random_verse_for_home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -71,6 +72,7 @@ import '../../domain/usecases/testimonies/delete_testimony.dart';
 import '../../domain/usecases/testimonies/get_my_testimonies.dart';
 
 // Use Cases - Auth
+import '../../presentation/blocs/auth/auth_bloc.dart';
 import '../../domain/usecases/auth/login.dart';
 import '../../domain/usecases/auth/register.dart';
 import '../../domain/usecases/auth/social_login.dart';
@@ -110,14 +112,14 @@ Future<void> init() async {
   // Auth Manager
   sl.registerLazySingleton<AuthManager>(
         () => AuthManager(
-      secureStorage,
-      sharedPreferences,
+      sl(),
+      sl(),
     ),
   );
 
   // API Client
   sl.registerLazySingleton<ApiClient>(
-        () => ApiClient(authManager: sl()),
+        () => ApiClient(sl()),
   );
 
   //! BLoCs
@@ -129,7 +131,10 @@ Future<void> init() async {
 
   sl.registerFactory(() => IssuesBloc(getIssues: sl()));
 
-  sl.registerFactory(() => VersesBloc(getVersesForIssue: sl()));
+  sl.registerFactory(() => VersesBloc(
+    getVersesForIssue: sl(),
+    getRandomVerseForHome: sl(),
+  ));
 
   sl.registerFactory(() => FavoritesBloc(
     getFavoriteVerses: sl(),
@@ -184,6 +189,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetRandomVerse(sl()));
   sl.registerLazySingleton(() => GetIssues(sl()));
   sl.registerLazySingleton(() => GetVersesForIssue(sl()));
+  sl.registerLazySingleton(() => GetRandomVerseForHome(sl()));
   sl.registerLazySingleton(() => GetFavoriteVerses(sl()));
   sl.registerLazySingleton(() => ToggleFavorite(sl()));
   sl.registerLazySingleton(() => GetSettings(sl()));

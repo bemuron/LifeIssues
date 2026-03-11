@@ -4,7 +4,7 @@ import 'database_helper.dart';
 abstract class VerseLocalDataSource {
   Future<List<VerseModel>> getVersesForIssue(int issueId);
   Future<VerseModel> getVerseById(int verseId);
-  //Future<VerseModel> getRandomVerse();
+  Future<VerseModel> getRandomVerseForHome();
 }
 
 class VerseLocalDataSourceImpl implements VerseLocalDataSource {
@@ -67,8 +67,8 @@ class VerseLocalDataSourceImpl implements VerseLocalDataSource {
     }
   }
 
-  /*@override
-  Future<VerseModel> getRandomVerse() async {
+  @override
+  Future<VerseModel> getRandomVerseForHome() async {
     try {
       final db = await DatabaseHelper.database;
 
@@ -114,5 +114,5 @@ class VerseLocalDataSourceImpl implements VerseLocalDataSource {
     } catch (e) {
       throw Exception('Failed to get random verse: $e');
     }
-  }*/
+  }
 }

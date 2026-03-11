@@ -1,6 +1,7 @@
 // lib/presentation/blocs/random_verse/random_verse_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:life_issues_flutter/domain/usecases/get_random_verse_for_home.dart';
 import '../../../domain/entities/verse.dart';
 import '../../../domain/usecases/get_random_verse.dart';
 
@@ -46,7 +47,7 @@ class RandomVerseError extends RandomVerseState {
 
 // BLoC
 class RandomVerseBloc extends Bloc<RandomVerseEvent, RandomVerseState> {
-  final GetRandomVerse getRandomVerse;
+  final GetRandomVerseForHome getRandomVerse;
 
   RandomVerseBloc({required this.getRandomVerse}) : super(RandomVerseInitial()) {
     on<LoadRandomVerse>(_onLoadRandomVerse);
