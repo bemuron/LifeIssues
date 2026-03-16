@@ -5,7 +5,8 @@ import '../../core/network/api_client.dart';
 import '../../core/config/api_config.dart';
 
 abstract class PrayerRemoteDataSource {
-  Future<List<PrayerModel>> getPrayers({int page = 1, String? category});
+  Future<List<PrayerModel>> getPrayers({int page = 1, String? category, String? sortBy,
+    bool? hasPrayers});
   Future<PrayerModel> getPrayerById(int id);
   Future<PrayerModel> submitPrayer({
     required String body,
@@ -23,7 +24,8 @@ class PrayerRemoteDataSourceImpl implements PrayerRemoteDataSource {
   PrayerRemoteDataSourceImpl({required this.apiClient});
 
   @override
-  Future<List<PrayerModel>> getPrayers({int page = 1, String? category}) async {
+  Future<List<PrayerModel>> getPrayers({int page = 1, String? category, String? sortBy,
+    bool? hasPrayers,}) async {
     final queryParams = <String, dynamic>{
       'page': page,
       'per_page': ApiConfig.defaultPageSize,
@@ -31,6 +33,14 @@ class PrayerRemoteDataSourceImpl implements PrayerRemoteDataSource {
 
     if (category != null && category.isNotEmpty) {
       queryParams['category'] = category;
+    }
+
+    if (sortBy != null) {
+      queryParams['sort'] = sortBy; // 'newest', 'oldest', 'needs_prayer'
+    }
+
+    if (hasPrayers != null) {
+      queryParams['has_prayers'] = hasPrayers ? '1' : '0';
     }
 
     final response = await apiClient.get(

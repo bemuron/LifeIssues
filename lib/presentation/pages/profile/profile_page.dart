@@ -14,6 +14,7 @@ import '../../blocs/testimony/testimony_event.dart';
 import '../../blocs/testimony/testimony_state.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_state.dart';
+import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/prayer_card.dart';
 import '../../widgets/testimony_card.dart';
 import '../auth/login_page.dart';
@@ -46,6 +47,44 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildUnauthenticatedView(BuildContext context) {
+    // Unauthenticated => show ad
+    const showAd = true;
+
+    final content = Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.person_outline,
+            size: 64,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Login to view your profile',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Access your prayers and testimonies',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+              );
+            },
+            child: const Text('Login'),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -61,39 +100,23 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.person_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+      body: Stack(
+        children: [
+          // Add bottom padding so content isn't covered
+          Positioned.fill(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: showAd ? 70 : 0),
+              child: content,
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Login to view your profile',
-              style: Theme.of(context).textTheme.titleLarge,
+          ),
+          if (showAd)
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: AdBannerWidget(),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Access your prayers and testimonies',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                );
-              },
-              child: const Text('Login'),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

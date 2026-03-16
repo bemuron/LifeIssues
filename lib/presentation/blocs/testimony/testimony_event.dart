@@ -10,30 +10,58 @@ abstract class TestimonyEvent extends Equatable {
 class LoadTestimoniesEvent extends TestimonyEvent {
   final int page;
   final String? category;
+  final String? sortBy; // 'newest', 'oldest', 'most_praised'
+  final bool? linkedToPrayer; // null = all, true = linked, false = standalone
+  final bool? hasPraise; // null = all, true = has praise, false = no praise yet
   final bool isRefresh;
 
   LoadTestimoniesEvent({
     this.page = 1,
     this.category,
+    this.sortBy,
+    this.linkedToPrayer,
+    this.hasPraise,
     this.isRefresh = false,
   });
 
   @override
-  List<Object?> get props => [page, category, isRefresh];
+  List<Object?> get props => [page, category, sortBy, linkedToPrayer, hasPraise, isRefresh];
 }
 
 class LoadMoreTestimoniesEvent extends TestimonyEvent {
   final int page;
   final String? category;
+  final String? sortBy;
+  final bool? linkedToPrayer;
+  final bool? hasPraise;
 
   LoadMoreTestimoniesEvent({
     required this.page,
     this.category,
+    this.sortBy,
+    this.linkedToPrayer,
+    this.hasPraise,
   });
 
   @override
-  List<Object?> get props => [page, category];
+  List<Object?> get props => [page, category, sortBy, linkedToPrayer, hasPraise];
 }
+
+class ApplyTestimonyFiltersEvent extends TestimonyEvent {
+  final String? sortBy;
+  final bool? linkedToPrayer;
+  final bool? hasPraise;
+  final String? category;
+
+  ApplyTestimonyFiltersEvent({
+    this.sortBy,
+    this.linkedToPrayer,
+    this.hasPraise,
+    this.category,
+  });
+}
+
+class ClearTestimonyFiltersEvent extends TestimonyEvent {}
 
 class LoadTestimonyByIdEvent extends TestimonyEvent {
   final int testimonyId;

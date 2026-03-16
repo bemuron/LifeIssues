@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/entities/verse.dart';
 import '../blocs/favorites/favorites_bloc.dart';
@@ -66,6 +67,10 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
             ? settingsState.bibleVersion
             : 'kjv';
         final verseText = _getVerseText(version);
+
+        // Today's date formatted the same way it would appear in a Bible app,
+        // e.g. "Sunday, March 15, 2026"
+        final today = DateFormat('EEEE, MMMM d, y').format(DateTime.now());
 
         return Card(
           margin: const EdgeInsets.all(16),
@@ -145,6 +150,37 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
                       ),
                     ],
                   ),
+
+                  // ── Date ──────────────────────────────────────────────
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 13,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onPrimaryContainer
+                            .withOpacity(0.65),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        today,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
+                            ?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer
+                              .withOpacity(0.65),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // ── End date ──────────────────────────────────────────
+
                   const SizedBox(height: 16),
 
                   // Reference

@@ -111,7 +111,7 @@ class LifeIssuesApp extends StatelessWidget {
   }
 
   ThemeData _buildLightTheme() {
-    final textTheme = GoogleFonts.loraTextTheme();
+    final textTheme = GoogleFonts.robotoSlabTextTheme();
 
     return ThemeData(
       useMaterial3: true,
@@ -125,7 +125,7 @@ class LifeIssuesApp extends StatelessWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
-        titleTextStyle: GoogleFonts.lora(
+        titleTextStyle: GoogleFonts.robotoSlab(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -142,14 +142,14 @@ class LifeIssuesApp extends StatelessWidget {
         unselectedItemColor: AppColors.textSecondary,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: GoogleFonts.lora(fontSize: 12),
-        unselectedLabelStyle: GoogleFonts.lora(fontSize: 12),
+        selectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
+        unselectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
       ),
     );
   }
 
   ThemeData _buildDarkTheme() {
-    final textTheme = GoogleFonts.loraTextTheme(ThemeData.dark().textTheme);
+    final textTheme = GoogleFonts.robotoSlabTextTheme(ThemeData.dark().textTheme);
 
     return ThemeData(
       useMaterial3: true,
@@ -163,7 +163,7 @@ class LifeIssuesApp extends StatelessWidget {
         backgroundColor: AppColors.darkSurface,
         foregroundColor: AppColors.darkTextPrimary,
         elevation: 0,
-        titleTextStyle: GoogleFonts.lora(
+        titleTextStyle: GoogleFonts.robotoSlab(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.darkTextPrimary,
@@ -182,8 +182,8 @@ class LifeIssuesApp extends StatelessWidget {
         unselectedItemColor: AppColors.darkTextSecondary,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: GoogleFonts.lora(fontSize: 12),
-        unselectedLabelStyle: GoogleFonts.lora(fontSize: 12),
+        selectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
+        unselectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
       ),
     );
   }

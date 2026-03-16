@@ -29,7 +29,9 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
     return issues
         .where((issue) =>
     issue.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-        issue.description.toLowerCase().contains(_searchQuery.toLowerCase()))
+        issue.description
+            .toLowerCase()
+            .contains(_searchQuery.toLowerCase()))
         .toList();
   }
 
@@ -79,9 +81,9 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
           ),
         ),
       ),
-      body: Column(  // ← WRAP in Column
+      body: Column(
         children: [
-          Expanded(  // ← WRAP BlocBuilder in Expanded
+          Expanded(
             child: BlocBuilder<IssuesBloc, IssuesState>(
               builder: (context, state) {
                 if (state is IssuesLoading) {
@@ -107,8 +109,13 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
                           const SizedBox(height: 8),
                           Text(
                             'Try a different search term',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -129,13 +136,16 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        const Icon(Icons.error_outline,
+                            size: 64, color: Colors.red),
                         const SizedBox(height: 16),
                         Text(state.message),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
-                            context.read<IssuesBloc>().add(LoadIssuesEvent());
+                            context
+                                .read<IssuesBloc>()
+                                .add(LoadIssuesEvent());
                           },
                           child: const Text('Retry'),
                         ),
@@ -147,7 +157,7 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
               },
             ),
           ),
-          const AdBannerWidget(), // ← ADD AD BANNER HERE
+          const AdBannerWidget(),
         ],
       ),
     );
@@ -155,21 +165,28 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
 
   Widget _buildGridView(List<Issue> issues) {
     return MasonryGridView.count(
-      crossAxisCount: 3,
+      crossAxisCount: 2,
       mainAxisSpacing: 8,
       crossAxisSpacing: 8,
       padding: const EdgeInsets.only(
         left: 16,
         right: 16,
         top: 8,
-        bottom: 72, // Space for bottom padding + ad banner
+        bottom: 72,
       ),
       itemCount: issues.length,
       itemBuilder: (context, index) {
-        return IssueCard(
-          issue: issues[index],
-          index: index,
-          isGridView: true,
+        // Alternate tile heights so the stagger is visible even before images load.
+        // Odd-indexed cards are ~20 % taller, giving a natural Pinterest-style rhythm.
+        final double height = index.isOdd ? 180.0 : 148.0;
+
+        return SizedBox(
+          height: height,
+          child: IssueCard(
+            issue: issues[index],
+            index: index,
+            isGridView: true,
+          ),
         );
       },
     );
@@ -181,7 +198,7 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
         left: 16,
         right: 16,
         top: 8,
-        bottom: 72, // Space for bottom padding + ad banner
+        bottom: 72,
       ),
       itemCount: issues.length,
       itemBuilder: (context, index) {

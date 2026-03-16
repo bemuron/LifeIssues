@@ -10,11 +10,15 @@ abstract class PrayerEvent extends Equatable {
 class LoadPrayersEvent extends PrayerEvent {
   final int page;
   final String? category;
+  final String? sortBy; // 'newest', 'oldest', 'needs_prayer'
+  final bool? hasPrayers; // null = all, true = has prayers, false = no prayers
   final bool isRefresh;
 
   LoadPrayersEvent({
     this.page = 1,
     this.category,
+    this.sortBy,
+    this.hasPrayers,
     this.isRefresh = false,
   });
 
@@ -25,15 +29,34 @@ class LoadPrayersEvent extends PrayerEvent {
 class LoadMorePrayersEvent extends PrayerEvent {
   final int page;
   final String? category;
+  final String? sortBy;
+  final bool? hasPrayers;
 
   LoadMorePrayersEvent({
     required this.page,
     this.category,
+    this.sortBy,
+    this.hasPrayers,
+
   });
 
   @override
   List<Object?> get props => [page, category];
 }
+
+class ApplyPrayerFiltersEvent extends PrayerEvent {
+  final String? sortBy;
+  final bool? hasPrayers;
+  final String? category;
+
+  ApplyPrayerFiltersEvent({
+    this.sortBy,
+    this.hasPrayers,
+    this.category,
+  });
+}
+
+class ClearPrayerFiltersEvent extends PrayerEvent {}
 
 class LoadPrayerByIdEvent extends PrayerEvent {
   final int prayerId;

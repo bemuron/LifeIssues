@@ -3,8 +3,8 @@
 class ImageConfig {
   // Base URLs for different image types
   // TODO: Replace these with your actual hosting URLs
-  static const String issueImagesBaseUrl = 'https://www.emtechint.com/life_issues/issues/';
-  static const String verseImagesBaseUrl = 'https://www.emtechint.com/life_issues/images/verses/';
+  static const String issueImagesBaseUrl = 'https://yachalapp.emtechint.com/public/assets/images/issues/';
+  static const String verseImagesBaseUrl = 'https://yachalapp.emtechint.com/public/assets/images/verses/';
 
   // Alternative: You can use different hosting services
   // For example, Firebase Storage, AWS S3, Cloudinary, etc.
@@ -23,7 +23,7 @@ class ImageConfig {
       return imageName;
     }
 
-    return '$issueImagesBaseUrl$imageName';
+    return '$issueImagesBaseUrl$imageName.png';
   }
 
   /// Builds full verse image URL from image filename

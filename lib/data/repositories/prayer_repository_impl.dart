@@ -10,10 +10,13 @@ class PrayerRepositoryImpl implements PrayerRepository {
   PrayerRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<Prayer>> getPrayers({int page = 1, String? category}) async {
+  Future<List<Prayer>> getPrayers({int page = 1, String? category, String? sortBy,
+    bool? hasPrayers,}) async {
     final models = await remoteDataSource.getPrayers(
       page: page,
       category: category,
+      sortBy: sortBy,
+      hasPrayers: hasPrayers,
     );
     return models.map((model) => model.toEntity()).toList();
   }

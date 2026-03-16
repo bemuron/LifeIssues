@@ -83,7 +83,7 @@ class _RegisterViewState extends State<RegisterView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Join the Community',
+                    'Scripture | Prayer | Testimonies',
                     style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
@@ -156,7 +156,17 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     obscureText: _obscurePassword,
+                    // FIX 1: disable autocorrect and suggestions on password
+                    // fields — some keyboards inject spaces or substitute
+                    // characters when autocorrect is on for obscured fields.
+                    autocorrect: false,
+                    enableSuggestions: false,
                     textInputAction: TextInputAction.next,
+                    // FIX 2: re-validate the confirm field whenever the
+                    // password field changes, so a mismatch error clears
+                    // immediately if the user corrects the password instead
+                    // of the confirm field.
+                    onChanged: (_) => _formKey.currentState?.validate(),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a password';
@@ -189,12 +199,22 @@ class _RegisterViewState extends State<RegisterView> {
                       ),
                     ),
                     obscureText: _obscureConfirmPassword,
+                    // FIX 1 (same): disable autocorrect on the confirm field.
+                    autocorrect: false,
+                    enableSuggestions: false,
                     textInputAction: TextInputAction.done,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please confirm your password';
                       }
-                      if (value != _passwordController.text) {
+                      // FIX 3: compare the two controllers directly rather
+                      // than comparing `value` (the form snapshot) against
+                      // the controller text. The form snapshot and the
+                      // controller text can briefly differ when autocorrect
+                      // or the IME flushes a pending composition just before
+                      // validation runs, producing a false mismatch.
+                      if (_confirmPasswordController.text !=
+                          _passwordController.text) {
                         return 'Passwords do not match';
                       }
                       return null;
@@ -239,7 +259,6 @@ class _RegisterViewState extends State<RegisterView> {
                     onPressed: isLoading
                         ? null
                         : () {
-                      // TODO: Implement Google Sign-In
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Google Sign-In coming soon'),
@@ -261,7 +280,6 @@ class _RegisterViewState extends State<RegisterView> {
                     onPressed: isLoading
                         ? null
                         : () {
-                      // TODO: Implement Apple Sign-In
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Apple Sign-In coming soon'),

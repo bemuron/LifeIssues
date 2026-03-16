@@ -5,7 +5,13 @@ import '../../core/network/api_client.dart';
 import '../../core/config/api_config.dart';
 
 abstract class TestimonyRemoteDataSource {
-  Future<List<TestimonyModel>> getTestimonies({int page = 1, String? category});
+  Future<List<TestimonyModel>> getTestimonies({
+    int page = 1,
+    String? category,
+    String? sortBy,
+    bool? linkedToPrayer,
+    bool? hasPraise,
+  });
   Future<TestimonyModel> getTestimonyById(int id);
   Future<TestimonyModel> submitTestimony({
     required String title,
@@ -27,6 +33,9 @@ class TestimonyRemoteDataSourceImpl implements TestimonyRemoteDataSource {
   Future<List<TestimonyModel>> getTestimonies({
     int page = 1,
     String? category,
+    String? sortBy,
+    bool? linkedToPrayer,
+    bool? hasPraise,
   }) async {
     final queryParams = <String, dynamic>{
       'page': page,
@@ -35,6 +44,18 @@ class TestimonyRemoteDataSourceImpl implements TestimonyRemoteDataSource {
 
     if (category != null && category.isNotEmpty) {
       queryParams['category'] = category;
+    }
+
+    if (sortBy != null) {
+      queryParams['sort'] = sortBy; // 'newest', 'oldest', 'most_praised'
+    }
+
+    if (linkedToPrayer != null) {
+      queryParams['linked_to_prayer'] = linkedToPrayer ? '1' : '0';
+    }
+
+    if (hasPraise != null) {
+      queryParams['has_praise'] = hasPraise ? '1' : '0';
     }
 
     final response = await apiClient.get(

@@ -13,10 +13,16 @@ class TestimonyRepositoryImpl implements TestimonyRepository {
   Future<List<Testimony>> getTestimonies({
     int page = 1,
     String? category,
+    String? sortBy,
+    bool? linkedToPrayer,
+    bool? hasPraise,
   }) async {
     final models = await remoteDataSource.getTestimonies(
       page: page,
       category: category,
+      sortBy: sortBy,
+      linkedToPrayer: linkedToPrayer,
+      hasPraise: hasPraise,
     );
     return models.map((model) => model.toEntity()).toList();
   }

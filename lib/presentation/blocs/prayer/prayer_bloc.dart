@@ -34,6 +34,8 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     on<DeletePrayerEvent>(_onDeletePrayer);
     on<LoadMyPrayersEvent>(_onLoadMyPrayers);
     on<FilterPrayersByCategoryEvent>(_onFilterByCategory);
+    on<ApplyPrayerFiltersEvent>(_onApplyFilters);
+    on<ClearPrayerFiltersEvent>(_onClearFilters);
   }
 
   Future<void> _onLoadPrayers(
@@ -53,6 +55,8 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
         hasMore: prayers.length >= 15, // Based on API page size
         currentPage: event.page,
         currentCategory: event.category,
+        currentSortBy: event.sortBy,
+        currentHasPrayers: event.hasPrayers,
       ));
     } catch (e) {
       emit(PrayerError(e.toString()));
@@ -90,9 +94,32 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
         hasMore: currentState.hasMore,
         currentPage: currentState.currentPage,
         currentCategory: currentState.currentCategory,
+        currentSortBy: event.sortBy,
+        currentHasPrayers: event.hasPrayers,
       ));
       emit(PrayerError(e.toString()));
     }
+  }
+
+  Future<void> _onApplyFilters(
+      ApplyPrayerFiltersEvent event,
+      Emitter<PrayerState> emit,
+      ) async {
+    // Apply filters by reloading from page 1
+    add(LoadPrayersEvent(
+      page: 1,
+      category: event.category,
+      sortBy: event.sortBy,
+      hasPrayers: event.hasPrayers,
+    ));
+  }
+
+  Future<void> _onClearFilters(
+      ClearPrayerFiltersEvent event,
+      Emitter<PrayerState> emit,
+      ) async {
+    // Reset to default (newest first, all prayers)
+    add(LoadPrayersEvent(page: 1));
   }
 
   Future<void> _onLoadPrayerById(

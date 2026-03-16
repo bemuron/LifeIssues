@@ -11,10 +11,14 @@ class GetPrayers {
   Future<List<Prayer>> call({
     int page = 1,
     String? category,
+    String? sortBy,
+    bool? hasPrayers,
   }) async {
     return await repository.getPrayers(
       page: page,
       category: category,
+      sortBy: sortBy,
+      hasPrayers: hasPrayers,
     );
   }
 }

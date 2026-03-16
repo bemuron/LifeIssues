@@ -3,7 +3,8 @@
 import '../entities/prayer.dart';
 
 abstract class PrayerRepository {
-  Future<List<Prayer>> getPrayers({int page = 1, String? category});
+  Future<List<Prayer>> getPrayers({int page = 1, String? category, String? sortBy,
+    bool? hasPrayers,});
   Future<Prayer> getPrayerById(int id);
   Future<Prayer> submitPrayer({
     required String body,

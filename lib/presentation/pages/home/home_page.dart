@@ -7,15 +7,16 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/services/notification_storage.dart';
 import '../../blocs/daily_verse/daily_verse_bloc.dart';
 import '../../blocs/issues/issues_bloc.dart';
-import '../../blocs/random_verse/random_verse_bloc.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../blocs/verses/verses_bloc.dart';
+import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/daily_verse_card.dart';
 import '../../widgets/issue_card.dart';
 import '../../widgets/random_verse_dialog.dart';
 import '../../widgets/community_strip.dart';
 import '../all_issues_page.dart';
+import '../favorites/favorites_page.dart';
 import '../profile/profile_page.dart';
 import '../notifications/notifications_page.dart';
 
@@ -35,11 +36,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.appName),
         actions: [
-          // Notifications icon (only for authenticated users)
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, authState) {
               if (authState is Authenticated) {
@@ -47,7 +49,6 @@ class _HomePageState extends State<HomePage> {
                   future: _getUnreadCount(),
                   builder: (context, snapshot) {
                     final unreadCount = snapshot.data ?? 0;
-
                     return IconButton(
                       icon: unreadCount > 0
                           ? Badge(
@@ -63,7 +64,6 @@ class _HomePageState extends State<HomePage> {
                             builder: (_) => const NotificationsPage(),
                           ),
                         );
-                        // Refresh to update badge
                         if (mounted) setState(() {});
                       },
                     );
@@ -73,177 +73,226 @@ class _HomePageState extends State<HomePage> {
               return const SizedBox.shrink();
             },
           ),
-
-          // Profile icon (always visible)
           IconButton(
             icon: const Icon(Icons.person),
             tooltip: 'Profile',
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const ProfilePage(),
-                ),
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
               );
             },
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<DailyVerseBloc>().add(LoadDailyVerseEvent());
-          context.read<IssuesBloc>().add(LoadIssuesEvent());
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Greeting Section
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: BlocBuilder<AuthBloc, AuthState>(
-                  builder: (context, authState) {
-                    if (authState is Authenticated) {
-                      return Text(
-                        'Hello, ${authState.user.name}',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    }
-                    return Text(
-                      'Hello,',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    );
-                  },
-                ),
-              ),
 
-              // Daily Verse Section
-              BlocBuilder<DailyVerseBloc, DailyVerseState>(
-                builder: (context, state) {
-                  if (state is DailyVerseLoading) {
-                    return _buildLoadingCard();
-                  } else if (state is DailyVerseLoaded) {
-                    return DailyVerseCard(verse: state.verse);
-                  } else if (state is DailyVerseError) {
-                    return _buildErrorCard(context, state.message);
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Community Strip (only for authenticated users)
-              BlocBuilder<AuthBloc, AuthState>(
-                builder: (context, authState) {
-                  if (authState is Authenticated) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: CommunityStrip(),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Random Verse Button
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showRandomVerse(context),
-                    icon: const Icon(Icons.shuffle),
-                    label: const Text('Get Random Verse'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Issues Section Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppStrings.issues,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AllIssuesPage(),
-                          ),
+      body: Stack(
+        children: [
+          // Scrollable content with bottom padding so the ad never covers it
+          RefreshIndicator(
+            onRefresh: () async {
+              context.read<DailyVerseBloc>().add(LoadDailyVerseEvent());
+              context.read<IssuesBloc>().add(LoadIssuesEvent());
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(bottom: 90),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Greeting
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, authState) {
+                        final greeting = authState is Authenticated
+                            ? 'Hello, ${authState.user.name}'
+                            : 'Hello,';
+                        return Text(
+                          greeting,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         );
                       },
-                      child: const Text('View All'),
                     ),
-                  ],
-                ),
+                  ),
+
+                  // Daily verse card
+                  BlocBuilder<DailyVerseBloc, DailyVerseState>(
+                    builder: (context, state) {
+                      if (state is DailyVerseLoading) {
+                        return _buildLoadingCard();
+                      } else if (state is DailyVerseLoaded) {
+                        return DailyVerseCard(verse: state.verse);
+                      } else if (state is DailyVerseError) {
+                        return _buildErrorCard(context, state.message);
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Community strip (authenticated only)
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, authState) {
+                      if (authState is Authenticated) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: CommunityStrip(),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Two-button row ──────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        // Random verse button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _showRandomVerse(context),
+                            icon: const Icon(Icons.shuffle, size: 18),
+                            label: const Text('Random Verse'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: cs.primaryContainer,
+                              foregroundColor: cs.onPrimaryContainer,
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        // Favorites button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const FavoritesPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.favorite, size: 18),
+                            label: const Text('Favourites'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              backgroundColor: cs.secondaryContainer,
+                              foregroundColor: cs.onSecondaryContainer,
+                              elevation: 0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Issues section header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppStrings.issues,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AllIssuesPage(),
+                              ),
+                            );
+                          },
+                          child: const Text('View All'),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Horizontal issues strip
+                  BlocBuilder<IssuesBloc, IssuesState>(
+                    builder: (context, state) {
+                      if (state is IssuesLoading) {
+                        return _buildLoadingIssues();
+                      } else if (state is IssuesLoaded) {
+                        return SizedBox(
+                          height: 140,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12),
+                            itemCount: state.issues.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4),
+                                child: SizedBox(
+                                  width: 160,
+                                  child: IssueCard(
+                                    issue: state.issues[index],
+                                    index: index,
+                                    isGridView: false,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      } else if (state is IssuesError) {
+                        return _buildErrorIssues(context, state.message);
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
               ),
-
-              const SizedBox(height: 16),
-
-              // Issues Horizontal List
-              BlocBuilder<IssuesBloc, IssuesState>(
-                builder: (context, state) {
-                  if (state is IssuesLoading) {
-                    return _buildLoadingIssues();
-                  } else if (state is IssuesLoaded) {
-                    return SizedBox(
-                      height: 140,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: state.issues.length,
-                        itemBuilder: (context, index) {
-                          return IssueCard(
-                              issue: state.issues[index],
-                              index: index,
-                              isGridView: false
-                          );
-                        },
-                      ),
-                    );
-                  } else if (state is IssuesError) {
-                    return _buildErrorIssues(context, state.message);
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
-        ),
+
+          // Bottom-pinned ad banner
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: AdBannerWidget(),
+          ),
+        ],
       ),
     );
   }
 
   void _showRandomVerse(BuildContext context) {
-    // Load a random verse and show it
     context.read<VersesBloc>().add(LoadRandomVerseForHomeEvent());
-
-    // Show dialog with the random verse
     showDialog(
       context: context,
       builder: (dialogContext) => BlocBuilder<VersesBloc, VersesState>(
@@ -251,7 +300,6 @@ class _HomePageState extends State<HomePage> {
           if (state is RandomVerseForHomeLoaded && state.isRandom) {
             return RandomVerseDialog(verse: state.verse);
           }
-
           return const AlertDialog(
             content: SizedBox(
               height: 100,
@@ -270,9 +318,7 @@ class _HomePageState extends State<HomePage> {
         child: Container(
           height: 200,
           padding: const EdgeInsets.all(16),
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: const Center(child: CircularProgressIndicator()),
         ),
       ),
     );
@@ -310,7 +356,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildLoadingIssues() {
     return SizedBox(
-      height: 180,
+      height: 140,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -318,12 +364,12 @@ class _HomePageState extends State<HomePage> {
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Card(
-              child: Container(
-                width: 140,
-                padding: const EdgeInsets.all(16),
-                child: const Center(
-                  child: CircularProgressIndicator(),
+            child: SizedBox(
+              width: 160,
+              child: Card(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  child: const Center(child: CircularProgressIndicator()),
                 ),
               ),
             ),

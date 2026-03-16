@@ -17,28 +17,37 @@ class PrayerLoaded extends PrayerState {
   final bool hasMore;
   final int currentPage;
   final String? currentCategory;
+  final String? currentSortBy;
+  final bool? currentHasPrayers;
 
   PrayerLoaded({
     required this.prayers,
     this.hasMore = true,
     this.currentPage = 1,
     this.currentCategory,
+    this.currentSortBy,
+    this.currentHasPrayers,
   });
 
   @override
-  List<Object?> get props => [prayers, hasMore, currentPage, currentCategory];
+  List<Object?> get props => [prayers, hasMore, currentPage, currentCategory, currentSortBy,
+    currentHasPrayers,];
 
   PrayerLoaded copyWith({
     List<Prayer>? prayers,
     bool? hasMore,
     int? currentPage,
     String? currentCategory,
+    String? currentSortBy,
+    bool? currentHasPrayers,
   }) {
     return PrayerLoaded(
       prayers: prayers ?? this.prayers,
       hasMore: hasMore ?? this.hasMore,
       currentPage: currentPage ?? this.currentPage,
       currentCategory: currentCategory ?? this.currentCategory,
+      currentSortBy: currentSortBy ?? this.currentSortBy,
+      currentHasPrayers: currentHasPrayers ?? this.currentHasPrayers,
     );
   }
 }

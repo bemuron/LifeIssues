@@ -17,28 +17,43 @@ class TestimonyLoaded extends TestimonyState {
   final bool hasMore;
   final int currentPage;
   final String? currentCategory;
+  final String? currentSortBy;
+  final bool? currentLinkedToPrayer;
+  final bool? currentHasPraise;
 
   TestimonyLoaded({
     required this.testimonies,
     this.hasMore = true,
     this.currentPage = 1,
     this.currentCategory,
+    this.currentSortBy,
+    this.currentLinkedToPrayer,
+    this.currentHasPraise,
   });
 
   @override
-  List<Object?> get props => [testimonies, hasMore, currentPage, currentCategory];
+  List<Object?> get props => [testimonies, hasMore, currentPage, currentCategory, currentSortBy,
+    currentLinkedToPrayer,
+    currentHasPraise,];
 
   TestimonyLoaded copyWith({
     List<Testimony>? testimonies,
     bool? hasMore,
     int? currentPage,
     String? currentCategory,
+    String? currentSortBy,
+    bool? currentLinkedToPrayer,
+    bool? currentHasPraise,
+
   }) {
     return TestimonyLoaded(
       testimonies: testimonies ?? this.testimonies,
       hasMore: hasMore ?? this.hasMore,
       currentPage: currentPage ?? this.currentPage,
       currentCategory: currentCategory ?? this.currentCategory,
+      currentSortBy: currentSortBy ?? this.currentSortBy,
+      currentLinkedToPrayer: currentLinkedToPrayer ?? this.currentLinkedToPrayer,
+      currentHasPraise: currentHasPraise ?? this.currentHasPraise,
     );
   }
 }

@@ -2,7 +2,7 @@
 
 class ApiConfig {
   // Base URL - Update this with your actual Laravel API URL
-  static const String baseUrl = 'https://your-api-domain.com/api';
+  static const String baseUrl = 'https://yachalapp.emtechint.com/api';
 
   // Endpoints
 

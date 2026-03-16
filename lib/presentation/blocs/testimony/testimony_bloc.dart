@@ -28,6 +28,8 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
   }) : super(TestimonyInitial()) {
     on<LoadTestimoniesEvent>(_onLoadTestimonies);
     on<LoadMoreTestimoniesEvent>(_onLoadMoreTestimonies);
+    on<ApplyTestimonyFiltersEvent>(_onApplyFilters);
+    on<ClearTestimonyFiltersEvent>(_onClearFilters);
     on<LoadTestimonyByIdEvent>(_onLoadTestimonyById);
     on<SubmitTestimonyEvent>(_onSubmitTestimony);
     on<TogglePraiseEvent>(_onTogglePraise);
@@ -46,6 +48,9 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
       final testimonies = await getTestimonies(
         page: event.page,
         category: event.category,
+        sortBy: event.sortBy,
+        linkedToPrayer: event.linkedToPrayer,
+        hasPraise: event.hasPraise,
       );
 
       emit(TestimonyLoaded(
@@ -53,6 +58,9 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
         hasMore: testimonies.length >= 10, // Based on API page size
         currentPage: event.page,
         currentCategory: event.category,
+        currentSortBy: event.sortBy,
+        currentLinkedToPrayer: event.linkedToPrayer,
+        currentHasPraise: event.hasPraise,
       ));
     } catch (e) {
       emit(TestimonyError(e.toString()));
@@ -74,6 +82,9 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
       final newTestimonies = await getTestimonies(
         page: event.page,
         category: event.category,
+        sortBy: event.sortBy,
+        linkedToPrayer: event.linkedToPrayer,
+        hasPraise: event.hasPraise,
       );
 
       final allTestimonies = [...currentState.testimonies, ...newTestimonies];
@@ -83,6 +94,9 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
         hasMore: newTestimonies.length >= 10,
         currentPage: event.page,
         currentCategory: event.category,
+        currentSortBy: event.sortBy,
+        currentLinkedToPrayer: event.linkedToPrayer,
+        currentHasPraise: event.hasPraise,
       ));
     } catch (e) {
       emit(TestimonyLoaded(
@@ -93,6 +107,26 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
       ));
       emit(TestimonyError(e.toString()));
     }
+  }
+
+  Future<void> _onApplyFilters(
+      ApplyTestimonyFiltersEvent event,
+      Emitter<TestimonyState> emit,
+      ) async {
+    add(LoadTestimoniesEvent(
+      page: 1,
+      category: event.category,
+      sortBy: event.sortBy,
+      linkedToPrayer: event.linkedToPrayer,
+      hasPraise: event.hasPraise,
+    ));
+  }
+
+  Future<void> _onClearFilters(
+      ClearTestimonyFiltersEvent event,
+      Emitter<TestimonyState> emit,
+      ) async {
+    add(LoadTestimoniesEvent(page: 1));
   }
 
   Future<void> _onLoadTestimonyById(

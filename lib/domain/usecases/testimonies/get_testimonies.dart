@@ -11,10 +11,16 @@ class GetTestimonies {
   Future<List<Testimony>> call({
     int page = 1,
     String? category,
+    String? sortBy,
+    bool? linkedToPrayer,
+    bool? hasPraise,
   }) async {
     return await repository.getTestimonies(
       page: page,
       category: category,
+      sortBy: sortBy,
+      linkedToPrayer: linkedToPrayer,
+      hasPraise: hasPraise,
     );
   }
 }

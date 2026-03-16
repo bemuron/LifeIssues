@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../../domain/entities/verse.dart';
 import '../../../domain/usecases/get_daily_verse.dart';
 import '../../../domain/usecases/get_random_verse.dart';
+import '../../widgets/home_screen_widget_provider.dart';
 
 // Events
 abstract class DailyVerseEvent extends Equatable {
@@ -10,7 +11,17 @@ abstract class DailyVerseEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadDailyVerseEvent extends DailyVerseEvent {}
+// bibleVersion is passed in by the caller — exactly like DailyVerseCard
+// reads settingsState.bibleVersion from SettingsBloc and uses it.
+// Defaults to 'kjv' so existing call sites need no changes.
+class LoadDailyVerseEvent extends DailyVerseEvent {
+  final String bibleVersion;
+
+  LoadDailyVerseEvent({this.bibleVersion = 'kjv'});
+
+  @override
+  List<Object?> get props => [bibleVersion];
+}
 
 class LoadRandomVerseEvent extends DailyVerseEvent {}
 
@@ -64,6 +75,15 @@ class DailyVerseBloc extends Bloc<DailyVerseEvent, DailyVerseState> {
     try {
       final verse = await getDailyVerse();
       emit(DailyVerseLoaded(verse));
+
+      // Update the home screen widget using the same version the caller
+      // read from SettingsBloc — mirrors how DailyVerseCard does it:
+      //   final version = settingsState is SettingsLoaded
+      //       ? settingsState.bibleVersion : 'kjv';
+      // Non-critical: swallow any widget update failure silently.
+      try {
+        await HomeScreenWidgetProvider.updateWidget(verse, event.bibleVersion);
+      } catch (_) {}
     } catch (e) {
       emit(DailyVerseError('Failed to load daily verse: ${e.toString()}'));
     }
@@ -77,6 +97,7 @@ class DailyVerseBloc extends Bloc<DailyVerseEvent, DailyVerseState> {
     try {
       final verse = await getRandomVerse();
       emit(DailyVerseLoaded(verse as Verse, isRandom: true));
+      // No widget update — home screen widget always shows the daily verse.
     } catch (e) {
       emit(DailyVerseError('Failed to load random verse: ${e.toString()}'));
     }

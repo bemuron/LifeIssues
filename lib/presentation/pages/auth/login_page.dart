@@ -85,13 +85,13 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Life Issues',
+                    'Yachal',
                     style: Theme.of(context).textTheme.headlineMedium,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Join our prayer community',
+                    'Scripture | Prayer | Testimonies',
                     style: Theme.of(context).textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),

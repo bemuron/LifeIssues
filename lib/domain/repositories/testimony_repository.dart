@@ -3,7 +3,13 @@
 import '../entities/testimony.dart';
 
 abstract class TestimonyRepository {
-  Future<List<Testimony>> getTestimonies({int page = 1, String? category});
+  Future<List<Testimony>> getTestimonies({
+    int page = 1,
+    String? category,
+    String? sortBy,
+    bool? linkedToPrayer,
+    bool? hasPraise,
+  });
   Future<Testimony> getTestimonyById(int id);
   Future<Testimony> submitTestimony({
     required String title,
