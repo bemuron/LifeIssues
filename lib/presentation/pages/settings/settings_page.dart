@@ -12,6 +12,7 @@ import '../../blocs/auth/auth_state.dart';
 import '../../blocs/settings/settings_bloc.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/bible_versions.dart';
+import '../../../data/datasources/database_helper.dart';
 import '../subscription/subscription_page.dart';
 import '../widget_config_page.dart';
 
@@ -343,18 +344,37 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showBibleVersionDialog(BuildContext context, SettingsLoaded state) {
+  Future<void> _showBibleVersionDialog(BuildContext context, SettingsLoaded state) async {
+    // Load only versions that have data in the local DB
+    List<String> availableVersions;
+    try {
+      final db = await DatabaseHelper.database;
+      final rows = await db.rawQuery(
+        'SELECT DISTINCT ${DatabaseHelper.columnBibleVersion} '
+        'FROM ${DatabaseHelper.tableBibleVerses} '
+        'ORDER BY ${DatabaseHelper.columnBibleVersion}',
+      );
+      availableVersions = rows
+          .map((r) => r[DatabaseHelper.columnBibleVersion] as String)
+          .toList();
+    } catch (_) {
+      availableVersions = BibleVersions.versions.keys.toList();
+    }
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Select Bible Version'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: BibleVersions.versions.entries.map((entry) {
+          children: availableVersions.map((code) {
+            final name = BibleVersions.getVersionName(code);
             return RadioListTile<String>(
-              title: Text(entry.value),
-              subtitle: Text(entry.key.toUpperCase()),
-              value: entry.key,
+              title: Text(name),
+              subtitle: Text(code),
+              value: code,
               groupValue: state.bibleVersion,
               onChanged: (String? value) {
                 if (value != null) {
@@ -443,7 +463,7 @@ iOS Version: ${iosInfo.systemVersion}
   }
 
   Future<void> _openPrivacyPolicy() async {
-    final Uri url = Uri.parse('https://lifeissues.app/privacy-policy');
+    final Uri url = Uri.parse('https://yachalapp.emtechint.com/privacy');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }

@@ -33,6 +33,10 @@ class AuthSocialLoggingIn extends AuthState {}
 
 class AuthLoggedOut extends AuthState {}
 
+class ProfileUpdating extends AuthState {}
+
+class ProfileUpdated extends AuthState {}
+
 class AuthError extends AuthState {
   final String message;
 

@@ -5,9 +5,12 @@ class Verse extends Equatable {
   final int id;
   final String reference;
   final String? issueName;
-  final String kjv;
-  final String? msg;
-  final String? amp;
+
+  /// All available translations keyed by uppercase version code.
+  /// e.g. {'KJV': '...', 'MSG': '...', 'AMP': '...', 'NIV': '...'}
+  /// Adding a new Bible version only requires data — no code change.
+  final Map<String, String> translations;
+
   final String? imageUrl;
   final DateTime? createdAt;
   final bool isFavorite;
@@ -16,24 +19,34 @@ class Verse extends Equatable {
     required this.id,
     required this.reference,
     this.issueName,
-    required this.kjv,
-    this.msg,
-    this.amp,
+    required this.translations,
     this.imageUrl,
     this.createdAt,
     this.isFavorite = false,
   });
 
-  // Convenience getter for default text
+  // ── Generic version lookup ───────────────────────────────────────────────
+  /// Returns text for [version] (case-insensitive). Falls back to KJV,
+  /// then the first available translation.
+  String getVersion(String version) =>
+      translations[version.toUpperCase()] ??
+      translations['KJV'] ??
+      translations.values.firstOrNull ??
+      '';
+
+  // ── Backward-compatible getters — existing UI code keeps working ─────────
+  String get kjv => translations['KJV'] ?? translations.values.firstOrNull ?? '';
+  String? get msg => translations['MSG'];
+  String? get amp => translations['AMP'];
+
+  /// Convenience: default text (KJV or first available).
   String get text => kjv;
 
   Verse copyWith({
     int? id,
     String? reference,
     String? issueName,
-    String? kjv,
-    String? msg,
-    String? amp,
+    Map<String, String>? translations,
     String? imageUrl,
     DateTime? createdAt,
     bool? isFavorite,
@@ -42,9 +55,7 @@ class Verse extends Equatable {
       id: id ?? this.id,
       reference: reference ?? this.reference,
       issueName: issueName ?? this.issueName,
-      kjv: kjv ?? this.kjv,
-      msg: msg ?? this.msg,
-      amp: amp ?? this.amp,
+      translations: translations ?? this.translations,
       imageUrl: imageUrl ?? this.imageUrl,
       createdAt: createdAt ?? this.createdAt,
       isFavorite: isFavorite ?? this.isFavorite,
@@ -52,15 +63,6 @@ class Verse extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-    id,
-    reference,
-    issueName,
-    kjv,
-    msg,
-    amp,
-    imageUrl,
-    createdAt,
-    isFavorite,
-  ];
+  List<Object?> get props =>
+      [id, reference, issueName, translations, imageUrl, createdAt, isFavorite];
 }

@@ -110,7 +110,7 @@ class _IssuesGridPageState extends State<IssuesGridPage> {
               itemBuilder: (context, index) {
                 final issue = filteredIssues[index];
                 return Hero(
-                  tag: 'issue_${issue.id}',
+                  tag: 'grid_issue_${issue.id}',
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
@@ -119,7 +119,10 @@ class _IssuesGridPageState extends State<IssuesGridPage> {
                           context,
                           PageRouteBuilder(
                             pageBuilder: (context, animation, secondaryAnimation) =>
-                                IssueVersesPage(issue: issue),
+                                IssueVersesPage(
+                                  issue: issue,
+                                  heroTag: 'grid_issue_${issue.id}',
+                                ),
                             transitionsBuilder:
                                 (context, animation, secondaryAnimation, child) {
                               const begin = Offset(1.0, 0.0);

@@ -27,7 +27,7 @@ class IssuesHorizontalList extends StatelessWidget {
         itemBuilder: (context, index) {
           final issue = displayIssues[index];
           return Hero(
-            tag: 'issue_${issue.id}',
+            tag: 'home_issue_${issue.id}',
             child: Card(
               margin: const EdgeInsets.symmetric(horizontal: 4),
               elevation: 0,
@@ -48,7 +48,10 @@ class IssuesHorizontalList extends StatelessWidget {
                       builder: (context) => BlocProvider(
                         create: (_) => di.sl<VersesBloc>()
                           ..add(LoadVersesForIssueEvent(issue.id)),
-                        child: IssueVersesPage(issue: issue),
+                        child: IssueVersesPage(
+                          issue: issue,
+                          heroTag: 'home_issue_${issue.id}',
+                        ),
                       ),
                     ),
                   );

@@ -10,6 +10,8 @@ import 'package:timezone/data/latest.dart' as tz;
 import '../../presentation/pages/prayers/prayer_detail_page.dart';
 import '../../presentation/pages/testimonies/testimony_detail_page.dart';
 import '../../data/datasources/daily_verse_local_datasource.dart';
+import '../config/api_config.dart';
+import '../network/api_client.dart';
 import 'notification_storage.dart';
 
 class NotificationHandler {
@@ -25,6 +27,9 @@ class NotificationHandler {
 
   // Navigation key for handling notifications when app is in background
   static GlobalKey<NavigatorState>? navigatorKey;
+
+  // API client for saving FCM tokens to backend
+  static ApiClient? apiClient;
 
   // Daily verse notification settings keys
   static const String _notificationEnabledKey = 'daily_verse_notification';
@@ -55,9 +60,6 @@ class NotificationHandler {
       _firebaseAvailable = false;
     }
 
-    // Request permission (iOS & Android 13+)
-    await _requestPermission();
-
     // Initialize local notifications
     await _initializeLocalNotifications();
 
@@ -75,7 +77,17 @@ class NotificationHandler {
         _handleNotificationTap(initialMessage);
       }
 
-      // Listen for token refresh
+      // Log the current token for debugging — registration happens after login
+      try {
+        final token = await _firebaseMessaging!.getToken();
+        if (token != null) {
+          debugPrint('🔔 FCM Token obtained: ${token.substring(0, 20)}...');
+        }
+      } catch (e) {
+        debugPrint('⚠️ Could not get FCM token: $e');
+      }
+
+      // Listen for token refresh — re-register with backend when token changes
       _firebaseMessaging!.onTokenRefresh.listen(_handleTokenRefresh);
     }
   }
@@ -89,7 +101,7 @@ class NotificationHandler {
     }
   }
 
-  Future<void> _requestPermission() async {
+  Future<void> requestPermission() async {
     // Request FCM permission (only if Firebase is available)
     if (_firebaseAvailable && _firebaseMessaging != null) {
       try {
@@ -284,8 +296,54 @@ class NotificationHandler {
   }
 
   void _handleTokenRefresh(String token) {
-    debugPrint('🔔 FCM Token refreshed: $token');
-    // TODO: Send new token to backend
+    debugPrint('🔔 FCM Token refreshed');
+    // Re-register with backend (only succeeds if user is logged in)
+    _saveTokenToBackend(token);
+  }
+
+  Future<void> _saveTokenToBackend(String token) async {
+    if (apiClient == null) return;
+    final platform = Platform.isIOS ? 'ios' : 'android';
+    try {
+      await apiClient!.post(ApiConfig.fcmToken, data: {
+        'token': token,
+        'platform': platform,
+      });
+      debugPrint('✅ FCM token registered with backend');
+    } catch (e) {
+      debugPrint('⚠️ Failed to register FCM token: $e');
+    }
+  }
+
+  /// Call this after the user successfully logs in or is found authenticated.
+  Future<void> registerFcmToken() async {
+    if (!_firebaseAvailable || _firebaseMessaging == null || apiClient == null) return;
+    try {
+      final token = await _firebaseMessaging!.getToken();
+      if (token != null) {
+        await _saveTokenToBackend(token);
+      }
+    } catch (e) {
+      debugPrint('⚠️ registerFcmToken failed: $e');
+    }
+  }
+
+  /// Call this before the user logs out so the backend removes the token.
+  Future<void> deregisterFcmToken() async {
+    if (!_firebaseAvailable || _firebaseMessaging == null || apiClient == null) return;
+    try {
+      final token = await _firebaseMessaging!.getToken();
+      if (token != null) {
+        // Pass token as query parameter — ApiClient.delete does not support a body
+        await apiClient!.delete(
+          ApiConfig.fcmToken,
+          queryParameters: {'token': token},
+        );
+        debugPrint('✅ FCM token deregistered from backend');
+      }
+    } catch (e) {
+      debugPrint('⚠️ deregisterFcmToken failed: $e');
+    }
   }
 
   // ========================================

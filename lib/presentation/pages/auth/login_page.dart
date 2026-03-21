@@ -2,7 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/services/social_auth_service.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../../domain/entities/user.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -13,10 +17,7 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl<AuthBloc>(),
-      child: const LoginView(),
-    );
+    return const LoginView();
   }
 }
 
@@ -77,24 +78,7 @@ class _LoginViewState extends State<LoginView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo/Icon
-                  Icon(
-                    Icons.favorite,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Yachal',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Scripture | Prayer | Testimonies',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                    textAlign: TextAlign.center,
-                  ),
+                  _buildHeader(),
                   const SizedBox(height: 48),
 
                   // Email field
@@ -179,17 +163,24 @@ class _LoginViewState extends State<LoginView> {
                   // Google Sign-In
                   OutlinedButton.icon(
                     onPressed: isLoading ? null : _loginWithGoogle,
-                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    icon: Image.asset(
+                      'assets/images/google_logo.png',
+                      height: 24,
+                      width: 24,
+                      errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.g_mobiledata),
+                    ),
                     label: const Text('Continue with Google'),
                   ),
                   const SizedBox(height: 12),
 
                   // Apple Sign-In (iOS only - you can add platform check)
-                  OutlinedButton.icon(
-                    onPressed: isLoading ? null : _loginWithApple,
-                    icon: const Icon(Icons.apple, size: 24),
-                    label: const Text('Continue with Apple'),
-                  ),
+                  if (Theme.of(context).platform == TargetPlatform.iOS)
+                    OutlinedButton.icon(
+                      onPressed: isLoading ? null : _loginWithApple,
+                      icon: const Icon(Icons.apple, size: 34),
+                      label: const Text('Continue with Apple'),
+                    ),
                   const SizedBox(height: 24),
 
                   // Register link
@@ -212,6 +203,52 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        // App Logo/Icon
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            //gradient: AppTheme.primaryGradient,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primarySeed.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            width: 50,
+            height: 50,
+            fit: BoxFit.cover,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        Text(
+          'Yachal',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.primarySeed,
+          ),
+        ),
+
+        Text(
+          'Scripture | Prayer | Testimony',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppTheme.secondarySeed,
+          ),
+        ),
+      ],
+    );
+  }
+
   void _login() {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -225,18 +262,112 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  void _loginWithGoogle() {
-    // TODO: Implement Google Sign-In
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google Sign-In coming soon')),
-    );
+  Future<void> _loginWithGoogle() async {
+    try {
+      final authService = di.sl<SocialAuthService>();
+      final result = await authService.signInWithGoogle();
+
+      if (!mounted) return;
+
+      if (result.success) {
+        // Emit authenticated state to Bloc
+        context.read<AuthBloc>().add(
+          AuthenticateDirectEvent(user: result.user!),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(child: Text('Signed in with Google!')),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(result.message)),
+              ],
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google sign-in failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-  void _loginWithApple() {
-    // TODO: Implement Apple Sign-In
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Apple Sign-In coming soon')),
-    );
+  Future<void> _loginWithApple() async {
+    try {
+      final authService = di.sl<SocialAuthService>();
+      final result = await authService.signInWithApple();
+
+      if (!mounted) return;
+
+      if (result.success) {
+        // Emit authenticated state to Bloc
+        context.read<AuthBloc>().add(
+          AuthenticateDirectEvent(user: result.user!),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(child: Text('Signed in with Apple!')),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text(result.message)),
+              ],
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Apple sign-in failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _navigateToRegister() {

@@ -43,7 +43,9 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
       Emitter<PrayerState> emit,
       ) async {
     try {
-      emit(PrayerLoading());
+      // On pull-to-refresh keep the current list visible — don't show the
+      // full-screen spinner — so the RefreshIndicator handles the UI.
+      if (!event.isRefresh) emit(PrayerLoading());
 
       final prayers = await getPrayers(
         page: event.page,
@@ -126,6 +128,13 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
       LoadPrayerByIdEvent event,
       Emitter<PrayerState> emit,
       ) async {
+    // If a pre-loaded Prayer entity was supplied (e.g. from profile page),
+    // emit it directly without making an API call.
+    if (event.preloaded != null) {
+      emit(PrayerDetailLoaded(event.preloaded));
+      return;
+    }
+
     try {
       emit(PrayerDetailLoading());
 
@@ -162,38 +171,62 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
       TogglePrayingEvent event,
       Emitter<PrayerState> emit,
       ) async {
+    // Save current detail state so we can restore it after the toggle
+    final prevDetailState = state is PrayerDetailLoaded ? state as PrayerDetailLoaded : null;
+    final prevListState = state is PrayerLoaded ? state as PrayerLoaded : null;
+
     try {
       emit(PrayerTogglingPraying(event.prayerId));
 
       final result = await togglePraying(event.prayerId);
 
+      final hasPrayed = result['has_prayed'] as bool;
+      final prayCount = result['pray_count'] as int;
+      final alreadyPrayed = result['already_prayed'] as bool? ?? false;
+
       emit(PrayerPrayingToggled(
         prayerId: event.prayerId,
-        hasPrayed: result['has_prayed'] as bool,
-        prayCount: result['pray_count'] as int,
+        hasPrayed: hasPrayed,
+        prayCount: prayCount,
+        alreadyPrayed: alreadyPrayed,
       ));
 
-      // Update the prayer in the list if currently loaded
-      if (state is PrayerLoaded) {
-        final currentState = state as PrayerLoaded;
-        final updatedPrayers = currentState.prayers.map((prayer) {
+      // If the detail page was open, re-emit the updated detail state so it
+      // doesn't show a blank screen after PrayerPrayingToggled.
+      if (prevDetailState != null) {
+        emit(PrayerDetailLoaded(
+          prevDetailState.prayer.copyWith(
+            hasPrayed: hasPrayed,
+            prayCount: prayCount,
+          ),
+        ));
+      }
+
+      // Update the prayer in the list if the list was the active state
+      if (prevListState != null) {
+        final updatedPrayers = prevListState.prayers.map((prayer) {
           if (prayer.id == event.prayerId) {
-            return prayer.copyWith(
-              hasPrayed: result['has_prayed'] as bool,
-              prayCount: result['pray_count'] as int,
-            );
+            return prayer.copyWith(hasPrayed: hasPrayed, prayCount: prayCount);
           }
           return prayer;
         }).toList();
 
         emit(PrayerLoaded(
           prayers: updatedPrayers,
-          hasMore: currentState.hasMore,
-          currentPage: currentState.currentPage,
-          currentCategory: currentState.currentCategory,
+          hasMore: prevListState.hasMore,
+          currentPage: prevListState.currentPage,
+          currentCategory: prevListState.currentCategory,
+          currentSortBy: prevListState.currentSortBy,
+          currentHasPrayers: prevListState.currentHasPrayers,
         ));
       }
     } catch (e) {
+      // Restore whichever state was active before the toggle attempt
+      if (prevDetailState != null) {
+        emit(prevDetailState);
+      } else if (prevListState != null) {
+        emit(prevListState);
+      }
       emit(PrayerError(e.toString()));
     }
   }

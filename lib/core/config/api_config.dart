@@ -4,6 +4,9 @@ class ApiConfig {
   // Base URL - Update this with your actual Laravel API URL
   static const String baseUrl = 'https://yachalapp.emtechint.com/api';
 
+  // Host root — used to resolve relative URLs returned by the API (e.g. /storage/…)
+  static const String host = 'https://yachalapp.emtechint.com';
+
   // Endpoints
 
   // Authentication
@@ -11,6 +14,7 @@ class ApiConfig {
   static const String register = '/auth/register';
   static const String logout = '/auth/logout';
   static const String user = '/auth/user';
+  static const String updateProfile = '/auth/profile';
 
   // Prayers
   static const String prayers = '/prayers';
@@ -30,6 +34,11 @@ class ApiConfig {
 
   // FCM
   static const String fcmToken = '/fcm/token';
+
+  // Database Sync
+  static const String syncDatabase = '/sync/database';
+  static const String syncDatabaseFull = '/sync/database/full';
+  static const String syncMetadata = '/sync/metadata';
 
   // Home
   static const String homeSummary = '/home/summary';

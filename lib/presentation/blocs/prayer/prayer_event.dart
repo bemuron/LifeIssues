@@ -60,8 +60,10 @@ class ClearPrayerFiltersEvent extends PrayerEvent {}
 
 class LoadPrayerByIdEvent extends PrayerEvent {
   final int prayerId;
+  /// Pre-loaded prayer — when set, the bloc emits it directly without an API call.
+  final dynamic preloaded;
 
-  LoadPrayerByIdEvent(this.prayerId);
+  LoadPrayerByIdEvent(this.prayerId, {this.preloaded});
 
   @override
   List<Object?> get props => [prayerId];

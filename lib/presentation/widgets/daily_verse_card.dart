@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../core/theme/app_theme.dart';
 import '../../domain/entities/verse.dart';
 import '../blocs/favorites/favorites_bloc.dart';
 import '../blocs/settings/settings_bloc.dart';
@@ -28,18 +29,7 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
     _isFavorite = widget.verse.isFavorite;
   }
 
-  String _getVerseText(String version) {
-    switch (version) {
-      case 'kjv':
-        return widget.verse.kjv;
-      case 'msg':
-        return widget.verse.msg!;
-      case 'amp':
-        return widget.verse.amp!;
-      default:
-        return widget.verse.kjv;
-    }
-  }
+  String _getVerseText(String version) => widget.verse.getVersion(version);
 
   void _toggleFavorite() {
     setState(() {
@@ -55,7 +45,7 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
 
   void _shareVerse(String verseText) {
     final text =
-        '${widget.verse.reference}\n\n$verseText\n\n- Life Issues App';
+        '${widget.verse.reference}\n\n$verseText\n\n- Yachal App';
     Share.share(text);
   }
 
@@ -74,7 +64,10 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
 
         return Card(
           margin: const EdgeInsets.all(16),
-          elevation: 2,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: InkWell(
             onTap: () {
               Navigator.push(
@@ -97,10 +90,7 @@ class _DailyVerseCardState extends State<DailyVerseCard> {
                   end: Alignment.bottomRight,
                   colors: [
                     Theme.of(context).colorScheme.primaryContainer,
-                    Theme.of(context)
-                        .colorScheme
-                        .secondaryContainer
-                        .withOpacity(0.7),
+                    Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.7),
                   ],
                 ),
               ),

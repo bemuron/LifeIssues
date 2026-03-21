@@ -12,12 +12,14 @@ class IssueCard extends StatelessWidget {
   final Issue issue;
   final int index;
   final bool isGridView;
+  final String heroTagPrefix;
 
   const IssueCard({
     super.key,
     required this.issue,
     required this.index,
     this.isGridView = false,
+    this.heroTagPrefix = '',
   });
 
   IconData _getIconForIssue(String issueName) {
@@ -58,8 +60,12 @@ class IssueCard extends StatelessWidget {
     final icon = _getIconForIssue(issue.name);
     final imageUrl = _getImageUrl();
 
+    final heroTag = heroTagPrefix.isEmpty 
+        ? 'issue_${issue.id}' 
+        : '${heroTagPrefix}_issue_${issue.id}';
+    
     return Hero(
-      tag: 'issue_${issue.id}',
+      tag: heroTag,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -70,7 +76,10 @@ class IssueCard extends StatelessWidget {
                 builder: (context) => BlocProvider(
                   create: (_) => di.sl<VersesBloc>()
                     ..add(LoadVersesForIssueEvent(issue.id)),
-                  child: IssueVersesPage(issue: issue),
+                  child: IssueVersesPage(
+                    issue: issue,
+                    heroTag: heroTag,
+                  ),
                 ),
               ),
             );
@@ -94,7 +103,7 @@ class IssueCard extends StatelessWidget {
       String? imageUrl,
       ) {
     return Card(
-      elevation: 1,
+      elevation: 4,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),

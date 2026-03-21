@@ -40,6 +40,7 @@ dependencies:
   home_widget: ^0.6.0
 
   # Firebase (for cloud sync)
+  firebase_auth: ^6.1.3
   firebase_core: ^4.3.0
   firebase_analytics: ^12.1.1
   firebase_messaging: ^16.1.0
@@ -60,8 +61,14 @@ dependencies:
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^7.0.1
 
+  # Image picker (for profile picture)
+  image_picker: ^1.1.2
+
   # Subscriptions (Qonversion instead of RevenueCat)
   qonversion_flutter: ^11.3.1
+
+  # File system paths
+  path_provider: ^2.1.2
 
   # HTTP & API
   dio: ^5.4.0
@@ -75,6 +82,9 @@ dependencies:
   # Google Fonts
   google_fonts: ^8.0.2
 
+  # Font Awesome Fonts
+  font_awesome_flutter: ^11.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -85,3 +95,5 @@ flutter:
 
   assets:
     - assets/databases/Life_Issues.db
+    - assets/images/
+    - assets/icons/

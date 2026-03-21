@@ -19,11 +19,13 @@ class VersionComparisonSheet extends StatefulWidget {
 class _VersionComparisonSheetState extends State<VersionComparisonSheet>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late List<String> _versionKeys;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _versionKeys = widget.verse.translations.keys.toList();
+    _tabController = TabController(length: _versionKeys.length, vsync: this);
   }
 
   @override
@@ -82,40 +84,27 @@ class _VersionComparisonSheetState extends State<VersionComparisonSheet>
                 ),
               ),
 
-              // Tab Bar
+              // Tab Bar — dynamic from available translations
               TabBar(
                 controller: _tabController,
                 labelColor: AppColors.primary,
                 unselectedLabelColor: AppColors.textSecondary,
                 indicatorColor: AppColors.primary,
-                tabs: const [
-                  Tab(text: 'KJV'),
-                  Tab(text: 'MSG'),
-                  Tab(text: 'AMP'),
-                ],
+                isScrollable: _versionKeys.length > 3,
+                tabs: _versionKeys.map((k) => Tab(text: k)).toList(),
               ),
 
               // Tab Views
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: [
-                    _buildVersionContent(
-                      scrollController,
-                      "kjv",
-                      widget.verse.kjv ?? widget.verse.text,
-                    ),
-                    _buildVersionContent(
-                      scrollController,
-                      "msg",
-                      widget.verse.msg ?? 'Translation not available',
-                    ),
-                    _buildVersionContent(
-                      scrollController,
-                      "amp",
-                      widget.verse.amp ?? 'Translation not available',
-                    ),
-                  ],
+                  children: _versionKeys
+                      .map((k) => _buildVersionContent(
+                            scrollController,
+                            k,
+                            widget.verse.translations[k] ?? '',
+                          ))
+                      .toList(),
                 ),
               ),
 
@@ -148,10 +137,10 @@ class _VersionComparisonSheetState extends State<VersionComparisonSheet>
   }
 
   Widget _buildVersionContent(
-      ScrollController scrollController,
-      String versionCode,
-      String text,
-      ) {
+    ScrollController scrollController,
+    String versionCode,
+    String text,
+  ) {
     return SingleChildScrollView(
       controller: scrollController,
       padding: const EdgeInsets.all(20),
@@ -253,14 +242,13 @@ class _VersionComparisonSheetState extends State<VersionComparisonSheet>
                 ),
               ),
 
-              // Content
+              // Content — iterate all available translations
               Flexible(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Reference
                       Text(
                         widget.verse.reference,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -269,31 +257,14 @@ class _VersionComparisonSheetState extends State<VersionComparisonSheet>
                         ),
                       ),
                       const SizedBox(height: 24),
-
-                      // KJV
-                      _buildVersionSection(
-                        context,
-                        'King James Version (KJV)',
-                        widget.verse.kjv ?? widget.verse.text,
-                      ),
-                      const SizedBox(height: 24),
-
-                      // MSG
-                      if (widget.verse.msg != null)
+                      for (final entry in widget.verse.translations.entries) ...[
                         _buildVersionSection(
                           context,
-                          'The Message (MSG)',
-                          widget.verse.msg!,
+                          '${BibleVersions.getVersionName(entry.key)} (${entry.key})',
+                          entry.value,
                         ),
-                      if (widget.verse.msg != null) const SizedBox(height: 24),
-
-                      // AMP
-                      if (widget.verse.amp != null)
-                        _buildVersionSection(
-                          context,
-                          'Amplified Bible (AMP)',
-                          widget.verse.amp!,
-                        ),
+                        const SizedBox(height: 24),
+                      ],
                     ],
                   ),
                 ),
@@ -306,10 +277,10 @@ class _VersionComparisonSheetState extends State<VersionComparisonSheet>
   }
 
   Widget _buildVersionSection(
-      BuildContext context,
-      String versionName,
-      String text,
-      ) {
+    BuildContext context,
+    String versionName,
+    String text,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

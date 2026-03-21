@@ -55,7 +55,7 @@ class PrayerRemoteDataSourceImpl implements PrayerRemoteDataSource {
   @override
   Future<PrayerModel> getPrayerById(int id) async {
     final response = await apiClient.get(ApiConfig.prayerById(id));
-    return PrayerModel.fromJson(response.data['data']);
+    return PrayerModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
@@ -73,7 +73,7 @@ class PrayerRemoteDataSourceImpl implements PrayerRemoteDataSource {
       },
     );
 
-    return PrayerModel.fromJson(response.data['data']);
+    return PrayerModel.fromJson(response.data['prayer']);
   }
 
   @override
@@ -82,10 +82,12 @@ class PrayerRemoteDataSourceImpl implements PrayerRemoteDataSource {
       ApiConfig.prayerPray(prayerId),
     );
 
+    final rawHasPrayed = response.data['has_prayed'];
+    final rawPrayCount = response.data['pray_count'];
     return {
-      'has_prayed': response.data['has_prayed'] as bool,
-      'pray_count': response.data['pray_count'] as int,
-      'already_prayed': response.data['already_prayed'] as bool? ?? false,
+      'has_prayed': rawHasPrayed == true || rawHasPrayed == 1,
+      'pray_count': rawPrayCount is int ? rawPrayCount : (rawPrayCount as num?)?.toInt() ?? 0,
+      'already_prayed': response.data['already_prayed'] == true || response.data['already_prayed'] == 1,
     };
   }
 

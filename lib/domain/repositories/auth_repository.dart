@@ -18,6 +18,17 @@ abstract class AuthRepository {
   Future<User> loginWithApple(String idToken);
 
   Future<User> getCurrentUser();
+
+  /// Returns a User built from locally cached data (no network call).
+  /// Used as a fallback when [getCurrentUser] fails due to no connectivity.
+  Future<User?> getLocalUser();
+
+  Future<void> updateProfile({
+    required String name,
+    String? password,
+    String? imagePath,
+  });
+
   Future<void> logout();
   Future<bool> isAuthenticated();
 }

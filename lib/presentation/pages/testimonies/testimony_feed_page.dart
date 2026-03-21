@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../../data/datasources/issue_local_datasource.dart';
 import '../../blocs/testimony/testimony_bloc.dart';
 import '../../blocs/testimony/testimony_event.dart';
 import '../../blocs/testimony/testimony_state.dart';
@@ -11,6 +13,7 @@ import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/testimony_card.dart';
 import '../../widgets/testimony/testimony_filter_sheet.dart';
+import '../subscription/subscription_page.dart';
 import 'testimony_submission_page.dart';
 import '../auth/login_page.dart';
 
@@ -35,22 +38,28 @@ class TestimonyFeedView extends StatefulWidget {
 
 class _TestimonyFeedViewState extends State<TestimonyFeedView> {
   final ScrollController _scrollController = ScrollController();
-  final List<String> _categories = [
-    'Anxiety',
-    'Depression',
-    'Fear',
-    'Loneliness',
-    'Forgiveness',
-    'Health',
-    'Family',
-    'Work',
-    'Relationships',
-  ];
+  List<String> _categories = [];
+  // Caches the last TestimonyLoaded so the list stays visible while refreshing.
+  TestimonyLoaded? _lastLoaded;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final issues = await di.sl<IssueLocalDataSource>().getAllIssues();
+      if (!mounted || issues.isEmpty) return;
+      final rng = Random();
+      final count = rng.nextInt(5) + 5; // 5–9 items
+      final shuffled = List.of(issues)..shuffle(rng);
+      setState(() {
+        _categories = shuffled.take(count).map((i) => i.name).toList();
+      });
+    } catch (_) {}
   }
 
   @override
@@ -127,6 +136,21 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
     }
   }
 
+  Future<void> _onRefresh(BuildContext context) async {
+    final bloc = context.read<TestimonyBloc>();
+    final s = _lastLoaded;
+    final future = bloc.stream
+        .firstWhere((st) => st is TestimonyLoaded || st is TestimonyError)
+        .timeout(const Duration(seconds: 15), onTimeout: () => TestimonyInitial());
+    bloc.add(LoadTestimoniesEvent(
+      category: s?.currentCategory,
+      sortBy: s?.currentSortBy,
+      linkedToPrayer: s?.currentLinkedToPrayer,
+      hasPraise: s?.currentHasPraise,
+    ));
+    await future;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,11 +200,18 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
                   }
                 },
                 builder: (context, state) {
-                  if (state is TestimonyLoading) {
+                  // During refresh, TestimonyLoading fires but we keep the old
+                  // list visible — the RefreshIndicator spinner overlays on top.
+                  if (state is TestimonyLoading && _lastLoaded == null) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (state is TestimonyLoaded) {
+                  final displayState = state is TestimonyLoaded
+                      ? (_lastLoaded = state)
+                      : _lastLoaded;
+
+                  if (displayState != null) {
+                    final state = displayState; // shadow for the block below
                     return Column(
                       children: [
                         // Active filters chip row
@@ -299,22 +330,14 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
 
                         // Testimony list
                         Expanded(
-                          child: state.testimonies.isEmpty
-                              ? _buildEmptyState(context)
-                              : RefreshIndicator(
-                            onRefresh: () async {
-                              context.read<TestimonyBloc>().add(
-                                LoadTestimoniesEvent(
-                                  isRefresh: true,
-                                  category: state.currentCategory,
-                                  sortBy: state.currentSortBy,
-                                  linkedToPrayer:
-                                  state.currentLinkedToPrayer,
-                                  hasPraise: state.currentHasPraise,
-                                ),
-                              );
-                            },
-                            child: ListView.builder(
+                          child: RefreshIndicator(
+                            onRefresh: () => _onRefresh(context),
+                            child: state.testimonies.isEmpty
+                                ? ListView(
+                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    children: [_buildEmptyState(context)],
+                                  )
+                                : ListView.builder(
                               controller: _scrollController,
                               padding: EdgeInsets.fromLTRB(
                                   16, 16, 16, showAd ? 90 : 16),
@@ -370,6 +393,7 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
         builder: (context, authState) {
           if (authState is! Authenticated) {
             return FloatingActionButton.extended(
+              heroTag: 'testimony_fab_login',
               onPressed: () => _navigateToLogin(context),
               icon: const Icon(Icons.login),
               label: const Text('Login to Post'),
@@ -379,6 +403,7 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
             builder: (context, subState) {
               final canPost = subState is SubscriptionLoaded && subState.canPost;
               return FloatingActionButton.extended(
+                heroTag: 'testimony_fab_post',
                 onPressed: () => _handlePostTestimony(context, canPost),
                 icon: const Icon(Icons.add),
                 label: const Text('Share Testimony'),
@@ -439,10 +464,10 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
   }
 
   void _handlePostTestimony(BuildContext context, bool canPost) {
-    if (!canPost) {
+    /*if (!canPost) {
       _showSubscriptionPaywall(context);
       return;
-    }
+    }*/
 
     Navigator.push(
       context,
@@ -451,9 +476,10 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
   }
 
   void _showSubscriptionPaywall(BuildContext context) {
+    final outerContext = context;
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -461,12 +487,12 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
             Icon(
               Icons.stars,
               size: 64,
-              color: Theme.of(context).colorScheme.primary,
+              color: Theme.of(sheetContext).colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
               'Subscription Required',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(sheetContext).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             const Text(
@@ -476,14 +502,17 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () {
-                Navigator.pop(context);
-                // TODO: Navigate to subscription page
+                Navigator.pop(sheetContext);
+                Navigator.push(
+                  outerContext,
+                  MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+                );
               },
               child: const Text('View Plans'),
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(sheetContext),
               child: const Text('Maybe Later'),
             ),
           ],

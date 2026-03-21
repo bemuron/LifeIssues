@@ -4,8 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/bible_versions.dart';
 import '../../../domain/entities/verse.dart';
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_state.dart';
 import '../../blocs/favorites/favorites_bloc.dart';
 import '../../blocs/settings/settings_bloc.dart';
+import '../../blocs/subscription/subscription_bloc.dart';
+import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/ad_banner_widget.dart';
 
 class VerseDetailsPage extends StatefulWidget {
@@ -39,18 +43,7 @@ class _VerseDetailsPageState extends State<VerseDetailsPage> {
     }
   }
 
-  String _getVerseText() {
-    switch (_selectedVersion) {
-      case 'kjv':
-        return widget.verse.kjv;
-      case 'msg':
-        return widget.verse.msg!;
-      case 'amp':
-        return widget.verse.amp!;
-      default:
-        return widget.verse.kjv;
-    }
-  }
+  String _getVerseText() => widget.verse.getVersion(_selectedVersion);
 
   void _shareVerse() {
     final text = '${widget.verse.reference}\n\n${_getVerseText()}\n\n- Life Issues App';
@@ -124,15 +117,15 @@ class _VerseDetailsPageState extends State<VerseDetailsPage> {
                           children: [
                             Expanded(
                               child: SegmentedButton<String>(
-                                segments: BibleVersions.versions.entries
+                                segments: widget.verse.translations.keys
                                     .map(
-                                      (e) => ButtonSegment(
-                                    value: e.key,
-                                    label: Text(e.key.toUpperCase()),
+                                      (k) => ButtonSegment(
+                                    value: k,
+                                    label: Text(k),
                                   ),
                                 )
                                     .toList(),
-                                selected: {_selectedVersion},
+                                selected: {widget.verse.translations.containsKey(_selectedVersion.toUpperCase()) ? _selectedVersion.toUpperCase() : widget.verse.translations.keys.first},
                                 onSelectionChanged: (Set<String> newSelection) {
                                   setState(() {
                                     _selectedVersion = newSelection.first;
@@ -238,11 +231,13 @@ class _VerseDetailsPageState extends State<VerseDetailsPage> {
 
                   // Comparison View
                   if (_showComparison) ...[
-                    _buildComparisonSection('King James Version (KJV)', widget.verse.kjv),
-                    const Divider(height: 1),
-                    _buildComparisonSection('The Message (MSG)', widget.verse.msg!),
-                    const Divider(height: 1),
-                    _buildComparisonSection('Amplified Bible (AMP)', widget.verse.amp!),
+                    for (final entry in widget.verse.translations.entries) ...[
+                      _buildComparisonSection(
+                        '${BibleVersions.getVersionName(entry.key)} (${entry.key})',
+                        entry.value,
+                      ),
+                      const Divider(height: 1),
+                    ],
                   ],
 
                   const SizedBox(height: 16), // Space before ad
@@ -250,7 +245,18 @@ class _VerseDetailsPageState extends State<VerseDetailsPage> {
               ),
             ),
           ),
-          const AdBannerWidget(), // ← ADD AD BANNER HERE
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, authState) {
+              return BlocBuilder<SubscriptionBloc, SubscriptionState>(
+                builder: (context, subState) {
+                  final showAd = authState is! Authenticated ||
+                      !(subState is SubscriptionLoaded && subState.canPost);
+                  if (!showAd) return const SizedBox.shrink();
+                  return const AdBannerWidget();
+                },
+              );
+            },
+          ),
         ],
       ),
     );

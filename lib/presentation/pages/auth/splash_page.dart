@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../data/datasources/database_helper.dart';
+import '../../../main.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../main_navigation_page.dart';
-import 'onboarding_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({Key? key}) : super(key: key);
@@ -16,7 +16,8 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -40,7 +41,18 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
     _controller.forward();
 
-    // Check auth status after animation
+    // Initialize DB while splash is visible, then check auth
+    _initAndCheckAuth();
+  }
+
+  Future<void> _initAndCheckAuth() async {
+    try {
+      // Ensure SQLite DB is created and populated before any query runs
+      await DatabaseHelper.database;
+    } catch (e) {
+      debugPrint('DB init error: $e');
+    }
+    if (!mounted) return;
     context.read<AuthBloc>().add(CheckAuthStatusEvent());
   }
 
@@ -53,29 +65,23 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
+      // Navigate once the auth check resolves (either way)
+      listenWhen: (_, state) =>
+          state is Authenticated || state is Unauthenticated,
       listener: (context, state) async {
-        if (state is Authenticated || state is Unauthenticated) {
-          // Check if user has seen onboarding
-          final prefs = await SharedPreferences.getInstance();
-          final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+        // Let the animation finish before navigating
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (!mounted) return;
 
-          if (!mounted) return;
-
-          // Delay to show splash animation
-          await Future.delayed(const Duration(milliseconds: 500));
-
-          if (!mounted) return;
-
-          if (!hasSeenOnboarding) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const OnboardingPage()),
-            );
-          } else {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const MainNavigationPageUpdated()),
-            );
-          }
-        }
+        // MainNavigationWrapper handles the onboarding check itself
+        Navigator.of(context).pushReplacement( 
+          PageRouteBuilder(
+            pageBuilder: (_, animation, __) => const MainNavigationWrapper(),
+            transitionsBuilder: (_, animation, __, child) =>
+                FadeTransition(opacity: animation, child: child),
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
       },
       child: Scaffold(
         body: Container(
@@ -97,7 +103,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // App icon/logo
+                    // App logo
                     Container(
                       width: 120,
                       height: 120,
@@ -112,17 +118,24 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.menu_book,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.primary,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.asset(
+                          'assets/icons/app_icon.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.menu_book,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
 
                     // App name
                     const Text(
-                      'Life Issues',
+                      'Yachal',
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -133,7 +146,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
                     // Tagline
                     const Text(
-                      'Bible verses for life\'s challenges',
+                      'Scripture | Prayer | Testimony',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white70,
@@ -147,7 +160,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                       height: 40,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
                   ],

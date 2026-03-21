@@ -31,17 +31,7 @@ class _RandomVerseDialogState extends State<RandomVerseDialog> {
   String _getVerseText() {
     final settingsState = context.read<SettingsBloc>().state;
     final version = settingsState is SettingsLoaded ? settingsState.bibleVersion : 'kjv';
-
-    switch (version) {
-      case 'kjv':
-        return widget.verse.kjv;
-      case 'msg':
-        return widget.verse.msg!;
-      case 'amp':
-        return widget.verse.amp!;
-      default:
-        return widget.verse.kjv;
-    }
+    return widget.verse.getVersion(version);
   }
 
   void _toggleFavorite() {

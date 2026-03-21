@@ -1,5 +1,6 @@
 // lib/data/models/prayer_model.dart
 
+import '../../core/constants/image_config.dart';
 import '../../domain/entities/prayer.dart';
 
 class PrayerModel {
@@ -15,6 +16,7 @@ class PrayerModel {
   final bool answered;
   final LinkedTestimonyModel? linkedTestimony;
   final DateTime createdAt;
+  final String? profileImageUrl;
 
   PrayerModel({
     required this.id,
@@ -29,16 +31,34 @@ class PrayerModel {
     this.answered = false,
     this.linkedTestimony,
     required this.createdAt,
+    this.profileImageUrl,
   });
 
   factory PrayerModel.fromJson(Map<String, dynamic> json) {
+    // user_id may be returned as String (e.g. "1") or int
+    final rawUserId = json['user_id'];
+    final int? userId = rawUserId is int
+        ? rawUserId
+        : int.tryParse(rawUserId?.toString() ?? '');
+
+    // poster_name: use direct field or fall back to nested user.name
+    final isAnonymous = json['is_anonymous'] as bool? ?? false;
+    final userMap = json['user'] as Map<String, dynamic>?;
+    String? posterName = json['poster_name'] as String?;
+    if (posterName == null && !isAnonymous) {
+      posterName = userMap?['name'] as String?;
+    }
+
+    final rawImagePath = userMap?['profile_image_path'] as String?;
+    final profileImageUrl = ImageConfig.getProfileImageUrl(rawImagePath);
+
     return PrayerModel(
       id: json['id'] as int,
-      userId: json['user_id'] as int?,
-      posterName: json['poster_name'] as String?,
+      userId: userId,
+      posterName: posterName,
       body: json['body'] as String,
       category: json['category'] as String?,
-      isAnonymous: json['is_anonymous'] as bool? ?? false,
+      isAnonymous: isAnonymous,
       status: json['status'] as String,
       prayCount: json['pray_count'] as int? ?? 0,
       hasPrayed: json['has_prayed'] as bool? ?? false,
@@ -47,6 +67,7 @@ class PrayerModel {
           ? LinkedTestimonyModel.fromJson(json['linked_testimony'] as Map<String, dynamic>)
           : null,
       createdAt: DateTime.parse(json['created_at'] as String),
+      profileImageUrl: profileImageUrl.isEmpty ? null : profileImageUrl,
     );
   }
 
@@ -81,6 +102,7 @@ class PrayerModel {
       answered: answered,
       linkedTestimony: linkedTestimony?.toEntity(),
       createdAt: createdAt,
+      profileImageUrl: profileImageUrl,
     );
   }
 }

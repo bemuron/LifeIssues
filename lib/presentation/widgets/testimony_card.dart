@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/testimony.dart';
+import '../pages/testimonies/testimony_detail_page.dart';
 
 class TestimonyCard extends StatelessWidget {
   final Testimony testimony;
@@ -16,145 +17,250 @@ class TestimonyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: InkWell(
         onTap: () {
-          // TODO: Navigate to testimony detail
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => TestimonyDetailPage(testimonyId: testimony.id),
+            ),
+          );
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header row
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 16,
-                    child: const Icon(Icons.person, size: 16),
-                  ),
-                  const SizedBox(width: 8),
+                  _buildAvatar(context),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          testimony.posterName,
-                          style: Theme.of(context).textTheme.titleSmall,
+                          testimony.posterName.isNotEmpty
+                              ? testimony.posterName
+                              : 'Anonymous',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           _getRelativeTime(testimony.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(
-                    Icons.verified,
-                    color: Colors.green,
-                    size: 20,
+                  // Verified badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.verified, size: 13, color: Colors.green.shade700),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Testimony',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 12),
 
-              // Category
-              if (testimony.category != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Chip(
-                    label: Text(testimony.category!),
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
+              // Category chip
+              if (testimony.category != null) ...[
+                _buildCategoryChip(context, testimony.category!),
+                const SizedBox(height: 8),
+              ],
 
               // Title
               Text(
                 testimony.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  height: 1.3,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
               // Body
               Text(
                 testimony.body,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  height: 1.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
+
               const SizedBox(height: 12),
 
               // Footer
               Row(
                 children: [
-                  const Icon(Icons.auto_awesome, size: 16, color: Colors.amber),
+                  Icon(
+                    Icons.auto_awesome,
+                    size: 16,
+                    color: testimony.hasPraised
+                        ? Colors.amber.shade700
+                        : colorScheme.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '${testimony.praiseCount} ${testimony.praiseCount == 1 ? 'praise' : 'praises'}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const Spacer(),
-                  FilledButton.tonal(
-                    onPressed: testimony.hasPraised ? null : onTapPraise,
-                    style: FilledButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          testimony.hasPraised ? Icons.check : Icons.auto_awesome,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(testimony.hasPraised ? 'Praised' : 'Praise God'),
-                      ],
-                    ),
-                  ),
+                  _buildPraiseButton(context),
                 ],
               ),
 
               // Linked prayer
               if (testimony.linkedPrayer != null) ...[
-                const SizedBox(height: 12),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.favorite, size: 14, color: Colors.red),
-                          const SizedBox(width: 4),
-                          Text(
-                            'This testimony answers a prayer',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
+                const SizedBox(height: 10),
+                Divider(height: 1, color: colorScheme.outlineVariant),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.volunteer_activism, size: 14, color: colorScheme.primary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
                         testimony.linkedPrayer!.bodyExcerpt,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontStyle: FontStyle.italic,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hasImage = testimony.profileImageUrl != null &&
+        testimony.profileImageUrl!.isNotEmpty;
+
+    return CircleAvatar(
+      radius: 22,
+      backgroundColor: colorScheme.tertiaryContainer,
+      backgroundImage: hasImage ? NetworkImage(testimony.profileImageUrl!) : null,
+      child: hasImage
+          ? null
+          : Icon(
+              Icons.person_outlined,
+              size: 22,
+              color: colorScheme.onTertiaryContainer,
+            ),
+    );
+  }
+
+  Widget _buildCategoryChip(BuildContext context, String category) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        category,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: colorScheme.onTertiaryContainer,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPraiseButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (testimony.hasPraised) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.amber.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.check, size: 14, color: Colors.amber.shade800),
+            const SizedBox(width: 4),
+            Text(
+              'Praised',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.amber.shade800,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return FilledButton.tonal(
+      onPressed: onTapPraise,
+      style: FilledButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: colorScheme.tertiaryContainer,
+        foregroundColor: colorScheme.onTertiaryContainer,
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.auto_awesome, size: 14),
+          SizedBox(width: 4),
+          Text('Praise God', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }

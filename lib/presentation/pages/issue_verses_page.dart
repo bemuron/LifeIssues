@@ -15,10 +15,12 @@ import '../widgets/verse_card_horizontal.dart';
 
 class IssueVersesPage extends StatefulWidget {
   final Issue issue;
+  final String heroTag;
 
   const IssueVersesPage({
     super.key,
     required this.issue,
+    this.heroTag = 'issue_default',
   });
 
   @override
@@ -106,7 +108,7 @@ class _IssueVersesPageState extends State<IssueVersesPage> {
                                 ),
                               ),
                               background: Hero(
-                                tag: 'issue_${widget.issue.id}',
+                                tag: widget.heroTag,
                                 child: _buildHeroBackground(
                                     context, imageUrl, cs),
                               ),

@@ -6,6 +6,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // Core
 import '../network/api_client.dart';
 import '../utils/auth_manager.dart';
+import '../services/social_auth_service.dart';
+import '../services/database_sync_service.dart';
 
 // Data Sources - Local (Existing)
 import '../../data/datasources/verse_local_datasource.dart';
@@ -122,6 +124,16 @@ Future<void> init() async {
         () => ApiClient(sl()),
   );
 
+  // Social Auth Service
+  sl.registerLazySingleton<SocialAuthService>(
+        () => SocialAuthService(authRepository: sl()),
+  );
+
+  // Database Sync Service
+  sl.registerLazySingleton<DatabaseSyncService>(
+        () => DatabaseSyncService(apiClient: sl()),
+  );
+
   //! BLoCs
   // Existing BLoCs
   sl.registerFactory(() => DailyVerseBloc(
@@ -168,19 +180,21 @@ Future<void> init() async {
     getMyTestimonies: sl(),
   ));
 
-  sl.registerFactory(() => AuthBloc(
+  sl.registerFactory(() => SubscriptionBloc(
+    getSubscriptionStatus: sl(),
+    checkSubscription: sl(),
+    subscriptionRepository: sl(),
+  ));
+
+  // AuthBloc as singleton to ensure single instance throughout app
+  sl.registerLazySingleton(() => AuthBloc(
     login: sl(),
     register: sl(),
     socialLogin: sl(),
     logout: sl(),
     checkAuthStatus: sl(),
     authRepository: sl(),
-  ));
-
-  sl.registerFactory(() => SubscriptionBloc(
-    getSubscriptionStatus: sl(),
-    checkSubscription: sl(),
-    subscriptionRepository: sl(),
+    socialAuthService: sl(),
   ));
 
   //! Use Cases

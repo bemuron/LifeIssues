@@ -70,7 +70,7 @@ class TestimonyRemoteDataSourceImpl implements TestimonyRemoteDataSource {
   @override
   Future<TestimonyModel> getTestimonyById(int id) async {
     final response = await apiClient.get(ApiConfig.testimonyById(id));
-    return TestimonyModel.fromJson(response.data['data']);
+    return TestimonyModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override
@@ -90,7 +90,7 @@ class TestimonyRemoteDataSourceImpl implements TestimonyRemoteDataSource {
       },
     );
 
-    return TestimonyModel.fromJson(response.data['data']);
+    return TestimonyModel.fromJson(response.data['testimony']);
   }
 
   @override
@@ -99,10 +99,12 @@ class TestimonyRemoteDataSourceImpl implements TestimonyRemoteDataSource {
       ApiConfig.testimonyPraise(testimonyId),
     );
 
+    final rawHasPraised = response.data['has_praised'];
+    final rawPraiseCount = response.data['praise_count'];
     return {
-      'has_praised': response.data['has_praised'] as bool,
-      'praise_count': response.data['praise_count'] as int,
-      'already_praised': response.data['already_praised'] as bool? ?? false,
+      'has_praised': rawHasPraised == true || rawHasPraised == 1,
+      'praise_count': rawPraiseCount is int ? rawPraiseCount : (rawPraiseCount as num?)?.toInt() ?? 0,
+      'already_praised': response.data['already_praised'] == true || response.data['already_praised'] == 1,
     };
   }
 

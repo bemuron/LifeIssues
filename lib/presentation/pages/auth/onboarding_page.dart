@@ -15,34 +15,41 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
+  // To use an image instead of an icon on any slide, set [imagePath] to the
+  // asset path (e.g. 'assets/images/onboarding1.png') and leave [icon] null.
+  // To use an icon, set [icon] and leave [imagePath] null.
   final List<OnboardingData> _pages = [
     OnboardingData(
       title: 'Find Hope in Scripture',
       description:
-      'Discover Bible verses perfectly matched to your life situations and challenges',
+          'Discover Bible verses perfectly matched to your life situations and challenges',
       icon: Icons.menu_book,
       color: Colors.blue,
+      // imagePath: 'assets/images/onboarding1.png',  // ← uncomment to use image
     ),
     OnboardingData(
       title: 'Share Prayer Requests',
       description:
-      'Join a caring community where believers pray for one another',
+          'Join a caring community where believers pray for one another',
       icon: Icons.favorite,
       color: Colors.red,
+      // imagePath: 'assets/images/onboarding2.png',
     ),
     OnboardingData(
       title: 'Share Your Testimony',
       description:
-      'Inspire others by sharing how God has moved in your life',
+          'Inspire others by sharing how God has moved in your life',
       icon: Icons.auto_awesome,
       color: Colors.amber,
+      // imagePath: 'assets/images/onboarding3.png',
     ),
     OnboardingData(
       title: 'Build Your Faith',
       description:
-      'Daily verses, powerful testimonies, and a supportive community await',
+          'Daily verses, powerful testimonies, and a supportive community await',
       icon: Icons.church,
       color: Colors.purple,
+      // imagePath: 'assets/images/onboarding4.png',
     ),
   ];
 
@@ -83,12 +90,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
 
-            // Page indicator
+            // Page indicator dots
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 _pages.length,
-                    (index) => _buildDot(index),
+                (index) => _buildDot(index),
               ),
             ),
             const SizedBox(height: 32),
@@ -112,7 +119,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ),
                   if (_currentPage > 0) const SizedBox(width: 16),
                   Expanded(
-                    flex: _currentPage == 0 ? 1 : 1,
                     child: FilledButton(
                       onPressed: () {
                         if (_currentPage == _pages.length - 1) {
@@ -147,28 +153,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon
-          Container(
-            width: 150,
-            height: 150,
-            decoration: BoxDecoration(
-              color: data.color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              data.icon,
-              size: 80,
-              color: data.color,
-            ),
-          ),
+          _buildVisual(data),
           const SizedBox(height: 48),
 
           // Title
           Text(
             data.title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -180,6 +173,38 @@ class _OnboardingPageState extends State<OnboardingPage> {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+
+  /// Shows an image asset when [data.imagePath] is set, otherwise falls back
+  /// to the icon in a coloured circle.
+  Widget _buildVisual(OnboardingData data) {
+    if (data.imagePath != null) {
+      return SizedBox(
+        height: 220,
+        child: Image.asset(
+          data.imagePath!,
+          fit: BoxFit.contain,
+          errorBuilder: (context, _, __) => _buildIconFallback(data),
+        ),
+      );
+    }
+    return _buildIconFallback(data);
+  }
+
+  Widget _buildIconFallback(OnboardingData data) {
+    return Container(
+      width: 150,
+      height: 150,
+      decoration: BoxDecoration(
+        color: data.color.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        data.icon ?? Icons.star,
+        size: 80,
+        color: data.color,
       ),
     );
   }
@@ -211,16 +236,29 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 }
 
+/// Data for a single onboarding slide.
+///
+/// Provide either [imagePath] (an asset path such as
+/// `'assets/images/onboarding1.png'`) or [icon] — not both.
+/// If [imagePath] is set the image is displayed; otherwise the icon is used.
 class OnboardingData {
   final String title;
   final String description;
-  final IconData icon;
+
+  /// Asset path to an image, e.g. `'assets/images/onboarding1.png'`.
+  /// Takes precedence over [icon] when set.
+  final String? imagePath;
+
+  /// Fallback icon shown when [imagePath] is null or fails to load.
+  final IconData? icon;
+
   final Color color;
 
   OnboardingData({
     required this.title,
     required this.description,
-    required this.icon,
+    this.imagePath,
+    this.icon,
     required this.color,
   });
 }

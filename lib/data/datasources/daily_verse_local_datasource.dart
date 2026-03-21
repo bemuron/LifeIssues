@@ -8,30 +8,53 @@ abstract class DailyVerseLocalDataSource {
 }
 
 class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
+  // ── Shared: group flat rows into VerseModels ────────────────────────────
+  List<VerseModel> _groupRows(List<Map<String, dynamic>> maps) {
+    final order = <int>[];
+    final groups = <int, List<Map<String, dynamic>>>{};
+    for (final row in maps) {
+      final id = row['canonical_id'] as int;
+      if (!groups.containsKey(id)) order.add(id);
+      groups.putIfAbsent(id, () => []).add(row);
+    }
+    return order
+        .map((id) => VerseModel.fromGroupedRows(
+              canonicalId: id,
+              rows: groups[id]!,
+            ))
+        .toList();
+  }
 
-  /// Ensures that daily verses exist for today and tomorrow
-  /// This should be called when app starts and when getting daily verse
+  // ── Base SELECT columns ─────────────────────────────────────────────────
+  static const String _verseColumns = '''
+      bv2.${DatabaseHelper.columnId},
+      bv2.${DatabaseHelper.columnBibleReference} AS reference,
+      bv2.${DatabaseHelper.columnBibleBook}      AS book,
+      bv2.${DatabaseHelper.columnBibleChapter}   AS chapter,
+      bv2.${DatabaseHelper.columnBibleVerseNum}  AS verse_num,
+      bv2.${DatabaseHelper.columnBibleText}      AS text,
+      bv2.${DatabaseHelper.columnBibleVersion}   AS version
+  ''';
+
+  /// Ensures that daily verses exist for today and tomorrow.
   @override
   Future<void> ensureDailyVersesExist() async {
     try {
       final db = await DatabaseHelper.database;
       final today = _getDateString(DateTime.now());
-      final tomorrow = _getDateString(DateTime.now().add(const Duration(days: 1)));
+      final tomorrow =
+          _getDateString(DateTime.now().add(const Duration(days: 1)));
 
-      // Check if verse exists for today
-      final todayExists = await _verseExistsForDate(today);
-      if (!todayExists) {
+      if (!await _verseExistsForDate(today)) {
         await _createDailyVerseForDate(today);
       }
-
-      // Check if verse exists for tomorrow
-      final tomorrowExists = await _verseExistsForDate(tomorrow);
-      if (!tomorrowExists) {
+      if (!await _verseExistsForDate(tomorrow)) {
         await _createDailyVerseForDate(tomorrow);
       }
 
-      // Clean up old verses (older than yesterday)
-      final yesterday = _getDateString(DateTime.now().subtract(const Duration(days: 1)));
+      // Clean up entries older than yesterday.
+      final yesterday =
+          _getDateString(DateTime.now().subtract(const Duration(days: 1)));
       await db.delete(
         DatabaseHelper.tableDailyVerses,
         where: '${DatabaseHelper.columnNotifyDate} < ?',
@@ -42,7 +65,6 @@ class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
     }
   }
 
-  /// Check if a verse exists for a specific date
   Future<bool> _verseExistsForDate(String date) async {
     final db = await DatabaseHelper.database;
     final result = await db.query(
@@ -54,33 +76,40 @@ class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
     return result.isNotEmpty;
   }
 
-  /// Create a daily verse entry for a specific date
+  /// Picks a random KJV verse (avoiding the last 30 days) and stores it.
   Future<void> _createDailyVerseForDate(String date) async {
     try {
       final db = await DatabaseHelper.database;
+      final cutoffDate =
+          _getDateString(DateTime.now().subtract(const Duration(days: 30)));
 
-      // Get a random verse that hasn't been used recently (last 30 days)
-      final cutoffDate = _getDateString(
-          DateTime.now().subtract(const Duration(days: 30))
-      );
-
-      final List<Map<String, dynamic>> randomVerse = await db.rawQuery('''
-        SELECT v._id as verse_id
-        FROM ${DatabaseHelper.tableBibleVerses} v
-        WHERE v._id NOT IN (
-          SELECT dv.${DatabaseHelper.columnVerseId}
-          FROM ${DatabaseHelper.tableDailyVerses} dv
-          WHERE dv.${DatabaseHelper.columnNotifyDate} >= ?
-        )
-        AND v.${DatabaseHelper.columnKjv} IS NOT NULL
+      // Restrict to KJV rows (canonical rows) only.
+      var rows = await db.rawQuery('''
+        SELECT ${DatabaseHelper.columnId} AS verse_id
+        FROM ${DatabaseHelper.tableBibleVerses}
+        WHERE ${DatabaseHelper.columnBibleVersion} = 'KJV'
+          AND ${DatabaseHelper.columnId} NOT IN (
+            SELECT ${DatabaseHelper.columnVerseId}
+            FROM ${DatabaseHelper.tableDailyVerses}
+            WHERE ${DatabaseHelper.columnNotifyDate} >= ?
+          )
         ORDER BY RANDOM()
         LIMIT 1
       ''', [cutoffDate]);
 
-      if (randomVerse.isNotEmpty) {
-        final verseId = randomVerse.first['verse_id'] as int;
+      // Fallback: any KJV verse if all were used recently.
+      if (rows.isEmpty) {
+        rows = await db.rawQuery('''
+          SELECT ${DatabaseHelper.columnId} AS verse_id
+          FROM ${DatabaseHelper.tableBibleVerses}
+          WHERE ${DatabaseHelper.columnBibleVersion} = 'KJV'
+          ORDER BY RANDOM()
+          LIMIT 1
+        ''');
+      }
 
-        // Insert into daily_verses table
+      if (rows.isNotEmpty) {
+        final verseId = rows.first['verse_id'] as int;
         await db.insert(
           DatabaseHelper.tableDailyVerses,
           {
@@ -88,29 +117,6 @@ class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
             DatabaseHelper.columnNotifyDate: date,
           },
         );
-
-        print('Created daily verse for $date with verse ID: $verseId');
-      } else {
-        // If no verse found (all used recently), just pick any random verse
-        final anyVerse = await db.rawQuery('''
-          SELECT _id as verse_id
-          FROM ${DatabaseHelper.tableBibleVerses}
-          WHERE ${DatabaseHelper.columnKjv} IS NOT NULL
-          ORDER BY RANDOM()
-          LIMIT 1
-        ''');
-
-        if (anyVerse.isNotEmpty) {
-          final verseId = anyVerse.first['verse_id'] as int;
-          await db.insert(
-            DatabaseHelper.tableDailyVerses,
-            {
-              DatabaseHelper.columnVerseId: verseId,
-              DatabaseHelper.columnNotifyDate: date,
-            },
-          );
-          print('Created daily verse for $date with verse ID: $verseId (from any)');
-        }
       }
     } catch (e) {
       print('Error creating daily verse for $date: $e');
@@ -118,49 +124,43 @@ class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
     }
   }
 
-  /// Get date string in YYYY-MM-DD format
-  String _getDateString(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
+  String _getDateString(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   @override
   Future<VerseModel> getDailyVerse() async {
     try {
-      // First ensure verses exist for today and tomorrow
       await ensureDailyVersesExist();
 
       final db = await DatabaseHelper.database;
       final today = _getDateString(DateTime.now());
 
-      // Get today's daily verse
-      final List<Map<String, dynamic>> dailyMaps = await db.rawQuery('''
-        SELECT 
-          v.${DatabaseHelper.columnId},
-          v.${DatabaseHelper.columnVerse},
-          v.${DatabaseHelper.columnKjv},
-          v.${DatabaseHelper.columnMsg},
-          v.${DatabaseHelper.columnAmp},
-          0 as is_favorite,
-          i.${DatabaseHelper.columnName} as issue_name,
-          i.${DatabaseHelper.columnIssueId}
-        FROM ${DatabaseHelper.tableDailyVerses} dv
-        INNER JOIN ${DatabaseHelper.tableBibleVerses} v 
-          ON dv.${DatabaseHelper.columnVerseId} = v.${DatabaseHelper.columnId}
-        LEFT JOIN ${DatabaseHelper.tableIssuesVerses} iv 
-          ON v.${DatabaseHelper.columnId} = iv.${DatabaseHelper.columnVerseId}
-        LEFT JOIN ${DatabaseHelper.tableIssues} i ON iv.${DatabaseHelper.columnIssueIdFk} = i.${DatabaseHelper.columnIssueId}
+      // bv1 = canonical KJV row stored in daily_verses; bv2 = all translations.
+      final maps = await db.rawQuery('''
+        SELECT
+          bv1.${DatabaseHelper.columnId}              AS canonical_id,
+          $_verseColumns,
+          0                                           AS is_favorite,
+          i.${DatabaseHelper.columnName}              AS issue_name
+        FROM  ${DatabaseHelper.tableDailyVerses} dv
+        JOIN  ${DatabaseHelper.tableBibleVerses} bv1
+          ON  bv1.${DatabaseHelper.columnId} = dv.${DatabaseHelper.columnVerseId}
+        JOIN  ${DatabaseHelper.tableBibleVerses} bv2
+          ON  bv2.${DatabaseHelper.columnBibleBook}     = bv1.${DatabaseHelper.columnBibleBook}
+         AND  bv2.${DatabaseHelper.columnBibleChapter}  = bv1.${DatabaseHelper.columnBibleChapter}
+         AND  bv2.${DatabaseHelper.columnBibleVerseNum} = bv1.${DatabaseHelper.columnBibleVerseNum}
+        LEFT JOIN ${DatabaseHelper.tableIssuesVerses} iv
+          ON  iv.${DatabaseHelper.columnVerseId} = bv1.${DatabaseHelper.columnId}
+        LEFT JOIN ${DatabaseHelper.tableIssues} i
+          ON  i.${DatabaseHelper.columnIssueId} = iv.${DatabaseHelper.columnIssueIdFk}
         WHERE dv.${DatabaseHelper.columnNotifyDate} = ?
-        LIMIT 1
+        ORDER BY bv2.${DatabaseHelper.columnBibleVersion}
       ''', [today]);
 
-      if (dailyMaps.isNotEmpty) {
-        print('Found daily verse for $today');
-        print('Text: $dailyMaps.first');
-        return VerseModel.fromMap(dailyMaps.first);
+      if (maps.isNotEmpty) {
+        return _groupRows(maps).first;
       }
 
-      // Fallback: This shouldn't happen, but if it does, return random verse
-      print('No daily verse found for $today, using random verse');
       return await getRandomVerse();
     } catch (e) {
       throw Exception('Failed to get daily verse: $e');
@@ -172,45 +172,44 @@ class DailyVerseLocalDataSourceImpl implements DailyVerseLocalDataSource {
     try {
       final db = await DatabaseHelper.database;
 
-      // First check if there are any verses
-      final countResult = await db.rawQuery(
-          'SELECT COUNT(*) as count FROM ${DatabaseHelper.tableBibleVerses}'
-      );
-      final count = countResult.first['count'] as int;
-
-      if (count == 0) {
-        throw Exception('No verses in database. Please ensure Life_Issues.db is copied to assets/databases/');
-      }
-
-      final List<Map<String, dynamic>> maps = await db.rawQuery('''
-        SELECT 
-          v.${DatabaseHelper.columnId},
-          v.${DatabaseHelper.columnVerse},
-          v.${DatabaseHelper.columnKjv},
-          v.${DatabaseHelper.columnMsg},
-          v.${DatabaseHelper.columnAmp},
-          0 as is_favorite,
-          i.${DatabaseHelper.columnName} as issue_name,
-          i.${DatabaseHelper.columnIssueId}
-        FROM ${DatabaseHelper.tableBibleVerses} v
-        LEFT JOIN ${DatabaseHelper.tableIssuesVerses} iv 
-          ON v.${DatabaseHelper.columnId} = iv.${DatabaseHelper.columnVerseId}
-        LEFT JOIN ${DatabaseHelper.tableIssues} i ON iv.${DatabaseHelper.columnIssueIdFk} = i.${DatabaseHelper.columnIssueId}
-        WHERE v.${DatabaseHelper.columnKjv} IS NOT NULL
-        ORDER BY RANDOM()
-        LIMIT 1
+      // Step 1: pick a random KJV row.
+      final pivot = await db.rawQuery('''
+        SELECT ${DatabaseHelper.columnId} AS canonical_id
+        FROM   ${DatabaseHelper.tableBibleVerses}
+        WHERE  ${DatabaseHelper.columnBibleVersion} = 'KJV'
+        ORDER  BY RANDOM()
+        LIMIT  1
       ''');
 
-      if (maps.isEmpty) {
-        throw Exception('Query returned no results');
+      if (pivot.isEmpty) {
+        throw Exception(
+            'No verses in database. Ensure Life_Issues.db is in assets/databases/');
       }
 
-      final firstMap = maps.first;
+      final canonicalId = pivot.first['canonical_id'] as int;
 
-      // Log the data for debugging
-      print('Random verse data: ${firstMap.toString()}');
+      // Step 2: load all translations of that verse.
+      final maps = await db.rawQuery('''
+        SELECT
+          bv1.${DatabaseHelper.columnId}              AS canonical_id,
+          $_verseColumns,
+          0                                           AS is_favorite,
+          i.${DatabaseHelper.columnName}              AS issue_name
+        FROM  ${DatabaseHelper.tableBibleVerses} bv1
+        JOIN  ${DatabaseHelper.tableBibleVerses} bv2
+          ON  bv2.${DatabaseHelper.columnBibleBook}     = bv1.${DatabaseHelper.columnBibleBook}
+         AND  bv2.${DatabaseHelper.columnBibleChapter}  = bv1.${DatabaseHelper.columnBibleChapter}
+         AND  bv2.${DatabaseHelper.columnBibleVerseNum} = bv1.${DatabaseHelper.columnBibleVerseNum}
+        LEFT JOIN ${DatabaseHelper.tableIssuesVerses} iv
+          ON  iv.${DatabaseHelper.columnVerseId} = bv1.${DatabaseHelper.columnId}
+        LEFT JOIN ${DatabaseHelper.tableIssues} i
+          ON  i.${DatabaseHelper.columnIssueId} = iv.${DatabaseHelper.columnIssueIdFk}
+        WHERE bv1.${DatabaseHelper.columnId} = ?
+        ORDER BY bv2.${DatabaseHelper.columnBibleVersion}
+      ''', [canonicalId]);
 
-      return VerseModel.fromMap(firstMap);
+      if (maps.isEmpty) throw Exception('Query returned no results');
+      return _groupRows(maps).first;
     } catch (e) {
       throw Exception('Failed to get random verse: $e');
     }

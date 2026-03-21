@@ -2,7 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/di/injection_container.dart' as di;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../domain/usecases/auth/social_login.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -12,10 +15,7 @@ class RegisterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl<AuthBloc>(),
-      child: const RegisterView(),
-    );
+    return const RegisterView();
   }
 }
 
@@ -76,10 +76,12 @@ class _RegisterViewState extends State<RegisterView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Header
-                  Icon(
-                    Icons.person_add,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
+                  _buildHeader(),
+                  /*Image.asset(
+                    'assets/icons/app_icon.png',
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -92,7 +94,7 @@ class _RegisterViewState extends State<RegisterView> {
                     'Create an account to share prayers and testimonies',
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
-                  ),
+                  ),*/
                   const SizedBox(height: 32),
 
                   // Name field
@@ -256,18 +258,11 @@ class _RegisterViewState extends State<RegisterView> {
 
                   // Google Sign Up
                   OutlinedButton.icon(
-                    onPressed: isLoading
-                        ? null
-                        : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Google Sign-In coming soon'),
-                        ),
-                      );
-                    },
+                    onPressed: isLoading ? null : _signUpWithGoogle,
                     icon: Image.asset(
                       'assets/images/google_logo.png',
                       height: 24,
+                      width: 24,
                       errorBuilder: (_, __, ___) =>
                       const Icon(Icons.g_mobiledata),
                     ),
@@ -275,20 +270,13 @@ class _RegisterViewState extends State<RegisterView> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Apple Sign Up
-                  OutlinedButton.icon(
-                    onPressed: isLoading
-                        ? null
-                        : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Apple Sign-In coming soon'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.apple),
-                    label: const Text('Continue with Apple'),
-                  ),
+                  // Apple Sign Up (iOS only)
+                  if (Theme.of(context).platform == TargetPlatform.iOS)
+                    OutlinedButton.icon(
+                      onPressed: isLoading ? null : _signUpWithApple,
+                      icon: const Icon(Icons.apple, size: 34),
+                      label: const Text('Continue with Apple'),
+                    ),
                   const SizedBox(height: 24),
 
                   // Login link
@@ -311,6 +299,94 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
+  Future<void> _signUpWithGoogle() async {
+    try {
+      final googleSignIn = GoogleSignIn();
+      await googleSignIn.signOut();
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return; // User cancelled
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Google Sign-In failed. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        context.read<AuthBloc>().add(
+          SocialLoginEvent(provider: SocialProvider.google, idToken: idToken),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google Sign-In error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _signUpWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Apple Sign-In failed. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        context.read<AuthBloc>().add(
+          SocialLoginEvent(provider: SocialProvider.apple, idToken: idToken),
+        );
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) return; // User cancelled
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Apple Sign-In error: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Apple Sign-In error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _handleRegister() {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -322,6 +398,54 @@ class _RegisterViewState extends State<RegisterView> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        // App Logo/Icon
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            //gradient: AppTheme.primaryGradient,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primarySeed.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            width: 50,
+            height: 50,
+            fit: BoxFit.cover,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        Text(
+          'Yachal',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppTheme.primarySeed,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          'Wait With Expectation',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: AppTheme.secondarySeed,
+          ),
+        ),
+      ],
     );
   }
 }

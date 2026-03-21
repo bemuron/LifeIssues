@@ -1,6 +1,9 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../../data/datasources/issue_local_datasource.dart';
 import '../../blocs/prayer/prayer_bloc.dart';
 import '../../blocs/prayer/prayer_event.dart';
 import '../../blocs/prayer/prayer_state.dart';
@@ -11,6 +14,7 @@ import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/prayer_card.dart';
 import '../../widgets/prayer/prayer_filter_sheet.dart';
+import '../subscription/subscription_page.dart';
 import 'prayer_submission_page.dart';
 import '../auth/login_page.dart';
 
@@ -35,22 +39,28 @@ class PrayerFeedView extends StatefulWidget {
 
 class _PrayerFeedViewState extends State<PrayerFeedView> {
   final ScrollController _scrollController = ScrollController();
-  final List<String> _categories = [
-    'Anxiety',
-    'Depression',
-    'Fear',
-    'Loneliness',
-    'Forgiveness',
-    'Health',
-    'Family',
-    'Work',
-    'Relationships',
-  ];
+  List<String> _categories = [];
+  // Caches the last PrayerLoaded so the list stays visible while refreshing.
+  PrayerLoaded? _lastLoaded;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final issues = await di.sl<IssueLocalDataSource>().getAllIssues();
+      if (!mounted || issues.isEmpty) return;
+      final rng = Random();
+      final count = rng.nextInt(5) + 5; // 5–9 items
+      final shuffled = List.of(issues)..shuffle(rng);
+      setState(() {
+        _categories = shuffled.take(count).map((i) => i.name).toList();
+      });
+    } catch (_) {}
   }
 
   @override
@@ -170,11 +180,18 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
                   }
                 },
                 builder: (context, state) {
-                  if (state is PrayerLoading) {
+                  // During refresh, PrayerLoading fires but we keep the old
+                  // list visible — the RefreshIndicator spinner overlays on top.
+                  if (state is PrayerLoading && _lastLoaded == null) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (state is PrayerLoaded) {
+                  final displayState = state is PrayerLoaded
+                      ? (_lastLoaded = state)
+                      : _lastLoaded;
+
+                  if (displayState != null) {
+                    final state = displayState; // shadow for the block below
                     return Column(
                       children: [
                         // Active filters chip row
@@ -264,20 +281,14 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
 
                         // Prayer list
                         Expanded(
-                          child: state.prayers.isEmpty
-                              ? _buildEmptyState(context)
-                              : RefreshIndicator(
-                            onRefresh: () async {
-                              context.read<PrayerBloc>().add(
-                                LoadPrayersEvent(
-                                  isRefresh: true,
-                                  category: state.currentCategory,
-                                  sortBy: state.currentSortBy,
-                                  hasPrayers: state.currentHasPrayers,
-                                ),
-                              );
-                            },
-                            child: ListView.builder(
+                          child: RefreshIndicator(
+                            onRefresh: () => _onRefresh(context),
+                            child: state.prayers.isEmpty
+                                ? ListView(
+                                    physics: const AlwaysScrollableScrollPhysics(),
+                                    children: [_buildEmptyState(context)],
+                                  )
+                                : ListView.builder(
                               controller: _scrollController,
                               padding: EdgeInsets.fromLTRB(
                                   16, 16, 16, showAd ? 90 : 16),
@@ -312,7 +323,6 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
                   return const SizedBox();
                 },
               );
-
               return Stack(
                 children: [
                   Positioned.fill(child: content),
@@ -333,6 +343,7 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
         builder: (context, authState) {
           if (authState is! Authenticated) {
             return FloatingActionButton.extended(
+              heroTag: 'prayer_fab_login',
               onPressed: () => _navigateToLogin(context),
               icon: const Icon(Icons.login),
               label: const Text('Login to Post'),
@@ -342,6 +353,7 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
             builder: (context, subState) {
               final canPost = subState is SubscriptionLoaded && subState.canPost;
               return FloatingActionButton.extended(
+                heroTag: 'prayer_fab_post',
                 onPressed: () => _handlePostPrayer(context, canPost),
                 icon: const Icon(Icons.add),
                 label: const Text('Post Prayer'),
@@ -351,6 +363,25 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
         },
       ),
     );
+  }
+
+  /// Pull-to-refresh handler.
+  ///
+  /// Does NOT pass isRefresh:true so that PrayerLoading is emitted first.
+  /// This guarantees a state transition (PrayerLoaded → PrayerLoading → PrayerLoaded)
+  /// that firstWhere can always detect, even if the returned data is identical.
+  Future<void> _onRefresh(BuildContext context) async {
+    final bloc = context.read<PrayerBloc>();
+    final s = _lastLoaded;
+    final future = bloc.stream
+        .firstWhere((st) => st is PrayerLoaded || st is PrayerError)
+        .timeout(const Duration(seconds: 15), onTimeout: () => PrayerInitial());
+    bloc.add(LoadPrayersEvent(
+      category: s?.currentCategory,
+      sortBy: s?.currentSortBy,
+      hasPrayers: s?.currentHasPrayers,
+    ));
+    await future;
   }
 
   String _getSortLabel(String sort) {
@@ -371,10 +402,9 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.favorite_border,
-            size: 64,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          FaIcon(FontAwesomeIcons.personPraying,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5)
           ),
           const SizedBox(height: 16),
           Text(
@@ -401,10 +431,10 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
   }
 
   void _handlePostPrayer(BuildContext context, bool canPost) {
-    if (!canPost) {
+    /*if (!canPost) {
       _showSubscriptionPaywall(context);
       return;
-    }
+    }*/
 
     Navigator.push(
       context,
@@ -413,9 +443,10 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
   }
 
   void _showSubscriptionPaywall(BuildContext context) {
+    final outerContext = context;
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -423,12 +454,12 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
             Icon(
               Icons.stars,
               size: 64,
-              color: Theme.of(context).colorScheme.primary,
+              color: Theme.of(sheetContext).colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
               'Subscription Required',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(sheetContext).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             const Text(
@@ -438,14 +469,17 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () {
-                Navigator.pop(context);
-                // TODO: Navigate to subscription page
+                Navigator.pop(sheetContext);
+                Navigator.push(
+                  outerContext,
+                  MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+                );
               },
               child: const Text('View Plans'),
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(sheetContext),
               child: const Text('Maybe Later'),
             ),
           ],

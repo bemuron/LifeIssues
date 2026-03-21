@@ -96,15 +96,17 @@ class PrayerPrayingToggled extends PrayerState {
   final int prayerId;
   final bool hasPrayed;
   final int prayCount;
+  final bool alreadyPrayed;
 
   PrayerPrayingToggled({
     required this.prayerId,
     required this.hasPrayed,
     required this.prayCount,
+    this.alreadyPrayed = false,
   });
 
   @override
-  List<Object?> get props => [prayerId, hasPrayed, prayCount];
+  List<Object?> get props => [prayerId, hasPrayed, prayCount, alreadyPrayed];
 }
 
 class PrayerDeleting extends PrayerState {

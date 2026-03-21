@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../domain/entities/issue.dart';
+import '../blocs/auth/auth_bloc.dart';
+import '../blocs/auth/auth_state.dart';
 import '../blocs/issues/issues_bloc.dart';
+import '../blocs/subscription/subscription_bloc.dart';
+import '../blocs/subscription/subscription_state.dart';
 import '../widgets/ad_banner_widget.dart';
 import '../widgets/issue_card.dart';
 
@@ -157,7 +161,18 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
               },
             ),
           ),
-          const AdBannerWidget(),
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, authState) {
+              return BlocBuilder<SubscriptionBloc, SubscriptionState>(
+                builder: (context, subState) {
+                  final showAd = authState is! Authenticated ||
+                      !(subState is SubscriptionLoaded && subState.canPost);
+                  if (!showAd) return const SizedBox.shrink();
+                  return const AdBannerWidget();
+                },
+              );
+            },
+          ),
         ],
       ),
     );
@@ -186,6 +201,7 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
             issue: issues[index],
             index: index,
             isGridView: true,
+            heroTagPrefix: 'all_issues',
           ),
         );
       },
@@ -210,6 +226,7 @@ class _AllIssuesPageState extends State<AllIssuesPage> {
               issue: issues[index],
               index: index,
               isGridView: false,
+              heroTagPrefix: 'all_issues',
             ),
           ),
         );

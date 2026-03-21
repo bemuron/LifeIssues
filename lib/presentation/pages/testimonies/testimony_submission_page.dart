@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../../data/datasources/issue_local_datasource.dart';
 import '../../blocs/testimony/testimony_bloc.dart';
 import '../../blocs/testimony/testimony_event.dart';
 import '../../blocs/testimony/testimony_state.dart';
@@ -52,6 +53,7 @@ class _TestimonySubmissionViewState extends State<TestimonySubmissionView> {
   String? _selectedCategory;
   bool _linkToPrayer = false;
   int? _selectedPrayerId;
+  List<String> _categories = [];
 
   @override
   void initState() {
@@ -60,6 +62,18 @@ class _TestimonySubmissionViewState extends State<TestimonySubmissionView> {
       _linkToPrayer = true;
       _selectedPrayerId = widget.linkedPrayerId;
     }
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final issues = await di.sl<IssueLocalDataSource>().getAllIssues();
+      if (mounted) {
+        setState(() {
+          _categories = issues.map((i) => i.name).toList();
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -180,7 +194,7 @@ class _TestimonySubmissionViewState extends State<TestimonySubmissionView> {
                     decoration: const InputDecoration(
                       labelText: 'Category (Optional)',
                     ),
-                    items: _getCategories()
+                    items: _categories
                         .map((cat) => DropdownMenuItem(
                       value: cat,
                       child: Text(cat),
@@ -282,19 +296,6 @@ class _TestimonySubmissionViewState extends State<TestimonySubmissionView> {
         },
       ),
     );
-  }
-
-  List<String> _getCategories() {
-    return [
-      'Healing',
-      'Provision',
-      'Guidance',
-      'Relationships',
-      'Salvation',
-      'Breakthrough',
-      'Protection',
-      'Other',
-    ];
   }
 
   String _truncate(String text, int maxLength) {

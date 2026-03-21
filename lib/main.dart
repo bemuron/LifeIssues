@@ -1,16 +1,21 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_options.dart';
 import 'package:life_issues_flutter/presentation/pages/main_navigation_page.dart';
-import 'core/constants/app_colors.dart';
+import 'presentation/pages/auth/onboarding_page.dart';
 import 'core/constants/app_strings.dart';
+import 'core/theme/app_theme.dart';
 import 'core/di/injection_container.dart' as di;
+import 'core/services/database_sync_service.dart';
 import 'core/services/notification_handler.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/auth/auth_event.dart';
+import 'presentation/pages/auth/splash_page.dart';
 import 'presentation/blocs/daily_verse/daily_verse_bloc.dart';
 import 'presentation/blocs/favorites/favorites_bloc.dart';
 import 'presentation/blocs/issues/issues_bloc.dart';
@@ -24,27 +29,50 @@ import 'presentation/blocs/verses/verses_bloc.dart';
 // Global navigator key for notifications
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+// Flag to track Firebase initialization
+bool _firebaseInitialized = false;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase FIRST (before NotificationHandler)
+  // Initialize Firebase FIRST with error handling
   try {
-    await Firebase.initializeApp();
-    debugPrint('✅ Firebase initialized');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    _firebaseInitialized = true;
+    debugPrint('✅ Firebase initialized successfully');
   } catch (e) {
-    debugPrint('⚠️ Firebase initialization error: $e');
+    _firebaseInitialized = false;
+    debugPrint('❌ Firebase initialization failed: $e');
+    debugPrint('⚠️ App will continue but Firebase features will not work');
   }
 
   // Initialize Mobile Ads SDK
-  await MobileAds.instance.initialize();
+  try {
+    await MobileAds.instance.initialize();
+    debugPrint('✅ Mobile Ads initialized');
+  } catch (e) {
+    debugPrint('⚠️ Mobile Ads initialization failed: $e');
+  }
 
   // Initialize Dependency Injection
   await di.init();
 
-  // Initialize notification handler (unified service)
-  // Note: This requires Firebase to be initialized first
-  NotificationHandler.navigatorKey = navigatorKey;
-  await NotificationHandler().initialize();
+  // Initialize notification handler if Firebase is available
+  if (_firebaseInitialized) {
+    try {
+      NotificationHandler.navigatorKey = navigatorKey;
+      NotificationHandler.apiClient = di.sl();
+      await NotificationHandler().initialize();
+      debugPrint('✅ Notification handler initialized');
+    } catch (e) {
+      debugPrint('⚠️ Notification handler initialization failed: $e');
+    }
+  }
+
+  // Sync local DB in background (does not block app startup)
+  di.sl<DatabaseSyncService>().sync();
 
   runApp(const LifeIssuesApp());
 }
@@ -78,7 +106,7 @@ class LifeIssuesApp extends StatelessWidget {
 
         // Community BLoCs
         BlocProvider<AuthBloc>(
-          create: (_) => di.sl<AuthBloc>()..add(CheckAuthStatusEvent()),
+          create: (_) => di.sl<AuthBloc>(),
         ),
         BlocProvider<SubscriptionBloc>(
           create: (_) => di.sl<SubscriptionBloc>(),
@@ -99,10 +127,10 @@ class LifeIssuesApp extends StatelessWidget {
           return MaterialApp(
             title: AppStrings.appName,
             navigatorKey: navigatorKey, // For notification navigation
-            theme: _buildLightTheme(),
-            darkTheme: _buildDarkTheme(),
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
             themeMode: themeMode,
-            home: const MainNavigationWrapper(),
+            home: const SplashPage(),
             debugShowCheckedModeBanner: false,
           );
         },
@@ -110,83 +138,6 @@ class LifeIssuesApp extends StatelessWidget {
     );
   }
 
-  ThemeData _buildLightTheme() {
-    final textTheme = GoogleFonts.robotoSlabTextTheme();
-
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
-      ),
-      textTheme: textTheme,
-      scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        titleTextStyle: GoogleFonts.robotoSlab(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
-        unselectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
-      ),
-    );
-  }
-
-  ThemeData _buildDarkTheme() {
-    final textTheme = GoogleFonts.robotoSlabTextTheme(ThemeData.dark().textTheme);
-
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.dark,
-      ),
-      textTheme: textTheme,
-      scaffoldBackgroundColor: AppColors.darkBackground,
-      appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.darkSurface,
-        foregroundColor: AppColors.darkTextPrimary,
-        elevation: 0,
-        titleTextStyle: GoogleFonts.robotoSlab(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.darkTextPrimary,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.darkSurface,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkSurface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.darkTextSecondary,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
-        unselectedLabelStyle: GoogleFonts.robotoSlab(fontSize: 12),
-      ),
-    );
-  }
 }
 
 /// Wrapper to handle back navigation behavior
@@ -210,32 +161,39 @@ class _MainNavigationWithBackHandler extends StatefulWidget {
 
 class _MainNavigationWithBackHandlerState
     extends State<_MainNavigationWithBackHandler> {
-  int _currentIndex = 0;
+  late Future<bool> _shouldShowOnboarding;
 
-  void _onTabSelected(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _shouldShowOnboarding = _checkOnboardingStatus();
+  }
+
+  Future<bool> _checkOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+    return !hasSeenOnboarding;
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // If not on home tab, go to home tab
-        if (_currentIndex != 0) {
-          setState(() {
-            _currentIndex = 0;
-          });
-          return false; // Don't exit app
+    return FutureBuilder<bool>(
+      future: _shouldShowOnboarding,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-        // Already on home tab, allow exit
-        return true;
+
+        if (snapshot.hasData && snapshot.data == true) {
+          return const OnboardingPage();
+        }
+
+        // PopScope and tab-index state live inside MainNavigationPageUpdated —
+        // single source of truth, no external state sync needed.
+        return const MainNavigationPageUpdated();
       },
-      child: MainNavigationPageUpdated(
-        initialIndex: _currentIndex,
-        onTabSelected: _onTabSelected,
-      ),
     );
   }
 }

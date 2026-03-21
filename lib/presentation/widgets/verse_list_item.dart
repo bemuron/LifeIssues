@@ -18,18 +18,7 @@ class VerseListItem extends StatelessWidget {
     this.showActions = true,
   });
 
-  String _getVerseText(String version) {
-    switch (version) {
-      case 'kjv':
-        return verse.kjv;
-      case 'msg':
-        return verse.msg!;
-      case 'amp':
-        return verse.amp!;
-      default:
-        return verse.kjv;
-    }
-  }
+  String _getVerseText(String version) => verse.getVersion(version);
 
   @override
   Widget build(BuildContext context) {

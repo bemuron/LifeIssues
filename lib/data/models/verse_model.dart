@@ -6,45 +6,40 @@ class VerseModel extends Verse {
     required super.id,
     required super.reference,
     super.issueName,
-    required super.kjv,
-    super.msg,
-    super.amp,
+    required super.translations,
     super.imageUrl,
     super.createdAt,
     super.isFavorite,
   });
 
-  factory VerseModel.fromMap(Map<String, dynamic> map) {
-    // Handle potential null values from database
-    final kjvText = map['kjv'] as String?;
-    final msgText = map['msg'] as String?;
-    final ampText = map['amp'] as String?;
-
-    // Use KJV as fallback if others are null
-    final fallbackText = kjvText ?? msgText ?? ampText ?? 'Text not available';
-
+  /// Build from a list of raw DB rows that all represent the same verse
+  /// in different translations (same book/chapter/verse_num, different version).
+  /// [canonicalId] is the _id of the row used as the FK in issues_verses.
+  static VerseModel fromGroupedRows({
+    required int canonicalId,
+    required List<Map<String, dynamic>> rows,
+  }) {
+    final first = rows.first;
+    final translations = <String, String>{
+      for (final r in rows)
+        (r['version'] as String): (r['text'] as String),
+    };
     return VerseModel(
-      id: map['_id'] as int,
-      reference: map['verse'] as String? ?? 'Unknown Reference',
-      kjv: kjvText ?? fallbackText,
-      msg: msgText ?? fallbackText,
-      amp: ampText ?? fallbackText,
-      isFavorite: (map['is_favorite'] as int?) == 1,
-      issueName: map['issue_name'] as String? ?? fallbackText,
-      imageUrl: map['image_url'] as String?,
+      id: canonicalId,
+      reference: first['reference'] as String? ?? '',
+      translations: translations,
+      isFavorite: (first['is_favorite'] as int?) == 1,
+      issueName: first['issue_name'] as String?,
+      imageUrl: first['image_url'] as String?,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       '_id': id,
-      'verse': reference,
+      'reference': reference,
       'issue_name': issueName,
-      'kjv': kjv,
-      'msg': msg,
-      'amp': amp,
       'image_url': imageUrl,
-      'created_at': createdAt?.toIso8601String(),
       'is_favorite': isFavorite ? 1 : 0,
     };
   }
@@ -54,9 +49,7 @@ class VerseModel extends Verse {
       id: id,
       reference: reference,
       issueName: issueName,
-      kjv: kjv,
-      msg: msg,
-      amp: amp,
+      translations: translations,
       imageUrl: imageUrl,
       createdAt: createdAt,
       isFavorite: isFavorite,
@@ -68,9 +61,7 @@ class VerseModel extends Verse {
       id: verse.id,
       reference: verse.reference,
       issueName: verse.issueName,
-      kjv: verse.kjv,
-      msg: verse.msg,
-      amp: verse.amp,
+      translations: verse.translations,
       imageUrl: verse.imageUrl,
       createdAt: verse.createdAt,
       isFavorite: verse.isFavorite,

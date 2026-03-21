@@ -1,5 +1,6 @@
 // lib/data/models/testimony_model.dart
 
+import '../../core/constants/image_config.dart';
 import '../../domain/entities/testimony.dart';
 
 class TestimonyModel {
@@ -15,6 +16,7 @@ class TestimonyModel {
   final int? prayerId;
   final LinkedPrayerModel? linkedPrayer;
   final DateTime createdAt;
+  final String? profileImageUrl;
 
   TestimonyModel({
     required this.id,
@@ -29,13 +31,30 @@ class TestimonyModel {
     this.prayerId,
     this.linkedPrayer,
     required this.createdAt,
+    this.profileImageUrl,
   });
 
   factory TestimonyModel.fromJson(Map<String, dynamic> json) {
+    // user_id may be returned as String (e.g. "1") or int
+    final rawUserId = json['user_id'];
+    final int userId = (rawUserId is int
+        ? rawUserId
+        : int.tryParse(rawUserId?.toString() ?? '')) ?? 0;
+
+    // poster_name: use direct field or fall back to nested user.name
+    final userMap = json['user'] as Map<String, dynamic>?;
+    String posterName = json['poster_name'] as String? ?? '';
+    if (posterName.isEmpty) {
+      posterName = userMap?['name'] as String? ?? '';
+    }
+
+    final rawImagePath = userMap?['profile_image_path'] as String?;
+    final profileImageUrl = ImageConfig.getProfileImageUrl(rawImagePath);
+
     return TestimonyModel(
       id: json['id'] as int,
-      userId: json['user_id'] as int,
-      posterName: json['poster_name'] as String,
+      userId: userId,
+      posterName: posterName,
       title: json['title'] as String,
       body: json['body'] as String,
       category: json['category'] as String?,
@@ -47,6 +66,7 @@ class TestimonyModel {
           ? LinkedPrayerModel.fromJson(json['linked_prayer'] as Map<String, dynamic>)
           : null,
       createdAt: DateTime.parse(json['created_at'] as String),
+      profileImageUrl: profileImageUrl.isEmpty ? null : profileImageUrl,
     );
   }
 
@@ -81,6 +101,7 @@ class TestimonyModel {
       prayerId: prayerId,
       linkedPrayer: linkedPrayer?.toEntity(),
       createdAt: createdAt,
+      profileImageUrl: profileImageUrl,
     );
   }
 }
@@ -99,9 +120,11 @@ class LinkedPrayerModel {
   });
 
   factory LinkedPrayerModel.fromJson(Map<String, dynamic> json) {
+    // API may return 'body_excerpt' (in feed) or 'body' (in detail/my-testimonies)
+    final excerpt = json['body_excerpt'] as String? ?? json['body'] as String? ?? '';
     return LinkedPrayerModel(
       id: json['id'] as int,
-      bodyExcerpt: json['body_excerpt'] as String,
+      bodyExcerpt: excerpt,
       prayCount: json['pray_count'] as int? ?? 0,
       isAnonymous: json['is_anonymous'] as bool? ?? false,
     );

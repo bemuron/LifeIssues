@@ -99,7 +99,46 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<User> getCurrentUser() async {
     final model = await remoteDataSource.getCurrentUser();
+    // Keep local cache in sync with the latest server data
+    await authManager.saveUserInfo(
+      userId: model.id,
+      name: model.name,
+      email: model.email,
+      profileImageUrl: model.profileImageUrl,
+    );
     return model.toEntity();
+  }
+
+  @override
+  Future<User?> getLocalUser() async {
+    final data = await authManager.getUserData();
+    if (data == null) return null;
+    return User(
+      id: data['id'] as int,
+      name: data['name'] as String,
+      email: data['email'] as String,
+      profileImageUrl: data['profileImageUrl'] as String?,
+    );
+  }
+
+  @override
+  Future<void> updateProfile({
+    required String name,
+    String? password,
+    String? imagePath,
+  }) async {
+    final model = await remoteDataSource.updateProfile(
+      name: name,
+      password: password,
+      imagePath: imagePath,
+    );
+    // Persist updated info locally
+    await authManager.saveUserInfo(
+      userId: model.id,
+      name: model.name,
+      email: model.email,
+      profileImageUrl: model.profileImageUrl,
+    );
   }
 
   @override

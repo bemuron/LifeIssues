@@ -17,8 +17,12 @@
 
     <!-- Internet permission (usually already present) -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Photo library access for profile picture picker -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <application
-        android:label="life_issues"
+        android:label="Yachal"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

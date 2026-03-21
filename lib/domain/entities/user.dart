@@ -7,28 +7,32 @@ class User extends Equatable {
   final String name;
   final String email;
   final String? token; // Sanctum API token
+  final String? profileImageUrl;
 
   const User({
     required this.id,
     required this.name,
     required this.email,
     this.token,
+    this.profileImageUrl,
   });
 
   @override
-  List<Object?> get props => [id, name, email, token];
+  List<Object?> get props => [id, name, email, token, profileImageUrl];
 
   User copyWith({
     int? id,
     String? name,
     String? email,
     String? token,
+    String? profileImageUrl,
   }) {
     return User(
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
       token: token ?? this.token,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
 }

@@ -102,15 +102,17 @@ class TestimonyPraiseToggled extends TestimonyState {
   final int testimonyId;
   final bool hasPraised;
   final int praiseCount;
+  final bool alreadyPraised;
 
   TestimonyPraiseToggled({
     required this.testimonyId,
     required this.hasPraised,
     required this.praiseCount,
+    this.alreadyPraised = false,
   });
 
   @override
-  List<Object?> get props => [testimonyId, hasPraised, praiseCount];
+  List<Object?> get props => [testimonyId, hasPraised, praiseCount, alreadyPraised];
 }
 
 class TestimonyDeleting extends TestimonyState {

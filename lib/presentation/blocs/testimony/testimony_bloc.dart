@@ -43,7 +43,7 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
       Emitter<TestimonyState> emit,
       ) async {
     try {
-      emit(TestimonyLoading());
+      if (!event.isRefresh) emit(TestimonyLoading());
 
       final testimonies = await getTestimonies(
         page: event.page,
@@ -170,38 +170,62 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
       TogglePraiseEvent event,
       Emitter<TestimonyState> emit,
       ) async {
+    // Save current detail state so we can restore it after the toggle
+    final prevDetailState = state is TestimonyDetailLoaded ? state as TestimonyDetailLoaded : null;
+    final prevListState = state is TestimonyLoaded ? state as TestimonyLoaded : null;
+
     try {
       emit(TestimonyTogglingPraise(event.testimonyId));
 
       final result = await togglePraise(event.testimonyId);
 
+      final hasPraised = result['has_praised'] as bool;
+      final praiseCount = result['praise_count'] as int;
+      final alreadyPraised = result['already_praised'] as bool? ?? false;
+
       emit(TestimonyPraiseToggled(
         testimonyId: event.testimonyId,
-        hasPraised: result['has_praised'] as bool,
-        praiseCount: result['praise_count'] as int,
+        hasPraised: hasPraised,
+        praiseCount: praiseCount,
+        alreadyPraised: alreadyPraised,
       ));
 
-      // Update the testimony in the list if currently loaded
-      if (state is TestimonyLoaded) {
-        final currentState = state as TestimonyLoaded;
-        final updatedTestimonies = currentState.testimonies.map((testimony) {
+      // If the detail page was open, re-emit the updated detail state
+      if (prevDetailState != null) {
+        emit(TestimonyDetailLoaded(
+          prevDetailState.testimony.copyWith(
+            hasPraised: hasPraised,
+            praiseCount: praiseCount,
+          ),
+        ));
+      }
+
+      // Update the testimony in the list if the list was the active state
+      if (prevListState != null) {
+        final updatedTestimonies = prevListState.testimonies.map((testimony) {
           if (testimony.id == event.testimonyId) {
-            return testimony.copyWith(
-              hasPraised: result['has_praised'] as bool,
-              praiseCount: result['praise_count'] as int,
-            );
+            return testimony.copyWith(hasPraised: hasPraised, praiseCount: praiseCount);
           }
           return testimony;
         }).toList();
 
         emit(TestimonyLoaded(
           testimonies: updatedTestimonies,
-          hasMore: currentState.hasMore,
-          currentPage: currentState.currentPage,
-          currentCategory: currentState.currentCategory,
+          hasMore: prevListState.hasMore,
+          currentPage: prevListState.currentPage,
+          currentCategory: prevListState.currentCategory,
+          currentSortBy: prevListState.currentSortBy,
+          currentLinkedToPrayer: prevListState.currentLinkedToPrayer,
+          currentHasPraise: prevListState.currentHasPraise,
         ));
       }
     } catch (e) {
+      // Restore whichever state was active before the toggle attempt
+      if (prevDetailState != null) {
+        emit(prevDetailState);
+      } else if (prevListState != null) {
+        emit(prevListState);
+      }
       emit(TestimonyError(e.toString()));
     }
   }

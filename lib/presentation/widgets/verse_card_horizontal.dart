@@ -25,18 +25,7 @@ class _VerseCardHorizontalState extends State<VerseCardHorizontal> {
     _isFavorite = widget.verse.isFavorite;
   }
 
-  String _getVerseText(String version) {
-    switch (version) {
-      case 'kjv':
-        return widget.verse.kjv;
-      case 'msg':
-        return widget.verse.msg!;
-      case 'amp':
-        return widget.verse.amp!;
-      default:
-        return widget.verse.kjv;
-    }
-  }
+  String _getVerseText(String version) => widget.verse.getVersion(version);
 
   void _toggleFavorite() {
     setState(() {

@@ -1,6 +1,6 @@
 class AppStrings {
   // App Info
-  static const String appName = 'Life Issues';
+  static const String appName = 'Yachal';
   static const String appTagline = 'Bible verses for life\'s challenges';
   static const String appVersion = '2.0.0';
 
@@ -28,7 +28,7 @@ class AppStrings {
   // Settings Items
   static const String settingsBibleVersion = 'Default Bible Version';
   static const String settingsDarkMode = 'Dark Mode';
-  static const String settingsShareApp = 'Share Life Issues';
+  static const String settingsShareApp = 'Share Yachal';
   static const String settingsShareAppDesc = 'Tell others about this app';
   static const String settingsNotification = 'Daily Verse Notification';
   static const String settingsNotificationDesc = 'Receive a daily verse reminder';
@@ -36,21 +36,21 @@ class AppStrings {
   static const String settingsFeedback = 'Send Feedback';
   static const String settingsFeedbackDesc = 'Help us improve the app';
   static const String settingsPrivacy = 'Privacy Policy';
-  static const String settingsAbout = 'About Life Issues';
+  static const String settingsAbout = 'About Yachal';
 
   // Share App
   static const String shareAppText =
-      'Check out Life Issues - Find Bible verses for life\'s challenges!\n'
+      'Check out Yachal - Find Bible verses for life\'s challenges!\n'
       'https://play.google.com/store/apps/details?id=com.lifeissues.lifeissues';
-  static const String shareAppSubject = 'Life Issues App';
+  static const String shareAppSubject = 'Yachal App';
 
   // Feedback Email
   static const String feedbackEmail = 'support@lifeissues.com';
-  static const String feedbackSubject = 'Life Issues App Feedback';
+  static const String feedbackSubject = 'Yachal App Feedback';
 
   // URLs
-  static const String privacyPolicyUrl = 'https://lifeissues.com/privacy-policy';
-  static const String aboutUrl = 'https://lifeissues.com/about';
+  static const String privacyPolicyUrl = 'https://yachalapp.emtechint.com/privacy';
+  static const String aboutUrl = 'https://yachalapp.emtechint.com';
   static const String playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.lifeissues.lifeissues';
 

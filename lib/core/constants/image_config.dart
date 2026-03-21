@@ -3,8 +3,9 @@
 class ImageConfig {
   // Base URLs for different image types
   // TODO: Replace these with your actual hosting URLs
-  static const String issueImagesBaseUrl = 'https://yachalapp.emtechint.com/public/assets/images/issues/';
-  static const String verseImagesBaseUrl = 'https://yachalapp.emtechint.com/public/assets/images/verses/';
+  static const String issueImagesBaseUrl = 'https://yachalapp.emtechint.com/public/images/issues/';
+  static const String verseImagesBaseUrl = 'https://yachalapp.emtechint.com/public/images/verses/';
+  static const String profileImagesBaseUrl = 'https://yachalapp.emtechint.com/storage/';
 
   // Alternative: You can use different hosting services
   // For example, Firebase Storage, AWS S3, Cloudinary, etc.
@@ -24,6 +25,13 @@ class ImageConfig {
     }
 
     return '$issueImagesBaseUrl$imageName.png';
+  }
+
+  /// Builds full profile image URL from a relative path (e.g. "profile_images/abc.jpg")
+  static String getProfileImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    return '$profileImagesBaseUrl$path';
   }
 
   /// Builds full verse image URL from image filename

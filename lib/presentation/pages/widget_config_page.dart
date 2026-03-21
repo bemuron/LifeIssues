@@ -182,20 +182,7 @@ class _WidgetConfigPageState extends State<WidgetConfigPage> {
                   builder: (context, settingsState) {
                     if (verseState is DailyVerseLoaded &&
                         settingsState is SettingsLoaded) {
-                      String verseText;
-                      switch (settingsState.bibleVersion) {
-                        case 'kjv':
-                          verseText = verseState.verse.kjv;
-                          break;
-                        case 'msg':
-                          verseText = verseState.verse.msg!;
-                          break;
-                        case 'amp':
-                          verseText = verseState.verse.amp!;
-                          break;
-                        default:
-                          verseText = verseState.verse.kjv;
-                      }
+                      final verseText = verseState.verse.getVersion(settingsState.bibleVersion);
 
                       return _buildWidgetPreview(
                         context,
@@ -342,7 +329,7 @@ class _WidgetConfigPageState extends State<WidgetConfigPage> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Life Issues',
+                'Yachal - Wait With Expectation',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,

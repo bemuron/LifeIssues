@@ -1,7 +1,9 @@
 // lib/presentation/pages/profile/profile_page.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/di/injection_container.dart' as di;
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -16,9 +18,14 @@ import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/prayer_card.dart';
+import '../prayers/prayer_detail_page.dart';
 import '../../widgets/testimony_card.dart';
 import '../auth/login_page.dart';
 import '../settings/settings_page.dart';
+import '../prayers/prayer_submission_page.dart';
+import '../testimonies/testimony_submission_page.dart';
+import '../subscription/subscription_page.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -47,39 +54,50 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildUnauthenticatedView(BuildContext context) {
-    // Unauthenticated => show ad
     const showAd = true;
 
     final content = Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.person_outline,
-            size: 64,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Theme.of(context).colorScheme.primaryContainer,
+            ),
+            child: Icon(
+              Icons.person_outline,
+              size: 52,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            'Login to view your profile',
-            style: Theme.of(context).textTheme.titleLarge,
+            'Welcome!',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Access your prayers and testimonies',
+            'Login to view your profile,\nprayers and testimonies',
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 24),
-          FilledButton(
+          const SizedBox(height: 32),
+          FilledButton.icon(
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const LoginPage()),
               );
             },
-            child: const Text('Login'),
+            icon: const Icon(Icons.login),
+            label: const Text('Login to Continue'),
           ),
         ],
       ),
@@ -102,7 +120,6 @@ class ProfilePage extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Add bottom padding so content isn't covered
           Positioned.fill(
             child: Padding(
               padding: EdgeInsets.only(bottom: showAd ? 70 : 0),
@@ -151,12 +168,26 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Profile',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EditProfilePage(user: widget.user),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
             onPressed: () {
               Navigator.push(
                 context,
@@ -169,57 +200,183 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
             onPressed: () => _showLogoutDialog(context),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'My Prayers', icon: Icon(Icons.favorite)),
-            Tab(text: 'My Testimonies', icon: Icon(Icons.auto_awesome)),
-          ],
-        ),
       ),
       body: Column(
         children: [
-          // Profile header
+          // Profile header card
           Container(
-            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Column(
               children: [
                 CircleAvatar(
-                  radius: 40,
-                  child: Text(
-                    widget.user.name[0].toUpperCase(),
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
+                  radius: 36,
+                  backgroundColor: colorScheme.primaryContainer,
+                  backgroundImage: widget.user.profileImageUrl != null &&
+                          widget.user.profileImageUrl!.isNotEmpty
+                      ? CachedNetworkImageProvider(
+                              widget.user.profileImageUrl!)
+                          as ImageProvider
+                      : null,
+                  child: widget.user.profileImageUrl == null ||
+                          widget.user.profileImageUrl!.isEmpty
+                      ? Text(
+                          widget.user.name[0].toUpperCase(),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                color: colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   widget.user.name,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   widget.user.email,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 BlocBuilder<SubscriptionBloc, SubscriptionState>(
                   builder: (context, state) {
-                    if (state is SubscriptionLoaded && state.canPost) {
-                      return Chip(
-                        label: const Text('Subscribed'),
-                        avatar: const Icon(Icons.stars, size: 16),
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    final isSubscribed =
+                        state is SubscriptionLoaded && state.canPost;
+
+                    if (isSubscribed) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.stars_rounded,
+                                size: 16,
+                                color: colorScheme.onPrimaryContainer),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Subscribed',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
+                                  ?.copyWith(
+                                    color: colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ],
+                        ),
                       );
                     }
-                    return Chip(
-                      label: const Text('Free'),
-                      avatar: const Icon(Icons.person, size: 16),
+
+                    // Free plan — show badge + upgrade button side by side
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.person_outline,
+                                  size: 16,
+                                  color: colorScheme.onSurfaceVariant),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Free Plan',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const SubscriptionPage()),
+                          ),
+                          icon: const Icon(Icons.upgrade, size: 16),
+                          label: const Text('Upgrade'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber.shade700,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                            elevation: 0,
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
               ],
             ),
           ),
-          const Divider(),
+
+          const SizedBox(height: 12),
+
+          // Tab bar
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: colorScheme.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              labelColor: colorScheme.onPrimary,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
+              labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: Theme.of(context).textTheme.labelLarge,
+              tabs: const [
+                Tab(text: 'My Prayers', icon: FaIcon(FontAwesomeIcons.personPraying, size: 18)),
+                Tab(text: 'My Testimonies', icon: Icon(Icons.auto_awesome, size: 18)),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 8),
 
           // Tabs content
           Expanded(
@@ -245,60 +402,152 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
 
         if (state is MyPrayersLoaded) {
           if (state.myPrayers.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.favorite_border,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('No prayers yet'),
-                  const SizedBox(height: 8),
-                  const Text('Post your first prayer request'),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async =>
+                  context.read<PrayerBloc>().add(LoadMyPrayersEvent()),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: _buildEmptyPrayers(context),
               ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.myPrayers.length,
-            itemBuilder: (context, index) {
-              final prayer = state.myPrayers[index];
-              return Column(
-                children: [
-                  PrayerCard(
-                    prayer: prayer,
-                    onTapPraying: () {
-                      context
-                          .read<PrayerBloc>()
-                          .add(TogglePrayingEvent(prayer.id));
-                    },
-                  ),
-                  // Status badge
-                  if (prayer.status != 'approved')
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Chip(
-                        label: Text(_getStatusText(prayer.status)),
-                        backgroundColor: _getStatusColor(context, prayer.status),
-                      ),
+          return RefreshIndicator(
+            onRefresh: () async =>
+                context.read<PrayerBloc>().add(LoadMyPrayersEvent()),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.myPrayers.length,
+              itemBuilder: (context, index) {
+                final prayer = state.myPrayers[index];
+                // For the user's own prayers the API omits the nested user
+                // object, so posterName and profileImageUrl arrive as null.
+                // Fill them in from the authenticated user's profile.
+                final displayPrayer = prayer.isAnonymous
+                    ? prayer
+                    : prayer.copyWith(
+                        posterName: (prayer.posterName != null &&
+                                prayer.posterName!.isNotEmpty)
+                            ? prayer.posterName
+                            : widget.user.name as String,
+                        profileImageUrl: prayer.profileImageUrl ??
+                            widget.user.profileImageUrl as String?,
+                      );
+                return Column(
+                  children: [
+                    PrayerCard(
+                      prayer: displayPrayer,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PrayerDetailPage(
+                              prayerId: displayPrayer.id,
+                              initialPrayer: displayPrayer,
+                            ),
+                          ),
+                        );
+                      },
+                      onTapPraying: () {
+                        context
+                            .read<PrayerBloc>()
+                            .add(TogglePrayingEvent(prayer.id));
+                      },
                     ),
-                ],
-              );
-            },
+                    if (prayer.status != 'approved')
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Chip(
+                          label: Text(_getStatusText(prayer.status)),
+                          backgroundColor:
+                              _getStatusColor(context, prayer.status),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
           );
         }
 
         if (state is PrayerError) {
-          return Center(child: Text(state.message));
+          return _buildErrorState(
+            context,
+            message: state.message,
+            onRetry: () =>
+                context.read<PrayerBloc>().add(LoadMyPrayersEvent()),
+          );
         }
 
         return const SizedBox();
       },
+    );
+  }
+
+  Widget _buildEmptyPrayers(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.primaryContainer,
+              ),
+              child: FaIcon(
+                FontAwesomeIcons.personPraying,
+                size: 40,
+                color: colorScheme.onPrimaryContainer,
+              ),
+              //FaIcon(FontAwesomeIcons.personPraying, size: 18)
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'No Prayers Yet',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Share your heart with the community.\nYour prayer request will be lifted up by others.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            BlocBuilder<SubscriptionBloc, SubscriptionState>(
+              builder: (context, subState) {
+                final canPost = subState is SubscriptionLoaded && subState.canPost;
+                return OutlinedButton.icon(
+                  onPressed: () {
+                    if (!canPost) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PrayerSubmissionPage()),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.add),
+                  label: Text(canPost ? 'Post a Prayer' : 'Subscribe to Post'),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -311,60 +560,190 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
 
         if (state is MyTestimoniesLoaded) {
           if (state.myTestimonies.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.auto_awesome_outlined,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('No testimonies yet'),
-                  const SizedBox(height: 8),
-                  const Text('Share how God moved in your life'),
-                ],
+            return RefreshIndicator(
+              onRefresh: () async =>
+                  context.read<TestimonyBloc>().add(LoadMyTestimoniesEvent()),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: _buildEmptyTestimonies(context),
               ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.myTestimonies.length,
-            itemBuilder: (context, index) {
-              final testimony = state.myTestimonies[index];
-              return Column(
-                children: [
-                  TestimonyCard(
-                    testimony: testimony,
-                    onTapPraise: () {
-                      context
-                          .read<TestimonyBloc>()
-                          .add(TogglePraiseEvent(testimony.id));
-                    },
-                  ),
-                  // Status badge
-                  if (testimony.status != 'approved')
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Chip(
-                        label: Text(_getStatusText(testimony.status)),
-                        backgroundColor: _getStatusColor(context, testimony.status),
-                      ),
+          return RefreshIndicator(
+            onRefresh: () async =>
+                context.read<TestimonyBloc>().add(LoadMyTestimoniesEvent()),
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.myTestimonies.length,
+              itemBuilder: (context, index) {
+                final testimony = state.myTestimonies[index];
+                // Same as prayers — fill in poster info from logged-in user.
+                final displayTestimony = testimony.copyWith(
+                  posterName: testimony.posterName.isNotEmpty
+                      ? testimony.posterName
+                      : widget.user.name as String,
+                  profileImageUrl: testimony.profileImageUrl ??
+                      widget.user.profileImageUrl as String?,
+                );
+                return Column(
+                  children: [
+                    TestimonyCard(
+                      testimony: displayTestimony,
+                      onTapPraise: () {
+                        context
+                            .read<TestimonyBloc>()
+                            .add(TogglePraiseEvent(testimony.id));
+                      },
                     ),
-                ],
-              );
-            },
+                    if (testimony.status != 'approved')
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Chip(
+                          label: Text(_getStatusText(testimony.status)),
+                          backgroundColor:
+                              _getStatusColor(context, testimony.status),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
           );
         }
 
         if (state is TestimonyError) {
-          return Center(child: Text(state.message));
+          return _buildErrorState(
+            context,
+            message: state.message,
+            onRetry: () =>
+                context.read<TestimonyBloc>().add(LoadMyTestimoniesEvent()),
+          );
         }
 
         return const SizedBox();
       },
+    );
+  }
+
+  Widget _buildErrorState(
+    BuildContext context, {
+    required String message,
+    required VoidCallback onRetry,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isOffline = message.toLowerCase().contains('internet') ||
+        message.toLowerCase().contains('network') ||
+        message.toLowerCase().contains('connection') ||
+        message.toLowerCase().contains('offline');
+
+    return RefreshIndicator(
+      onRefresh: () async => onRetry(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 48),
+              Icon(
+                isOffline ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
+                size: 64,
+                color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isOffline ? 'You\'re Offline' : 'Something Went Wrong',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isOffline
+                    ? 'Check your internet connection\nand pull down to refresh.'
+                    : message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyTestimonies(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.secondaryContainer,
+              ),
+              child: Icon(
+                Icons.auto_awesome_outlined,
+                size: 40,
+                color: colorScheme.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'No Testimonies Yet',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Has God done something amazing in your life?\nShare your testimony and inspire others!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            BlocBuilder<SubscriptionBloc, SubscriptionState>(
+              builder: (context, subState) {
+                final canPost = subState is SubscriptionLoaded && subState.canPost;
+                return OutlinedButton.icon(
+                  onPressed: () {
+                    if (!canPost) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SubscriptionPage()),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TestimonySubmissionPage()),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.add),
+                  label: Text(canPost ? 'Share a Testimony' : 'Subscribe to Post'),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -390,7 +769,7 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
       case 'rejected':
         return Colors.red.withOpacity(0.2);
       default:
-        return Theme.of(context).colorScheme.surfaceVariant;
+        return Theme.of(context).colorScheme.surfaceContainerHighest;
     }
   }
 

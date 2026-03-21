@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../../data/datasources/issue_local_datasource.dart';
 import '../../blocs/prayer/prayer_bloc.dart';
 import '../../blocs/prayer/prayer_event.dart';
 import '../../blocs/prayer/prayer_state.dart';
@@ -31,6 +32,24 @@ class _PrayerSubmissionViewState extends State<PrayerSubmissionView> {
   final _bodyController = TextEditingController();
   String? _selectedCategory;
   bool _isAnonymous = false;
+  List<String> _categories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final issues = await di.sl<IssueLocalDataSource>().getAllIssues();
+      if (mounted) {
+        setState(() {
+          _categories = issues.map((i) => i.name).toList();
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -129,7 +148,7 @@ class _PrayerSubmissionViewState extends State<PrayerSubmissionView> {
                     decoration: const InputDecoration(
                       labelText: 'Category (Optional)',
                     ),
-                    items: _getCategories()
+                    items: _categories
                         .map((cat) => DropdownMenuItem(
                       value: cat,
                       child: Text(cat),
@@ -174,20 +193,6 @@ class _PrayerSubmissionViewState extends State<PrayerSubmissionView> {
         },
       ),
     );
-  }
-
-  List<String> _getCategories() {
-    // TODO: Fetch from database or constants
-    return [
-      'Family',
-      'Health',
-      'Work',
-      'Relationships',
-      'Financial',
-      'Spiritual Growth',
-      'Guidance',
-      'Other',
-    ];
   }
 
   void _submitPrayer() {
