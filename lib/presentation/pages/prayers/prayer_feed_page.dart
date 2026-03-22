@@ -431,10 +431,10 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
   }
 
   void _handlePostPrayer(BuildContext context, bool canPost) {
-    /*if (!canPost) {
+    if (!canPost) {
       _showSubscriptionPaywall(context);
       return;
-    }*/
+    }
 
     Navigator.push(
       context,

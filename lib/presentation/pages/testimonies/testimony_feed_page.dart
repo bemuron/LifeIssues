@@ -464,10 +464,10 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
   }
 
   void _handlePostTestimony(BuildContext context, bool canPost) {
-    /*if (!canPost) {
+    if (!canPost) {
       _showSubscriptionPaywall(context);
       return;
-    }*/
+    }
 
     Navigator.push(
       context,

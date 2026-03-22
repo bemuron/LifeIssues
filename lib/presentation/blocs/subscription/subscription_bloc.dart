@@ -37,19 +37,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         subscription: subscription,
         canPost: canPost,
       ));
-
-      // Also emit specific state based on subscription status
-      if (subscription.isActive) {
-        emit(SubscriptionActive(subscription));
-      } else if (subscription.expiresAt != null) {
-        emit(SubscriptionExpired(subscription));
-      } else {
-        emit(SubscriptionFree());
-      }
     } catch (e) {
       emit(SubscriptionError(e.toString()));
-      // Default to free on error
-      emit(SubscriptionFree());
     }
   }
 

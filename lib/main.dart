@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:qonversion_flutter/qonversion_flutter.dart';
 import 'firebase_options.dart';
 import 'package:life_issues_flutter/presentation/pages/main_navigation_page.dart';
 import 'presentation/pages/auth/onboarding_page.dart';
@@ -69,6 +70,20 @@ void main() async {
     } catch (e) {
       debugPrint('⚠️ Notification handler initialization failed: $e');
     }
+  }
+
+  // Initialize Qonversion for subscription billing
+  // TODO: Replace with your actual project key from the Qonversion dashboard.
+  const qonversionProjectKey = 'hKOLtC43RAnk7Fcqog2ReQ9kCZjE44vi';
+  try {
+    final qonversionConfig = QonversionConfigBuilder(
+      qonversionProjectKey,
+      QLaunchMode.subscriptionManagement,
+    ).build();
+    Qonversion.initialize(qonversionConfig);
+    debugPrint('✅ Qonversion initialized');
+  } catch (e) {
+    debugPrint('⚠️ Qonversion initialization failed: $e');
   }
 
   // Sync local DB in background (does not block app startup)

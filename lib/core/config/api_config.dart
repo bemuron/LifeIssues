@@ -30,7 +30,7 @@ class ApiConfig {
 
   // Subscription
   static const String subscriptionStatus = '/user/subscription-status';
-  static const String revenueCatWebhook = '/webhooks/revenuecat';
+  static const String subscriptionSync = '/subscriptions/sync';
 
   // FCM
   static const String fcmToken = '/fcm/token';

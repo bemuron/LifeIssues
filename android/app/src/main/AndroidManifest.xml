@@ -18,6 +18,9 @@
     <!-- Internet permission (usually already present) -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Required for Google Play Billing (used by Qonversion) -->
+    <uses-permission android:name="com.android.vending.BILLING"/>
+
     <!-- Photo library access for profile picture picker -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>

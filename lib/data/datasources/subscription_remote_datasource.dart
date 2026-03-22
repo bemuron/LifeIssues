@@ -25,7 +25,7 @@ class SubscriptionRemoteDataSourceImpl implements SubscriptionRemoteDataSource {
       Map<String, dynamic> qonversionData,
       ) async {
     await apiClient.post(
-      ApiConfig.revenueCatWebhook, // Note: Update this to qonversion webhook
+      ApiConfig.subscriptionSync,
       data: qonversionData,
     );
   }

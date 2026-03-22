@@ -2,10 +2,15 @@ import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DatabaseHelper {
   static Database? _database;
   static const String _databaseName = 'Life_Issues.db';
+
+  /// Increment this whenever the shipped asset DB changes.
+  /// Devices with a stored version lower than this will have their DB replaced.
+  static const int _assetDbVersion = 2;
 
   // Table names
   static const String tableBibleVerses = 'bible_verses';
@@ -49,36 +54,77 @@ class DatabaseHelper {
   static Future<Database> _initDatabase() async {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, _databaseName);
+    final prefs = await SharedPreferences.getInstance();
+    final storedVersion = prefs.getInt('db_asset_version') ?? 0;
 
-    final exists = await databaseExists(path);
+    if (await databaseExists(path)) {
+      if (storedVersion < _assetDbVersion) {
+        // Back up user favourites before wiping the old DB.
+        final favoriteVerseIds = await _backupFavorites(path);
 
-    if (exists) {
-      // Detect old schema: old bible_verses had 'kjv' column, new has 'version'.
-      // If version column is missing, delete and re-copy the updated asset DB.
-      try {
-        final db = await openDatabase(path, readOnly: true);
-        await db.rawQuery(
-            'SELECT $columnBibleVersion FROM $tableBibleVerses LIMIT 1');
-        await db.close();
-        // New schema detected — proceed normally.
-      } catch (_) {
-        // Old schema — remove and replace with new asset DB.
         await deleteDatabase(path);
-      }
-    }
 
-    if (!await databaseExists(path)) {
-      try {
-        await Directory(dirname(path)).create(recursive: true);
-      } catch (_) {}
-      final ByteData data =
-          await rootBundle.load('assets/databases/$_databaseName');
-      final List<int> bytes =
-          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-      await File(path).writeAsBytes(bytes, flush: true);
+        // Copy fresh asset DB.
+        await _copyAssetDatabase(path);
+
+        // Restore favourites into the new DB.
+        if (favoriteVerseIds.isNotEmpty) {
+          await _restoreFavorites(path, favoriteVerseIds);
+        }
+
+        await prefs.setInt('db_asset_version', _assetDbVersion);
+      }
+    } else {
+      await _copyAssetDatabase(path);
+      await prefs.setInt('db_asset_version', _assetDbVersion);
     }
 
     return await openDatabase(path, readOnly: false);
+  }
+
+  /// Returns the list of verse_ids that the user had marked as favourite.
+  static Future<List<int>> _backupFavorites(String path) async {
+    try {
+      final db = await openDatabase(path, readOnly: true);
+      final rows = await db.query(
+        tableIssuesVerses,
+        columns: [columnVerseId],
+        where: '$columnIsFavoriteVerse = 1',
+      );
+      await db.close();
+      return rows.map((r) => r[columnVerseId] as int).toList();
+    } catch (_) {
+      // If the old DB is unreadable just proceed without restoring.
+      return [];
+    }
+  }
+
+  /// Re-applies is_favorite = 1 for each verse_id in the freshly copied DB.
+  static Future<void> _restoreFavorites(
+      String path, List<int> verseIds) async {
+    final db = await openDatabase(path, readOnly: false);
+    final batch = db.batch();
+    for (final id in verseIds) {
+      batch.update(
+        tableIssuesVerses,
+        {columnIsFavoriteVerse: 1},
+        where: '$columnVerseId = ?',
+        whereArgs: [id],
+      );
+    }
+    await batch.commit(noResult: true);
+    await db.close();
+  }
+
+  static Future<void> _copyAssetDatabase(String path) async {
+    try {
+      await Directory(dirname(path)).create(recursive: true);
+    } catch (_) {}
+    final ByteData data =
+        await rootBundle.load('assets/databases/$_databaseName');
+    final List<int> bytes =
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    await File(path).writeAsBytes(bytes, flush: true);
   }
 
   static Future<void> close() async {

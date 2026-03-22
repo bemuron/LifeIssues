@@ -2,11 +2,22 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:qonversion_flutter/qonversion_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../blocs/auth/auth_bloc.dart';
+import '../../blocs/auth/auth_state.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
 import '../../blocs/subscription/subscription_event.dart';
 import '../../blocs/subscription/subscription_state.dart';
+
+// ─── Qonversion IDs ──────────────────────────────────────────────────────────
+// These must match the IDs configured in the Qonversion dashboard.
+const _kEntitlementId = 'premium';
+const _kMonthlyProductId = 'monthly';
+const _kAnnualProductId = 'annual';
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 class SubscriptionPage extends StatelessWidget {
   const SubscriptionPage({Key? key}) : super(key: key);
@@ -14,40 +25,163 @@ class SubscriptionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => di.sl<SubscriptionBloc>()..add(LoadSubscriptionStatusEvent()),
+      create: (_) =>
+          di.sl<SubscriptionBloc>()..add(LoadSubscriptionStatusEvent()),
       child: const _SubscriptionView(),
     );
   }
 }
 
-class _SubscriptionView extends StatelessWidget {
+// ─── Inner stateful view ─────────────────────────────────────────────────────
+
+class _SubscriptionView extends StatefulWidget {
   const _SubscriptionView({Key? key}) : super(key: key);
+
+  @override
+  State<_SubscriptionView> createState() => _SubscriptionViewState();
+}
+
+class _SubscriptionViewState extends State<_SubscriptionView> {
+  Map<String, QProduct> _products = {};
+  bool _loadingProducts = true;
+  bool _isPurchasing = false;
+  bool _isRestoring = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _identifyUser();
+    await _loadProducts();
+  }
+
+  Future<void> _identifyUser() async {
+    try {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is Authenticated) {
+        await Qonversion.getSharedInstance()
+            .identify(authState.user.id.toString());
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final products = await Qonversion.getSharedInstance().products();
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _loadingProducts = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingProducts = false);
+    }
+  }
+
+  Future<void> _purchase(QProduct product) async {
+    if (_isPurchasing) return;
+    setState(() => _isPurchasing = true);
+    try {
+      final result =
+          await Qonversion.getSharedInstance().purchaseWithResult(product);
+      if (result.isSuccess && result.entitlements != null) {
+        _syncToBackend(result.entitlements!, status: 'active');
+      } else if (result.isError && mounted) {
+        _showSnackBar(result.error?.message ?? 'Purchase failed. Please try again.');
+      }
+      // isCanceled and isPending: do nothing
+    } on QPurchaseException catch (e) {
+      if (!e.isUserCancelled && mounted) {
+        _showSnackBar(e.message);
+      }
+    } catch (_) {
+      if (mounted) _showSnackBar('Purchase failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isPurchasing = false);
+    }
+  }
+
+  Future<void> _restore() async {
+    if (_isRestoring) return;
+    setState(() => _isRestoring = true);
+    try {
+      final entitlements = await Qonversion.getSharedInstance().restore();
+      final premium = entitlements[_kEntitlementId];
+      if (premium != null && premium.isActive) {
+        _syncToBackend(entitlements, status: 'restored');
+      } else if (mounted) {
+        _showSnackBar('No active subscription found to restore.');
+      }
+    } catch (_) {
+      if (mounted) _showSnackBar('Restore failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
+    }
+  }
+
+  void _syncToBackend(
+    Map<String, QEntitlement> entitlements, {
+    required String status,
+  }) {
+    final entitlement = entitlements[_kEntitlementId];
+    if (entitlement == null || !mounted) return;
+    context.read<SubscriptionBloc>().add(SyncQonversionEvent({
+      'entitlement_id': entitlement.id,
+      'product_id': entitlement.productId,
+      'is_active': entitlement.isActive,
+      'expires_at': entitlement.expirationDate?.toIso8601String(),
+      'renew_state': entitlement.renewState.name,
+      'status': status,
+    }));
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Premium')),
-      body: BlocBuilder<SubscriptionBloc, SubscriptionState>(
+      body: BlocConsumer<SubscriptionBloc, SubscriptionState>(
+        listener: (context, state) {
+          if (state is SubscriptionSynced) {
+            _showSnackBar('Subscription activated successfully!');
+          } else if (state is SubscriptionError) {
+            _showSnackBar(state.message);
+          }
+        },
         builder: (context, state) {
-          if (state is SubscriptionLoading) {
+          if (state is SubscriptionLoading || state is SubscriptionSyncing) {
             return const Center(child: CircularProgressIndicator());
           }
           if (state is SubscriptionLoaded && state.canPost) {
-            return _ActiveSubscriptionView(state: state);
+            return _ActiveView(state: state);
           }
-          return const _PlansView();
+          return _PlansView(
+            products: _products,
+            loadingProducts: _loadingProducts,
+            isPurchasing: _isPurchasing,
+            isRestoring: _isRestoring,
+            onPurchase: _purchase,
+            onRestore: _restore,
+          );
         },
       ),
     );
   }
 }
 
-// ─── Active subscription ───────────────────────────────────────────────────
+// ─── Active subscription view ────────────────────────────────────────────────
 
-class _ActiveSubscriptionView extends StatelessWidget {
+class _ActiveView extends StatelessWidget {
   final SubscriptionLoaded state;
-  const _ActiveSubscriptionView({Key? key, required this.state})
-      : super(key: key);
+  const _ActiveView({Key? key, required this.state}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +193,6 @@ class _ActiveSubscriptionView extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 16),
-          // Badge
           Container(
             width: 96,
             height: 96,
@@ -75,27 +208,23 @@ class _ActiveSubscriptionView extends StatelessWidget {
               style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           if (state.subscription.productId != null)
-            Text(_productName(state.subscription.productId!),
+            Text(_productLabel(state.subscription.productId!),
                 style: tt.titleMedium?.copyWith(color: cs.primary)),
           const SizedBox(height: 4),
           if (state.subscription.expiresAt != null)
             Text(
               'Renews ${_formatDate(state.subscription.expiresAt!)}',
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-            )
-          else
-            Text('Lifetime Access — never expires',
-                style: tt.bodyMedium?.copyWith(
-                    color: cs.primary, fontWeight: FontWeight.w600)),
+            ),
           const SizedBox(height: 32),
-          _BenefitsTiles(),
+          const _BenefitsTiles(),
           const SizedBox(height: 24),
           OutlinedButton.icon(
-            icon: const Icon(Icons.settings_outlined, size: 18),
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
             label: const Text('Manage Subscription'),
             onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                  content: Text('Manage subscription in your app store')),
+                  content: Text('Manage your subscription in the Play Store')),
             ),
           ),
         ],
@@ -103,10 +232,9 @@ class _ActiveSubscriptionView extends StatelessWidget {
     );
   }
 
-  String _productName(String id) {
+  String _productLabel(String id) {
     if (id.contains('monthly')) return 'Monthly Plan';
-    if (id.contains('annual')) return 'Annual Plan';
-    if (id.contains('lifetime')) return 'Lifetime Access';
+    if (id.contains('annual') || id.contains('yearly')) return 'Annual Plan';
     return 'Premium';
   }
 
@@ -119,163 +247,187 @@ class _ActiveSubscriptionView extends StatelessWidget {
   }
 }
 
-// ─── Plans (upsell) view ────────────────────────────────────────────────────
+// ─── Plans (upsell) view ─────────────────────────────────────────────────────
 
 class _PlansView extends StatelessWidget {
-  const _PlansView({Key? key}) : super(key: key);
+  final Map<String, QProduct> products;
+  final bool loadingProducts;
+  final bool isPurchasing;
+  final bool isRestoring;
+  final Future<void> Function(QProduct) onPurchase;
+  final Future<void> Function() onRestore;
+
+  const _PlansView({
+    Key? key,
+    required this.products,
+    required this.loadingProducts,
+    required this.isPurchasing,
+    required this.isRestoring,
+    required this.onPurchase,
+    required this.onRestore,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // ── Hero banner ─────────────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  cs.primary,
-                  cs.tertiary,
-                ],
-              ),
-            ),
-            padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
-            child: Column(
-              children: [
-                Icon(Icons.stars_rounded, size: 56, color: cs.onPrimary),
-                const SizedBox(height: 16),
-                Text(
-                  'Unlock Full Access',
-                  style: tt.headlineSmall?.copyWith(
-                    color: cs.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Join the community. Share your faith.\nSupport the mission.',
-                  style: tt.bodyMedium?.copyWith(
-                    color: cs.onPrimary.withOpacity(0.85),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
+    final monthly = products[_kMonthlyProductId];
+    final annual = products[_kAnnualProductId];
 
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Benefits ──────────────────────────────────────────────
-                Text(
-                  'WHAT YOU GET',
-                  style: tt.labelMedium?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Hero banner ────────────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [cs.primary, cs.tertiary],
                   ),
                 ),
-                const SizedBox(height: 12),
-                _BenefitsTiles(),
-
-                const SizedBox(height: 32),
-
-                // ── Plans ─────────────────────────────────────────────────
-                Text(
-                  'CHOOSE A PLAN',
-                  style: tt.labelMedium?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                _PlanCard(
-                  title: 'Monthly',
-                  price: '\$1.99',
-                  period: 'per month',
-                  productId: 'com.lifeissues.monthly',
-                ),
-                const SizedBox(height: 12),
-                _PlanCard(
-                  title: 'Annual',
-                  price: '\$9.99',
-                  period: 'per year',
-                  savingsLabel: 'Save \$14 · Best Value',
-                  productId: 'com.lifeissues.annual',
-                  isFeatured: true,
-                ),
-                const SizedBox(height: 12),
-                _PlanCard(
-                  title: 'Lifetime',
-                  price: '\$24.99',
-                  period: 'one-time',
-                  savingsLabel: 'Pay once, never again',
-                  productId: 'com.lifeissues.lifetime',
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Footer links ─────────────────────────────────────────
-                Center(
-                  child: TextButton(
-                    onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Restore purchases coming soon')),
-                    ),
-                    child: const Text('Restore Purchases'),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
+                child: Column(
                   children: [
-                    TextButton(
-                      onPressed: () {_openTerms();},
-                      child: const Text('Terms of Service'),
+                    Icon(Icons.stars_rounded, size: 56, color: cs.onPrimary),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Unlock Full Access',
+                      style: tt.headlineSmall?.copyWith(
+                        color: cs.onPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    Text(' · ', style: tt.bodySmall),
-                    TextButton(
-                      onPressed: () {_openPrivacyPolicy();},
-                      child: const Text('Privacy Policy'),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Join the community. Share your faith.\nSupport the mission.',
+                      style: tt.bodyMedium
+                          ?.copyWith(color: cs.onPrimary.withOpacity(0.85)),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-              ],
+              ),
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // ── Benefits ───────────────────────────────────────────
+                    Text(
+                      'WHAT YOU GET',
+                      style: tt.labelMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const _BenefitsTiles(),
+
+                    const SizedBox(height: 32),
+
+                    // ── Plans ─────────────────────────────────────────────
+                    Text(
+                      'CHOOSE A PLAN',
+                      style: tt.labelMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (loadingProducts)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else ...[
+                      _PlanCard(
+                        title: 'Monthly',
+                        price: monthly?.prettyPrice ?? '\$1.99',
+                        period: 'per month',
+                        product: monthly,
+                        isPurchasing: isPurchasing,
+                        onPurchase: onPurchase,
+                      ),
+                      const SizedBox(height: 12),
+                      _PlanCard(
+                        title: 'Annual',
+                        price: annual?.prettyPrice ?? '\$9.99',
+                        period: 'per year',
+                        savingsLabel: 'Save 58% · Best Value',
+                        product: annual,
+                        isFeatured: true,
+                        isPurchasing: isPurchasing,
+                        onPurchase: onPurchase,
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // ── Footer ─────────────────────────────────────────────
+                    Center(
+                      child: TextButton(
+                        onPressed: (isRestoring || isPurchasing)
+                            ? null
+                            : onRestore,
+                        child: isRestoring
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Restore Purchases'),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: _openTerms,
+                          child: const Text('Terms of Service'),
+                        ),
+                        Text(' · ', style: tt.bodySmall),
+                        TextButton(
+                          onPressed: _openPrivacy,
+                          child: const Text('Privacy Policy'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Full-screen purchase overlay ───────────────────────────────────
+        if (isPurchasing)
+          const Positioned.fill(
+            child: ColoredBox(
+              color: Colors.black26,
+              child: Center(child: CircularProgressIndicator()),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
 
-Future<void> _openPrivacyPolicy() async {
-  final Uri url = Uri.parse('https://yachalapp.emtechint.com/privacy');
-  if (await canLaunchUrl(url)) {
-    await launchUrl(url, mode: LaunchMode.externalApplication);
-  }
-}
-
-Future<void> _openTerms() async {
-  final Uri url = Uri.parse('https://yachalapp.emtechint.com/terms');
-  if (await canLaunchUrl(url)) {
-    await launchUrl(url, mode: LaunchMode.externalApplication);
-  }
-}
-
-// ─── Benefits tiles ─────────────────────────────────────────────────────────
+// ─── Benefits ────────────────────────────────────────────────────────────────
 
 class _BenefitsTiles extends StatelessWidget {
   static const _benefits = [
@@ -305,12 +457,12 @@ class _BenefitsTiles extends StatelessWidget {
     ),
   ];
 
+  const _BenefitsTiles({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: _benefits
-          .map((b) => _BenefitTile(benefit: b))
-          .toList(),
+      children: _benefits.map((b) => _BenefitTile(benefit: b)).toList(),
     );
   }
 }
@@ -344,8 +496,7 @@ class _BenefitTile extends StatelessWidget {
               color: cs.primaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
-            child:
-                Icon(benefit.icon, size: 22, color: cs.onPrimaryContainer),
+            child: Icon(benefit.icon, size: 22, color: cs.onPrimaryContainer),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -353,12 +504,12 @@ class _BenefitTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(benefit.title,
-                    style: tt.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                    style:
+                        tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Text(benefit.description,
-                    style: tt.bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant)),
+                    style:
+                        tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
               ],
             ),
           ),
@@ -375,8 +526,10 @@ class _PlanCard extends StatelessWidget {
   final String price;
   final String period;
   final String? savingsLabel;
-  final String productId;
+  final QProduct? product;
   final bool isFeatured;
+  final bool isPurchasing;
+  final Future<void> Function(QProduct) onPurchase;
 
   const _PlanCard({
     Key? key,
@@ -384,8 +537,10 @@ class _PlanCard extends StatelessWidget {
     required this.price,
     required this.period,
     this.savingsLabel,
-    required this.productId,
+    required this.product,
     this.isFeatured = false,
+    required this.isPurchasing,
+    required this.onPurchase,
   }) : super(key: key);
 
   @override
@@ -395,23 +550,21 @@ class _PlanCard extends StatelessWidget {
 
     final bgColor =
         isFeatured ? cs.primaryContainer : cs.surfaceContainerHigh;
-    final textColor =
-        isFeatured ? cs.onPrimaryContainer : cs.onSurface;
-    final subTextColor =
-        isFeatured ? cs.onPrimaryContainer.withOpacity(0.7) : cs.onSurfaceVariant;
+    final textColor = isFeatured ? cs.onPrimaryContainer : cs.onSurface;
+    final subTextColor = isFeatured
+        ? cs.onPrimaryContainer.withOpacity(0.7)
+        : cs.onSurfaceVariant;
 
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
-        border: isFeatured
-            ? Border.all(color: cs.primary, width: 2)
-            : null,
+        border:
+            isFeatured ? Border.all(color: cs.primary, width: 2) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Featured label
           if (isFeatured)
             Container(
               decoration: BoxDecoration(
@@ -437,7 +590,6 @@ class _PlanCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             child: Row(
               children: [
-                // Price info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,11 +602,15 @@ class _PlanCard extends StatelessWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(price,
-                              style: tt.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: isFeatured ? cs.onPrimaryContainer : cs.primary,
-                              )),
+                          Text(
+                            price,
+                            style: tt.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: isFeatured
+                                  ? cs.onPrimaryContainer
+                                  : cs.primary,
+                            ),
+                          ),
                           const SizedBox(width: 4),
                           Padding(
                             padding: const EdgeInsets.only(bottom: 3),
@@ -466,21 +622,24 @@ class _PlanCard extends StatelessWidget {
                       ),
                       if (savingsLabel != null) ...[
                         const SizedBox(height: 2),
-                        Text(savingsLabel!,
-                            style: tt.labelSmall?.copyWith(
-                              color: isFeatured
-                                  ? cs.onPrimaryContainer.withOpacity(0.8)
-                                  : cs.primary,
-                              fontWeight: FontWeight.w600,
-                            )),
+                        Text(
+                          savingsLabel!,
+                          style: tt.labelSmall?.copyWith(
+                            color: isFeatured
+                                ? cs.onPrimaryContainer.withOpacity(0.8)
+                                : cs.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ],
                   ),
                 ),
 
-                // CTA button
                 FilledButton(
-                  onPressed: () => _handlePurchase(context, productId),
+                  onPressed: (product == null || isPurchasing)
+                      ? null
+                      : () => onPurchase(product!),
                   style: isFeatured
                       ? FilledButton.styleFrom(
                           backgroundColor: cs.primary,
@@ -496,10 +655,16 @@ class _PlanCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  void _handlePurchase(BuildContext context, String id) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Purchase $id — coming soon')),
-    );
-  }
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+Future<void> _openPrivacy() async {
+  final uri = Uri.parse('https://yachalapp.emtechint.com/privacy');
+  if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+Future<void> _openTerms() async {
+  final uri = Uri.parse('https://yachalapp.emtechint.com/terms');
+  if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
