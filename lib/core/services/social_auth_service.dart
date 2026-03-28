@@ -2,6 +2,7 @@
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../domain/entities/user.dart';
@@ -31,7 +32,13 @@ class SocialAuthService {
   SocialAuthService({
     required this.authRepository,
   })  : _firebaseAuth = firebase_auth.FirebaseAuth.instance,
-        _googleSignIn = GoogleSignIn();
+        // serverClientId is the Web OAuth client ID from google-services.json
+        // (client_type: 3). Without it, googleAuth.idToken is null on Android,
+        // making the Firebase GoogleAuthProvider credential incomplete.
+        _googleSignIn = GoogleSignIn(
+          serverClientId:
+              '229607121728-ovbisd9vfsf6g2l6kmahumch4toh540i.apps.googleusercontent.com',
+        );
 
   // ========== GOOGLE SIGN IN ==========
 
@@ -299,7 +306,24 @@ class SocialAuthService {
           return error.message ?? 'Authentication failed.';
       }
     }
-    
+
+    // PlatformException from google_sign_in — ApiException:10 is DEVELOPER_ERROR,
+    // meaning the SHA-1 fingerprint of this APK is not registered in Firebase.
+    if (error is PlatformException) {
+      final msg = error.message ?? '';
+      if (msg.contains('ApiException: 10') || msg.contains('DEVELOPER_ERROR')) {
+        return 'Google Sign-In is not configured for this build. '
+            'The app\'s SHA-1 fingerprint must be registered in Firebase Console.';
+      }
+      if (error.code == 'sign_in_canceled' || error.code == 'canceled') {
+        return 'Sign-in was cancelled.';
+      }
+      if (msg.contains('network') || msg.contains('NETWORK_ERROR')) {
+        return 'Network error. Please check your connection.';
+      }
+      return msg.isNotEmpty ? msg : 'Sign-in failed. Please try again.';
+    }
+
     return error.toString().split(':').last.trim();
   }
 

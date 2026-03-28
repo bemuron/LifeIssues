@@ -57,7 +57,14 @@ class SubscriptionExpired extends SubscriptionState {
 
 class SubscriptionSyncing extends SubscriptionState {}
 
-class SubscriptionSynced extends SubscriptionState {}
+class SubscriptionSynced extends SubscriptionState {
+  /// Human-readable result message. Empty string means show nothing.
+  final String message;
+  SubscriptionSynced({this.message = ''});
+
+  @override
+  List<Object?> get props => [message];
+}
 
 class SubscriptionError extends SubscriptionState {
   final String message;

@@ -4,9 +4,9 @@ class AdHelper {
   static String get bannerAdUnitId {
     if (Platform.isAndroid) {
       // Test ID during development
-      return 'ca-app-pub-3940256099942544/6300978111';
+      //return 'ca-app-pub-3940256099942544/6300978111';
       // Replace with your actual ID for production:
-      // return 'YOUR_ANDROID_AD_UNIT_ID';
+       return 'ca-app-pub-3075330085087679/2977421942';
     } else if (Platform.isIOS) {
       // Test ID during development
       return 'ca-app-pub-3940256099942544/2934735716';

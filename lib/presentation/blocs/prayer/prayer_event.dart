@@ -93,6 +93,23 @@ class TogglePrayingEvent extends PrayerEvent {
   List<Object?> get props => [prayerId];
 }
 
+class EditPrayerEvent extends PrayerEvent {
+  final int prayerId;
+  final String body;
+  final String? category;
+  final bool? isAnonymous;
+
+  EditPrayerEvent({
+    required this.prayerId,
+    required this.body,
+    this.category,
+    this.isAnonymous,
+  });
+
+  @override
+  List<Object?> get props => [prayerId, body, category, isAnonymous];
+}
+
 class DeletePrayerEvent extends PrayerEvent {
   final int prayerId;
 

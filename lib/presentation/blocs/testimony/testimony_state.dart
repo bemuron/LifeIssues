@@ -115,6 +115,20 @@ class TestimonyPraiseToggled extends TestimonyState {
   List<Object?> get props => [testimonyId, hasPraised, praiseCount, alreadyPraised];
 }
 
+class TestimonyEditing extends TestimonyState {
+  final int testimonyId;
+  TestimonyEditing(this.testimonyId);
+  @override
+  List<Object?> get props => [testimonyId];
+}
+
+class TestimonyEdited extends TestimonyState {
+  final Testimony testimony;
+  TestimonyEdited(this.testimony);
+  @override
+  List<Object?> get props => [testimony];
+}
+
 class TestimonyDeleting extends TestimonyState {
   final int testimonyId;
 

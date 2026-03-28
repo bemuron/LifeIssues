@@ -18,6 +18,12 @@ abstract class TestimonyRepository {
     int? prayerId,
   });
   Future<Map<String, dynamic>> togglePraise(int testimonyId);
+  Future<Testimony> editTestimony({
+    required int testimonyId,
+    required String title,
+    required String body,
+    String? category,
+  });
   Future<void> deleteTestimony(int testimonyId);
   Future<List<Testimony>> getMyTestimonies({int page = 1});
 }

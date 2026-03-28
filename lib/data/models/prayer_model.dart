@@ -17,6 +17,7 @@ class PrayerModel {
   final LinkedTestimonyModel? linkedTestimony;
   final DateTime createdAt;
   final String? profileImageUrl;
+  final bool isEdited;
 
   PrayerModel({
     required this.id,
@@ -32,6 +33,7 @@ class PrayerModel {
     this.linkedTestimony,
     required this.createdAt,
     this.profileImageUrl,
+    this.isEdited = false,
   });
 
   factory PrayerModel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,7 @@ class PrayerModel {
           : null,
       createdAt: DateTime.parse(json['created_at'] as String),
       profileImageUrl: profileImageUrl.isEmpty ? null : profileImageUrl,
+      isEdited: json['is_edited'] as bool? ?? false,
     );
   }
 
@@ -103,6 +106,7 @@ class PrayerModel {
       linkedTestimony: linkedTestimony?.toEntity(),
       createdAt: createdAt,
       profileImageUrl: profileImageUrl,
+      isEdited: isEdited,
     );
   }
 }

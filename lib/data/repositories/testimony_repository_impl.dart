@@ -55,6 +55,22 @@ class TestimonyRepositoryImpl implements TestimonyRepository {
   }
 
   @override
+  Future<Testimony> editTestimony({
+    required int testimonyId,
+    required String title,
+    required String body,
+    String? category,
+  }) async {
+    final model = await remoteDataSource.editTestimony(
+      testimonyId: testimonyId,
+      title: title,
+      body: body,
+      category: category,
+    );
+    return model.toEntity();
+  }
+
+  @override
   Future<void> deleteTestimony(int testimonyId) async {
     await remoteDataSource.deleteTestimony(testimonyId);
   }

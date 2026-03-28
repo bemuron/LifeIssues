@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../../core/services/connectivity_service.dart';
 import '../../../data/datasources/issue_local_datasource.dart';
 import '../../blocs/testimony/testimony_bloc.dart';
 import '../../blocs/testimony/testimony_event.dart';
@@ -190,7 +191,8 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
 
               final content = BlocConsumer<TestimonyBloc, TestimonyState>(
                 listener: (context, state) {
-                  if (state is TestimonyError) {
+                  if (state is TestimonyError &&
+                      !ConnectivityService.isConnectivityError(state.message)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.message),
@@ -339,6 +341,7 @@ class _TestimonyFeedViewState extends State<TestimonyFeedView> {
                                   )
                                 : ListView.builder(
                               controller: _scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(),
                               padding: EdgeInsets.fromLTRB(
                                   16, 16, 16, showAd ? 90 : 16),
                               itemCount: state.testimonies.length +

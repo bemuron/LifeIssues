@@ -7,6 +7,7 @@ import '../../../domain/usecases/prayers/get_prayers.dart';
 import '../../../domain/usecases/prayers/get_prayer_by_id.dart';
 import '../../../domain/usecases/prayers/submit_prayer.dart';
 import '../../../domain/usecases/prayers/toggle_praying.dart';
+import '../../../domain/usecases/prayers/edit_prayer.dart';
 import '../../../domain/usecases/prayers/delete_prayer.dart';
 import '../../../domain/usecases/prayers/get_my_prayers.dart';
 
@@ -15,6 +16,7 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
   final GetPrayerById getPrayerById;
   final SubmitPrayer submitPrayer;
   final TogglePraying togglePraying;
+  final EditPrayer editPrayer;
   final DeletePrayer deletePrayer;
   final GetMyPrayers getMyPrayers;
 
@@ -23,6 +25,7 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     required this.getPrayerById,
     required this.submitPrayer,
     required this.togglePraying,
+    required this.editPrayer,
     required this.deletePrayer,
     required this.getMyPrayers,
   }) : super(PrayerInitial()) {
@@ -31,6 +34,7 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     on<LoadPrayerByIdEvent>(_onLoadPrayerById);
     on<SubmitPrayerEvent>(_onSubmitPrayer);
     on<TogglePrayingEvent>(_onTogglePraying);
+    on<EditPrayerEvent>(_onEditPrayer);
     on<DeletePrayerEvent>(_onDeletePrayer);
     on<LoadMyPrayersEvent>(_onLoadMyPrayers);
     on<FilterPrayersByCategoryEvent>(_onFilterByCategory);
@@ -231,10 +235,39 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
     }
   }
 
+  Future<void> _onEditPrayer(
+      EditPrayerEvent event,
+      Emitter<PrayerState> emit,
+      ) async {
+    final prevDetailState =
+        state is PrayerDetailLoaded ? state as PrayerDetailLoaded : null;
+    try {
+      emit(PrayerEditing(event.prayerId));
+
+      final updated = await editPrayer(
+        prayerId: event.prayerId,
+        body: event.body,
+        category: event.category,
+        isAnonymous: event.isAnonymous,
+      );
+
+      emit(PrayerEdited(updated));
+      emit(PrayerDetailLoaded(updated));
+    } catch (e) {
+      if (prevDetailState != null) emit(prevDetailState);
+      emit(PrayerError(e.toString()));
+    }
+  }
+
   Future<void> _onDeletePrayer(
       DeletePrayerEvent event,
       Emitter<PrayerState> emit,
       ) async {
+    final prevListState =
+        state is PrayerLoaded ? state as PrayerLoaded : null;
+    final prevMyListState =
+        state is MyPrayersLoaded ? state as MyPrayersLoaded : null;
+
     try {
       emit(PrayerDeleting(event.prayerId));
 
@@ -242,18 +275,25 @@ class PrayerBloc extends Bloc<PrayerEvent, PrayerState> {
 
       emit(PrayerDeleted(event.prayerId));
 
-      // Remove prayer from list if currently loaded
-      if (state is PrayerLoaded) {
-        final currentState = state as PrayerLoaded;
-        final updatedPrayers = currentState.prayers
-            .where((prayer) => prayer.id != event.prayerId)
-            .toList();
-
+      // Update list in-memory after delete
+      if (prevListState != null) {
         emit(PrayerLoaded(
-          prayers: updatedPrayers,
-          hasMore: currentState.hasMore,
-          currentPage: currentState.currentPage,
-          currentCategory: currentState.currentCategory,
+          prayers: prevListState.prayers
+              .where((p) => p.id != event.prayerId)
+              .toList(),
+          hasMore: prevListState.hasMore,
+          currentPage: prevListState.currentPage,
+          currentCategory: prevListState.currentCategory,
+          currentSortBy: prevListState.currentSortBy,
+          currentHasPrayers: prevListState.currentHasPrayers,
+        ));
+      } else if (prevMyListState != null) {
+        emit(MyPrayersLoaded(
+          myPrayers: prevMyListState.myPrayers
+              .where((p) => p.id != event.prayerId)
+              .toList(),
+          hasMore: prevMyListState.hasMore,
+          currentPage: prevMyListState.currentPage,
         ));
       }
     } catch (e) {

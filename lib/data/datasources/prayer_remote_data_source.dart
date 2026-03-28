@@ -14,6 +14,12 @@ abstract class PrayerRemoteDataSource {
     bool isAnonymous = false,
   });
   Future<Map<String, dynamic>> togglePraying(int prayerId);
+  Future<PrayerModel> editPrayer({
+    required int prayerId,
+    required String body,
+    String? category,
+    bool? isAnonymous,
+  });
   Future<void> deletePrayer(int prayerId);
   Future<List<PrayerModel>> getMyPrayers({int page = 1});
 }
@@ -89,6 +95,25 @@ class PrayerRemoteDataSourceImpl implements PrayerRemoteDataSource {
       'pray_count': rawPrayCount is int ? rawPrayCount : (rawPrayCount as num?)?.toInt() ?? 0,
       'already_prayed': response.data['already_prayed'] == true || response.data['already_prayed'] == 1,
     };
+  }
+
+  @override
+  Future<PrayerModel> editPrayer({
+    required int prayerId,
+    required String body,
+    String? category,
+    bool? isAnonymous,
+  }) async {
+    final data = <String, dynamic>{'body': body};
+    if (category != null) data['category'] = category;
+    if (isAnonymous != null) data['is_anonymous'] = isAnonymous;
+
+    final response = await apiClient.put(
+      ApiConfig.prayerById(prayerId),
+      data: data,
+    );
+
+    return PrayerModel.fromJson(response.data['prayer'] ?? response.data);
   }
 
   @override

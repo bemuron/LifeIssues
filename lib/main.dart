@@ -16,6 +16,9 @@ import 'core/services/database_sync_service.dart';
 import 'core/services/notification_handler.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/auth/auth_event.dart';
+import 'presentation/blocs/auth/auth_state.dart';
+import 'presentation/blocs/subscription/subscription_bloc.dart';
+import 'presentation/blocs/subscription/subscription_event.dart';
 import 'presentation/pages/auth/splash_page.dart';
 import 'presentation/blocs/daily_verse/daily_verse_bloc.dart';
 import 'presentation/blocs/favorites/favorites_bloc.dart';
@@ -73,13 +76,18 @@ void main() async {
   }
 
   // Initialize Qonversion for subscription billing
-  // TODO: Replace with your actual project key from the Qonversion dashboard.
   const qonversionProjectKey = 'hKOLtC43RAnk7Fcqog2ReQ9kCZjE44vi';
   try {
     final qonversionConfig = QonversionConfigBuilder(
       qonversionProjectKey,
       QLaunchMode.subscriptionManagement,
-    ).build();
+    )
+    // TODO: Remove .setEnvironment() before releasing to production.
+    // Test cards / Google Play license testers generate sandbox receipts —
+    // Qonversion must be in sandbox mode or it can't validate them and
+    // returns empty entitlements, making the subscription invisible to the app.
+    //.setEnvironment(QEnvironment.sandbox)
+    .build();
     Qonversion.initialize(qonversionConfig);
     debugPrint('✅ Qonversion initialized');
   } catch (e) {
@@ -92,8 +100,92 @@ void main() async {
   runApp(const LifeIssuesApp());
 }
 
-class LifeIssuesApp extends StatelessWidget {
+class LifeIssuesApp extends StatefulWidget {
   const LifeIssuesApp({Key? key}) : super(key: key);
+
+  @override
+  State<LifeIssuesApp> createState() => _LifeIssuesAppState();
+}
+
+class _LifeIssuesAppState extends State<LifeIssuesApp>
+    with WidgetsBindingObserver {
+  // Prevent overlapping sync calls when the user rapidly backgrounds/foregrounds.
+  bool _syncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncSubscription();
+    }
+  }
+
+  /// Checks Qonversion for the current entitlement state and pushes the result
+  /// to the backend. Called on every app resume so renewals, cancellations and
+  /// expiries are reflected without needing Qonversion webhooks.
+  Future<void> _syncSubscription() async {
+    if (_syncing) return;
+    _syncing = true;
+    try {
+      final authState = di.sl<AuthBloc>().state;
+      if (authState is! Authenticated) return;
+
+      // Re-identify so Qonversion links the check to this user.
+      await Qonversion.getSharedInstance()
+          .identify(authState.user.id.toString());
+
+      final entitlements =
+          await Qonversion.getSharedInstance().checkEntitlements();
+      final premium = entitlements['premium'];
+
+      final now = DateTime.now();
+      final isActive = premium != null &&
+          (premium.isActive ||
+              (premium.expirationDate != null &&
+                  premium.expirationDate!.isAfter(now)));
+
+      final subscriptionBloc = di.sl<SubscriptionBloc>();
+
+      if (isActive && premium != null) {
+        subscriptionBloc.add(SyncQonversionEvent({
+          'product_id': premium.productId,
+          'is_active': true,
+          'expires_at': premium.expirationDate?.toIso8601String(),
+          'renew_state': premium.renewState.name,
+          'status': 'active',
+          'qonversion_user_id': authState.user.id.toString(),
+        }));
+      } else {
+        // No active entitlement — ensure backend reflects the lapsed state.
+        subscriptionBloc.add(SyncQonversionEvent({
+          'product_id': premium?.productId,
+          'is_active': false,
+          'expires_at': premium?.expirationDate?.toIso8601String(),
+          'renew_state': premium?.renewState.name ?? 'canceled',
+          'status': 'expired',
+          'qonversion_user_id': authState.user.id.toString(),
+        }));
+      }
+
+      // Reload subscription status so the UI reflects the synced state.
+      subscriptionBloc.add(LoadSubscriptionStatusEvent());
+    } catch (_) {
+      // Sync is best-effort; never crash the app on failure.
+    } finally {
+      _syncing = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -133,22 +225,29 @@ class LifeIssuesApp extends StatelessWidget {
           create: (_) => di.sl<TestimonyBloc>(),
         ),
       ],
-      child: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) {
-          final themeMode = state is SettingsLoaded
-              ? (state.isDarkMode ? ThemeMode.dark : ThemeMode.light)
-              : ThemeMode.system;
+      child: BlocListener<AuthBloc, AuthState>(
+        // Sync subscription status every time the user becomes authenticated
+        // (app start with existing session, login, social login) so premium
+        // gating is accurate without needing Qonversion webhooks.
+        listenWhen: (prev, curr) => curr is Authenticated && prev is! Authenticated,
+        listener: (context, state) => _syncSubscription(),
+        child: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, state) {
+            final themeMode = state is SettingsLoaded
+                ? (state.isDarkMode ? ThemeMode.dark : ThemeMode.light)
+                : ThemeMode.system;
 
-          return MaterialApp(
-            title: AppStrings.appName,
-            navigatorKey: navigatorKey, // For notification navigation
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: themeMode,
-            home: const SplashPage(),
-            debugShowCheckedModeBanner: false,
-          );
-        },
+            return MaterialApp(
+              title: AppStrings.appName,
+              navigatorKey: navigatorKey,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: themeMode,
+              home: const SplashPage(),
+              debugShowCheckedModeBanner: false,
+            );
+          },
+        ),
       ),
     );
   }

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:qonversion_flutter/qonversion_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../core/di/injection_container.dart' as di;
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../blocs/subscription/subscription_bloc.dart';
@@ -14,8 +13,8 @@ import '../../blocs/subscription/subscription_state.dart';
 // ─── Qonversion IDs ──────────────────────────────────────────────────────────
 // These must match the IDs configured in the Qonversion dashboard.
 const _kEntitlementId = 'premium';
-const _kMonthlyProductId = 'monthly';
-const _kAnnualProductId = 'annual';
+const _kMonthlyProductId = 'monthly_plan';
+const _kAnnualProductId = 'yearly_7d_free_trial';
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
@@ -24,11 +23,9 @@ class SubscriptionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) =>
-          di.sl<SubscriptionBloc>()..add(LoadSubscriptionStatusEvent()),
-      child: const _SubscriptionView(),
-    );
+    // The global SubscriptionBloc singleton (provided in main.dart) is used
+    // directly — no local BlocProvider so all pages share the same state.
+    return const _SubscriptionView();
   }
 }
 
@@ -56,6 +53,11 @@ class _SubscriptionViewState extends State<_SubscriptionView> {
   Future<void> _init() async {
     await _identifyUser();
     await _loadProducts();
+    // Reload subscription status from the backend each time this page opens
+    // so the view reflects any changes (purchase, restore, expiry).
+    if (mounted) {
+      context.read<SubscriptionBloc>().add(LoadSubscriptionStatusEvent());
+    }
   }
 
   Future<void> _identifyUser() async {
@@ -86,14 +88,44 @@ class _SubscriptionViewState extends State<_SubscriptionView> {
     if (_isPurchasing) return;
     setState(() => _isPurchasing = true);
     try {
+      // Identify BEFORE purchasing so Qonversion links the purchase to this
+      // user. If identify() is skipped, the receipt is stored under an
+      // anonymous user and entitlements will be empty after purchase.
+      await _identifyUser();
+
       final result =
           await Qonversion.getSharedInstance().purchaseWithResult(product);
-      if (result.isSuccess && result.entitlements != null) {
-        _syncToBackend(result.entitlements!, status: 'active');
+
+      if (result.isSuccess) {
+        // For free-trial subscriptions on Android, Qonversion may not have
+        // finished processing the Google Play receipt by the time
+        // purchaseWithResult() returns, leaving result.entitlements empty.
+        // Fall back to checkEntitlements() which forces a server sync.
+        var entitlements = result.entitlements ?? {};
+        if (!entitlements.containsKey(_kEntitlementId)) {
+          try {
+            entitlements =
+                await Qonversion.getSharedInstance().checkEntitlements();
+          } catch (_) {}
+        }
+
+        if (entitlements.containsKey(_kEntitlementId)) {
+          // _syncToBackend already guards against writing is_active:false.
+          _syncToBackend(entitlements, status: 'active');
+        } else {
+          // Google Play confirmed the purchase (isSuccess = true) but
+          // Qonversion's receipt validation is still in flight.
+          // Only call _syncDirectToBackend here — the billing sheet was actually
+          // shown and completed. Do NOT call this for canceled/error results.
+          _syncDirectToBackend(product);
+        }
+      } else if (result.isCanceled) {
+        // User dismissed the Play Store sheet — nothing to do.
+      } else if (result.isPending && mounted) {
+        _showSnackBar('Your purchase is pending approval. You will get access once it is confirmed.');
       } else if (result.isError && mounted) {
         _showSnackBar(result.error?.message ?? 'Purchase failed. Please try again.');
       }
-      // isCanceled and isPending: do nothing
     } on QPurchaseException catch (e) {
       if (!e.isUserCancelled && mounted) {
         _showSnackBar(e.message);
@@ -105,13 +137,41 @@ class _SubscriptionViewState extends State<_SubscriptionView> {
     }
   }
 
+  /// Syncs a confirmed purchase directly to the backend when Qonversion
+  /// hasn't returned entitlement details yet (e.g. free-trial receipt delay).
+  void _syncDirectToBackend(QProduct product) {
+    if (!mounted) return;
+    context.read<SubscriptionBloc>().add(SyncQonversionEvent({
+      'product_id': product.storeId,
+      'is_active': true,
+      'expires_at': null,
+      'renew_state': 'will_renew',
+      'status': 'active',
+    }));
+  }
+
   Future<void> _restore() async {
     if (_isRestoring) return;
     setState(() => _isRestoring = true);
     try {
+      // Re-identify before restoring — after reinstall Qonversion starts a new
+      // anonymous session, and identify() links it back to the user's purchase
+      // history on Qonversion's server before we query entitlements.
+      await _identifyUser();
+
       final entitlements = await Qonversion.getSharedInstance().restore();
       final premium = entitlements[_kEntitlementId];
-      if (premium != null && premium.isActive) {
+
+      // Accept the entitlement if it is active OR if it has a future expiry date
+      // (free-trial subscriptions may return isActive=false on some SDK versions
+      // even though the trial period hasn't ended yet).
+      final now = DateTime.now();
+      final hasAccess = premium != null &&
+          (premium.isActive ||
+              (premium.expirationDate != null &&
+                  premium.expirationDate!.isAfter(now)));
+
+      if (hasAccess) {
         _syncToBackend(entitlements, status: 'restored');
       } else if (mounted) {
         _showSnackBar('No active subscription found to restore.');
@@ -129,13 +189,32 @@ class _SubscriptionViewState extends State<_SubscriptionView> {
   }) {
     final entitlement = entitlements[_kEntitlementId];
     if (entitlement == null || !mounted) return;
+
+    final hasActiveAccess = entitlement.isActive ||
+        (entitlement.expirationDate != null &&
+            entitlement.expirationDate!.isAfter(DateTime.now()));
+
+    // CRITICAL: Never write is_active:false to the backend from a client-side
+    // Qonversion check. Without webhooks the backend must only ever be told
+    // "this user IS subscribed". Expiry is derived from expires_at; cancellation
+    // status is irrelevant until the paid period actually ends.
+    // Writing false here would strip access from a user who is still in their
+    // billing period (e.g. canceled-but-not-yet-expired, or a Qonversion
+    // receipt validation delay on a fresh install / sandbox environment).
+    if (!hasActiveAccess) return;
+
+    final authState = context.read<AuthBloc>().state;
+    final qonversionUserId =
+        authState is Authenticated ? authState.user.id.toString() : null;
+
     context.read<SubscriptionBloc>().add(SyncQonversionEvent({
       'entitlement_id': entitlement.id,
       'product_id': entitlement.productId,
-      'is_active': entitlement.isActive,
+      'is_active': true,
       'expires_at': entitlement.expirationDate?.toIso8601String(),
       'renew_state': entitlement.renewState.name,
       'status': status,
+      if (qonversionUserId != null) 'qonversion_user_id': qonversionUserId,
     }));
   }
 
@@ -150,8 +229,8 @@ class _SubscriptionViewState extends State<_SubscriptionView> {
       appBar: AppBar(title: const Text('Premium')),
       body: BlocConsumer<SubscriptionBloc, SubscriptionState>(
         listener: (context, state) {
-          if (state is SubscriptionSynced) {
-            _showSnackBar('Subscription activated successfully!');
+          if (state is SubscriptionSynced && state.message.isNotEmpty) {
+            _showSnackBar(state.message);
           } else if (state is SubscriptionError) {
             _showSnackBar(state.message);
           }
@@ -282,34 +361,86 @@ class _PlansView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Hero banner ────────────────────────────────────────────────
-              Container(
+              SizedBox(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [cs.primary, cs.tertiary],
-                  ),
-                ),
-                padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
-                child: Column(
+                // Fixed height so the banner is consistent whether the
+                // placeholder or the real image is shown.
+                height: 220,
+                child: Stack(
+                  fit: StackFit.expand,
                   children: [
-                    Icon(Icons.stars_rounded, size: 56, color: cs.onPrimary),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Unlock Full Access',
-                      style: tt.headlineSmall?.copyWith(
-                        color: cs.onPrimary,
-                        fontWeight: FontWeight.bold,
+                    // Background: real image once available at
+                    // assets/images/subscription_hero.jpg — until then the
+                    // placeholder fills the space.
+                    Image.asset(
+                      'assets/images/subscription_hero.jpg',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: cs.primaryContainer,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.image_outlined,
+                                size: 40,
+                                color: cs.onPrimaryContainer.withOpacity(0.4),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'assets/images/subscription_hero.jpg',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: cs.onPrimaryContainer.withOpacity(0.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Join the community. Share your faith.\nSupport the mission.',
-                      style: tt.bodyMedium
-                          ?.copyWith(color: cs.onPrimary.withOpacity(0.85)),
-                      textAlign: TextAlign.center,
+
+                    // Gradient overlay — keeps text legible over any image.
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            cs.primary.withOpacity(0.55),
+                            cs.tertiary.withOpacity(0.80),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // Text content centred over the image.
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.stars_rounded,
+                              size: 56, color: cs.onPrimary),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Unlock Full Access',
+                            style: tt.headlineSmall?.copyWith(
+                              color: cs.onPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Join the community. Share your faith.\nSupport the mission.',
+                            style: tt.bodyMedium?.copyWith(
+                              color: cs.onPrimary.withOpacity(0.9),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

@@ -62,6 +62,7 @@ import '../../domain/usecases/prayers/get_prayers.dart';
 import '../../domain/usecases/prayers/get_prayer_by_id.dart';
 import '../../domain/usecases/prayers/submit_prayer.dart';
 import '../../domain/usecases/prayers/toggle_praying.dart';
+import '../../domain/usecases/prayers/edit_prayer.dart';
 import '../../domain/usecases/prayers/delete_prayer.dart';
 import '../../domain/usecases/prayers/get_my_prayers.dart';
 
@@ -70,6 +71,7 @@ import '../../domain/usecases/testimonies/get_testimonies.dart';
 import '../../domain/usecases/testimonies/get_testimony_by_id.dart';
 import '../../domain/usecases/testimonies/submit_testimony.dart';
 import '../../domain/usecases/testimonies/toggle_praise.dart';
+import '../../domain/usecases/testimonies/edit_testimony.dart';
 import '../../domain/usecases/testimonies/delete_testimony.dart';
 import '../../domain/usecases/testimonies/get_my_testimonies.dart';
 
@@ -167,6 +169,7 @@ Future<void> init() async {
     getPrayerById: sl(),
     submitPrayer: sl(),
     togglePraying: sl(),
+    editPrayer: sl(),
     deletePrayer: sl(),
     getMyPrayers: sl(),
   ));
@@ -176,11 +179,12 @@ Future<void> init() async {
     getTestimonyById: sl(),
     submitTestimony: sl(),
     togglePraise: sl(),
+    editTestimony: sl(),
     deleteTestimony: sl(),
     getMyTestimonies: sl(),
   ));
 
-  sl.registerFactory(() => SubscriptionBloc(
+  sl.registerLazySingleton(() => SubscriptionBloc(
     getSubscriptionStatus: sl(),
     checkSubscription: sl(),
     subscriptionRepository: sl(),
@@ -217,6 +221,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetPrayerById(sl()));
   sl.registerLazySingleton(() => SubmitPrayer(sl()));
   sl.registerLazySingleton(() => TogglePraying(sl()));
+  sl.registerLazySingleton(() => EditPrayer(sl()));
   sl.registerLazySingleton(() => DeletePrayer(sl()));
   sl.registerLazySingleton(() => GetMyPrayers(sl()));
 
@@ -225,6 +230,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetTestimonyById(sl()));
   sl.registerLazySingleton(() => SubmitTestimony(sl()));
   sl.registerLazySingleton(() => TogglePraise(sl()));
+  sl.registerLazySingleton(() => EditTestimony(sl()));
   sl.registerLazySingleton(() => DeleteTestimony(sl()));
   sl.registerLazySingleton(() => GetMyTestimonies(sl()));
 

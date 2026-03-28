@@ -5,6 +5,7 @@ import '../../../domain/usecases/testimonies/get_testimonies.dart';
 import '../../../domain/usecases/testimonies/get_testimony_by_id.dart';
 import '../../../domain/usecases/testimonies/submit_testimony.dart';
 import '../../../domain/usecases/testimonies/toggle_praise.dart';
+import '../../../domain/usecases/testimonies/edit_testimony.dart';
 import '../../../domain/usecases/testimonies/delete_testimony.dart';
 import '../../../domain/usecases/testimonies/get_my_testimonies.dart';
 import 'testimony_event.dart';
@@ -15,6 +16,7 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
   final GetTestimonyById getTestimonyById;
   final SubmitTestimony submitTestimony;
   final TogglePraise togglePraise;
+  final EditTestimony editTestimony;
   final DeleteTestimony deleteTestimony;
   final GetMyTestimonies getMyTestimonies;
 
@@ -23,6 +25,7 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
     required this.getTestimonyById,
     required this.submitTestimony,
     required this.togglePraise,
+    required this.editTestimony,
     required this.deleteTestimony,
     required this.getMyTestimonies,
   }) : super(TestimonyInitial()) {
@@ -33,6 +36,7 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
     on<LoadTestimonyByIdEvent>(_onLoadTestimonyById);
     on<SubmitTestimonyEvent>(_onSubmitTestimony);
     on<TogglePraiseEvent>(_onTogglePraise);
+    on<EditTestimonyEvent>(_onEditTestimony);
     on<DeleteTestimonyEvent>(_onDeleteTestimony);
     on<LoadMyTestimoniesEvent>(_onLoadMyTestimonies);
     on<FilterTestimoniesByCategoryEvent>(_onFilterByCategory);
@@ -230,10 +234,41 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
     }
   }
 
+  Future<void> _onEditTestimony(
+      EditTestimonyEvent event,
+      Emitter<TestimonyState> emit,
+      ) async {
+    final prevDetailState = state is TestimonyDetailLoaded
+        ? state as TestimonyDetailLoaded
+        : null;
+    try {
+      emit(TestimonyEditing(event.testimonyId));
+
+      final updated = await editTestimony(
+        testimonyId: event.testimonyId,
+        title: event.title,
+        body: event.body,
+        category: event.category,
+      );
+
+      emit(TestimonyEdited(updated));
+      emit(TestimonyDetailLoaded(updated));
+    } catch (e) {
+      if (prevDetailState != null) emit(prevDetailState);
+      emit(TestimonyError(e.toString()));
+    }
+  }
+
   Future<void> _onDeleteTestimony(
       DeleteTestimonyEvent event,
       Emitter<TestimonyState> emit,
       ) async {
+    final prevListState =
+        state is TestimonyLoaded ? state as TestimonyLoaded : null;
+    final prevMyListState = state is MyTestimoniesLoaded
+        ? state as MyTestimoniesLoaded
+        : null;
+
     try {
       emit(TestimonyDeleting(event.testimonyId));
 
@@ -241,18 +276,25 @@ class TestimonyBloc extends Bloc<TestimonyEvent, TestimonyState> {
 
       emit(TestimonyDeleted(event.testimonyId));
 
-      // Remove testimony from list if currently loaded
-      if (state is TestimonyLoaded) {
-        final currentState = state as TestimonyLoaded;
-        final updatedTestimonies = currentState.testimonies
-            .where((testimony) => testimony.id != event.testimonyId)
-            .toList();
-
+      if (prevListState != null) {
         emit(TestimonyLoaded(
-          testimonies: updatedTestimonies,
-          hasMore: currentState.hasMore,
-          currentPage: currentState.currentPage,
-          currentCategory: currentState.currentCategory,
+          testimonies: prevListState.testimonies
+              .where((t) => t.id != event.testimonyId)
+              .toList(),
+          hasMore: prevListState.hasMore,
+          currentPage: prevListState.currentPage,
+          currentCategory: prevListState.currentCategory,
+          currentSortBy: prevListState.currentSortBy,
+          currentLinkedToPrayer: prevListState.currentLinkedToPrayer,
+          currentHasPraise: prevListState.currentHasPraise,
+        ));
+      } else if (prevMyListState != null) {
+        emit(MyTestimoniesLoaded(
+          myTestimonies: prevMyListState.myTestimonies
+              .where((t) => t.id != event.testimonyId)
+              .toList(),
+          hasMore: prevMyListState.hasMore,
+          currentPage: prevMyListState.currentPage,
         ));
       }
     } catch (e) {

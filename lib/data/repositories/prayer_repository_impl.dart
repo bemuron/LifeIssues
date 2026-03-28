@@ -47,6 +47,22 @@ class PrayerRepositoryImpl implements PrayerRepository {
   }
 
   @override
+  Future<Prayer> editPrayer({
+    required int prayerId,
+    required String body,
+    String? category,
+    bool? isAnonymous,
+  }) async {
+    final model = await remoteDataSource.editPrayer(
+      prayerId: prayerId,
+      body: body,
+      category: category,
+      isAnonymous: isAnonymous,
+    );
+    return model.toEntity();
+  }
+
+  @override
   Future<void> deletePrayer(int prayerId) async {
     await remoteDataSource.deletePrayer(prayerId);
   }

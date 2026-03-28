@@ -98,6 +98,23 @@ class TogglePraiseEvent extends TestimonyEvent {
   List<Object?> get props => [testimonyId];
 }
 
+class EditTestimonyEvent extends TestimonyEvent {
+  final int testimonyId;
+  final String title;
+  final String body;
+  final String? category;
+
+  EditTestimonyEvent({
+    required this.testimonyId,
+    required this.title,
+    required this.body,
+    this.category,
+  });
+
+  @override
+  List<Object?> get props => [testimonyId, title, body, category];
+}
+
 class DeleteTestimonyEvent extends TestimonyEvent {
   final int testimonyId;
 

@@ -15,6 +15,7 @@ import '../../../core/constants/bible_versions.dart';
 import '../../../data/datasources/database_helper.dart';
 import '../subscription/subscription_page.dart';
 import '../widget_config_page.dart';
+import 'about_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -219,13 +220,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildShareAppTile(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.share),
-      title: const Text('Share Life Issues'),
+      title: const Text('Share Yachal'),
       subtitle: const Text('Share the app with friends'),
       onTap: () {
-        Share.share(
-          'Check out Life Issues - Bible verses for life situations\n\n'
-              'https://play.google.com/store/apps/details?id=com.lifeissues.lifeissues',
-        );
+        Share.share(AppStrings.shareAppText);
       },
     );
   }
@@ -301,22 +299,13 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildAboutTile(BuildContext context) {
     return ListTile(
       leading: const Icon(Icons.info),
-      title: const Text('About Life Issues'),
+      title: const Text('About Yachal'),
       subtitle: const Text('App information and credits'),
       trailing: const Icon(Icons.chevron_right),
       onTap: () {
-        showAboutDialog(
-          context: context,
-          applicationName: AppStrings.appName,
-          applicationVersion: '2.0.0',
-          applicationIcon: const Icon(Icons.menu_book, size: 48),
-          children: [
-            const Text(
-              'Life Issues provides Bible verses for various life situations, '
-                  'helping you find guidance and comfort in God\'s Word. '
-                  'Share prayers and inspire others with your testimony.',
-            ),
-          ],
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AboutPage()),
         );
       },
     );

@@ -173,14 +173,20 @@ class ApiClient {
       case DioExceptionType.cancel:
         return NetworkException('Request cancelled');
 
+      case DioExceptionType.connectionError:
+        return NetworkException('No internet connection. Please check your connection.');
+
       case DioExceptionType.unknown:
-        if (error.error.toString().contains('SocketException')) {
-          return NetworkException('No internet connection');
+        final errStr = error.error?.toString() ?? '';
+        if (errStr.contains('SocketException') ||
+            errStr.contains('Failed host lookup') ||
+            errStr.contains('No address associated')) {
+          return NetworkException('No internet connection. Please check your connection.');
         }
-        return NetworkException('Network error');
+        return NetworkException('Network error. Please try again.');
 
       default:
-        return NetworkException('Unknown error occurred');
+        return NetworkException('Network error. Please try again.');
     }
   }
 }

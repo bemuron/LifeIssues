@@ -2,10 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../../../core/services/social_auth_service.dart';
+import '../../../core/di/injection_container.dart' as di;
 import '../../../core/theme/app_theme.dart';
-import '../../../domain/usecases/auth/social_login.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
@@ -300,90 +299,70 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   Future<void> _signUpWithGoogle() async {
-    try {
-      final googleSignIn = GoogleSignIn();
-      await googleSignIn.signOut();
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return; // User cancelled
+    final authService = di.sl<SocialAuthService>();
+    final result = await authService.signInWithGoogle();
 
-      final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
+    if (!mounted) return;
 
-      if (idToken == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Google Sign-In failed. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      if (mounted) {
-        context.read<AuthBloc>().add(
-          SocialLoginEvent(provider: SocialProvider.google, idToken: idToken),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Google Sign-In error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (result.success) {
+      context.read<AuthBloc>().add(AuthenticateDirectEvent(user: result.user!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 12),
+            Expanded(child: Text('Signed in with Google!')),
+          ]),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(result.message)),
+          ]),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> _signUpWithApple() async {
-    try {
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
+    final authService = di.sl<SocialAuthService>();
+    final result = await authService.signInWithApple();
+
+    if (!mounted) return;
+
+    if (result.success) {
+      context.read<AuthBloc>().add(AuthenticateDirectEvent(user: result.user!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 12),
+            Expanded(child: Text('Signed in with Apple!')),
+          ]),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
       );
-
-      final idToken = credential.identityToken;
-      if (idToken == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Apple Sign-In failed. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      if (mounted) {
-        context.read<AuthBloc>().add(
-          SocialLoginEvent(provider: SocialProvider.apple, idToken: idToken),
-        );
-      }
-    } on SignInWithAppleAuthorizationException catch (e) {
-      if (e.code == AuthorizationErrorCode.canceled) return; // User cancelled
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apple Sign-In error: ${e.message}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Apple Sign-In error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(children: [
+            const Icon(Icons.error_outline, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(child: Text(result.message)),
+          ]),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

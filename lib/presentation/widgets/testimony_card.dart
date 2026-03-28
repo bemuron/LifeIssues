@@ -8,11 +8,13 @@ import '../pages/testimonies/testimony_detail_page.dart';
 class TestimonyCard extends StatelessWidget {
   final Testimony testimony;
   final VoidCallback? onTapPraise;
+  final VoidCallback? onTap;
 
   const TestimonyCard({
     Key? key,
     required this.testimony,
     this.onTapPraise,
+    this.onTap,
   }) : super(key: key);
 
   @override
@@ -27,7 +29,7 @@ class TestimonyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
-        onTap: () {
+        onTap: onTap ?? () {
           Navigator.push(
             context,
             MaterialPageRoute(

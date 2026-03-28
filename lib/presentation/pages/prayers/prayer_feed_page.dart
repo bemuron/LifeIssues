@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../core/di/injection_container.dart' as di;
+import '../../../core/services/connectivity_service.dart';
 import '../../../data/datasources/issue_local_datasource.dart';
 import '../../blocs/prayer/prayer_bloc.dart';
 import '../../blocs/prayer/prayer_event.dart';
@@ -170,7 +171,11 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
 
               final content = BlocConsumer<PrayerBloc, PrayerState>(
                 listener: (context, state) {
-                  if (state is PrayerError) {
+                  // Connectivity errors are handled centrally with a single
+                  // snackbar in MainNavigationPage — skip here to avoid
+                  // showing 3+ stacked "unknown error" messages when offline.
+                  if (state is PrayerError &&
+                      !ConnectivityService.isConnectivityError(state.message)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.message),
@@ -290,6 +295,7 @@ class _PrayerFeedViewState extends State<PrayerFeedView> {
                                   )
                                 : ListView.builder(
                               controller: _scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(),
                               padding: EdgeInsets.fromLTRB(
                                   16, 16, 16, showAd ? 90 : 16),
                               itemCount: state.prayers.length +

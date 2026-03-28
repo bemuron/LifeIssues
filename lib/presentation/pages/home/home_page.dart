@@ -33,6 +33,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final _communityStripKey = GlobalKey<CommunityStripState>();
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +62,7 @@ class _HomePageState extends State<HomePage> {
             onRefresh: () async {
               context.read<DailyVerseBloc>().add(LoadDailyVerseEvent());
               context.read<IssuesBloc>().add(LoadIssuesEvent());
+              await _communityStripKey.currentState?.refresh();
             },
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -376,6 +379,7 @@ class _HomePageState extends State<HomePage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 16),
                                 child: CommunityStrip(
+                                  key: _communityStripKey,
                                   onNavigateToTab: widget.onNavigateToTab,
                                 ),
                               );

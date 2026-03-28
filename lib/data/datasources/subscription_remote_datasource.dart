@@ -17,7 +17,7 @@ class SubscriptionRemoteDataSourceImpl implements SubscriptionRemoteDataSource {
   @override
   Future<SubscriptionModel> getSubscriptionStatus() async {
     final response = await apiClient.get(ApiConfig.subscriptionStatus);
-    return SubscriptionModel.fromJson(response.data['subscription']);
+    return SubscriptionModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override

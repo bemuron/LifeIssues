@@ -12,18 +12,15 @@
     <!-- This is what fixes the "exact_alarms_not_permitted" error -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
-    <!-- Alternative permission for apps targeting Android 14+ -->
-    <!--    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>-->
-
     <!-- Internet permission (usually already present) -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <!-- Required for Google Play Billing (used by Qonversion) -->
     <uses-permission android:name="com.android.vending.BILLING"/>
 
-    <!-- Photo library access for profile picture picker -->
+    <!-- READ_EXTERNAL_STORAGE for Android ≤12; Android 13+ uses the system
+         Photo Picker via image_picker which requires no extra permission. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <application
         android:label="Yachal"
         android:name="${applicationName}"
@@ -83,7 +80,7 @@
 
         <!-- Daily Verse Widget -->
         <receiver
-            android:name="com.example.life_issues.DailyVerseWidgetProvider"
+            android:name="com.lifeissues.lifeissues.DailyVerseWidgetProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

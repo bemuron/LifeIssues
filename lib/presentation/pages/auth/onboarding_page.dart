@@ -15,41 +15,38 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // To use an image instead of an icon on any slide, set [imagePath] to the
-  // asset path (e.g. 'assets/images/onboarding1.png') and leave [icon] null.
-  // To use an icon, set [icon] and leave [imagePath] null.
-  final List<OnboardingData> _pages = [
-    OnboardingData(
+  final List<_OnboardingData> _pages = [
+    _OnboardingData(
       title: 'Find Hope in Scripture',
       description:
-          'Discover Bible verses perfectly matched to your life situations and challenges',
+          'Bible verses organised by topic so you always find the Word you need — anxiety, grief, finances, healing, joy, and more.',
       icon: Icons.menu_book,
-      color: Colors.blue,
-      // imagePath: 'assets/images/onboarding1.png',  // ← uncomment to use image
+      accentColor: const Color(0xFF6750A4),
+      imagePath: 'assets/images/onboarding1.jpg',
     ),
-    OnboardingData(
-      title: 'Share Prayer Requests',
+    _OnboardingData(
+      title: 'You Are Not Waiting Alone',
       description:
-          'Join a caring community where believers pray for one another',
-      icon: Icons.favorite,
-      color: Colors.red,
-      // imagePath: 'assets/images/onboarding2.png',
+          'Post your prayer request and let the community stand with you. One tap. Real intercession.',
+      icon: Icons.volunteer_activism,
+      accentColor: const Color(0xFFB5438A),
+      imagePath: 'assets/images/onboarding2.jpg',
     ),
-    OnboardingData(
-      title: 'Share Your Testimony',
+    _OnboardingData(
+      title: 'Share What God Has Done',
       description:
-          'Inspire others by sharing how God has moved in your life',
+          'Your testimony could be someone else\'s breakthrough. Share what God has done — big miracle or quiet blessing.',
       icon: Icons.auto_awesome,
-      color: Colors.amber,
-      // imagePath: 'assets/images/onboarding3.png',
+      accentColor: const Color(0xFF7965AF),
+      imagePath: 'assets/images/onboarding3.jpg',
     ),
-    OnboardingData(
-      title: 'Build Your Faith',
+    _OnboardingData(
+      title: 'Grow Together',
       description:
-          'Daily verses, powerful testimonies, and a supportive community await',
-      icon: Icons.church,
-      color: Colors.purple,
-      // imagePath: 'assets/images/onboarding4.png',
+          'Daily verses, community prayers, and testimonies that build your faith every single day.',
+      icon: Icons.groups,
+      accentColor: const Color(0xFF4A90D9),
+      imagePath: 'assets/images/onboarding4.jpg',
     ),
   ];
 
@@ -59,166 +56,188 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Skip button
-            Align(
-              alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: _finishOnboarding,
-                child: const Text('Skip'),
-              ),
-            ),
-
-            // Pages
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  return _buildPage(_pages[index]);
-                },
-              ),
-            ),
-
-            // Page indicator dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _pages.length,
-                (index) => _buildDot(index),
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Navigation buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  if (_currentPage > 0)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          _pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        },
-                        child: const Text('Back'),
-                      ),
-                    ),
-                  if (_currentPage > 0) const SizedBox(width: 16),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () {
-                        if (_currentPage == _pages.length - 1) {
-                          _finishOnboarding();
-                        } else {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        }
-                      },
-                      child: Text(
-                        _currentPage == _pages.length - 1
-                            ? 'Get Started'
-                            : 'Next',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
+  void _nextPage() {
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
     );
   }
 
-  Widget _buildPage(OnboardingData data) {
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  void _prevPage() {
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final topPad = MediaQuery.of(context).padding.top;
+
+    return Scaffold(
+      body: Stack(
         children: [
-          _buildVisual(data),
-          const SizedBox(height: 48),
-
-          // Title
-          Text(
-            data.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          // ── Full-screen page content ──────────────────────────────────────
+          Column(
+            children: [
+              // Image area with no top inset — bleeds behind status bar
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (i) => setState(() => _currentPage = i),
+                  itemCount: _pages.length,
+                  itemBuilder: (_, i) => _buildPage(_pages[i]),
                 ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
+              ),
 
-          // Description
-          Text(
-            data.description,
-            style: Theme.of(context).textTheme.bodyLarge,
-            textAlign: TextAlign.center,
+              // ── Dots ───────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_pages.length, _buildDot),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // ── Buttons ────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    if (_currentPage > 0) ...[
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _prevPage,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text('Back'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: _currentPage == _pages.length - 1
+                            ? _finishOnboarding
+                            : _nextPage,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: Text(
+                          _currentPage == _pages.length - 1
+                              ? 'Get Started'
+                              : 'Next',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: bottomPad + 24),
+            ],
+          ),
+
+          // ── Skip button — floats over image ───────────────────────────────
+          Positioned(
+            top: topPad + 8,
+            right: 16,
+            child: TextButton(
+              onPressed: _finishOnboarding,
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.black26,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'Skip',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// Shows an image asset when [data.imagePath] is set, otherwise falls back
-  /// to the icon in a coloured circle.
-  Widget _buildVisual(OnboardingData data) {
-    if (data.imagePath != null) {
-      return SizedBox(
-        height: 220,
-        child: Image.asset(
-          data.imagePath!,
-          fit: BoxFit.contain,
-          errorBuilder: (context, _, __) => _buildIconFallback(data),
-        ),
-      );
-    }
-    return _buildIconFallback(data);
-  }
+  Widget _buildPage(_OnboardingData data) {
+    final bgColor = Theme.of(context).scaffoldBackgroundColor;
 
-  Widget _buildIconFallback(OnboardingData data) {
-    return Container(
-      width: 150,
-      height: 150,
-      decoration: BoxDecoration(
-        color: data.color.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        data.icon ?? Icons.star,
-        size: 80,
-        color: data.color,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Image / illustration area (full-bleed, top ~58 %) ──────────────
+        Expanded(
+          flex: 58,
+          child: _ImageArea(data: data, bgColor: bgColor),
+        ),
+
+        // ── Title + description (bottom ~42 %) ─────────────────────────────
+        Expanded(
+          flex: 42,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  data.title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  data.description,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        height: 1.55,
+                        color:
+                            Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildDot(int index) {
+    final isActive = index == _currentPage;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
       margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: _currentPage == index ? 24 : 8,
+      width: isActive ? 28 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: _currentPage == index
+        color: isActive
             ? Theme.of(context).colorScheme.primary
-            : Theme.of(context).colorScheme.surfaceVariant,
+            : Theme.of(context).colorScheme.outlineVariant,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -227,38 +246,138 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Future<void> _finishOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('has_seen_onboarding', true);
-
     if (!mounted) return;
-
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainNavigationPageUpdated()),
+      PageRouteBuilder(
+        pageBuilder: (_, a, __) => const MainNavigationPageUpdated(),
+        transitionsBuilder: (_, a, __, child) =>
+            FadeTransition(opacity: a, child: child),
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
     );
   }
 }
 
-/// Data for a single onboarding slide.
-///
-/// Provide either [imagePath] (an asset path such as
-/// `'assets/images/onboarding1.png'`) or [icon] — not both.
-/// If [imagePath] is set the image is displayed; otherwise the icon is used.
-class OnboardingData {
+// ── Image area widget ─────────────────────────────────────────────────────────
+
+class _ImageArea extends StatelessWidget {
+  final _OnboardingData data;
+  final Color bgColor;
+
+  const _ImageArea({required this.data, required this.bgColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Tinted background — always visible, acts as mat for the icon
+        // fallback and bleeds through semi-transparent image edges.
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                data.accentColor.withOpacity(0.22),
+                data.accentColor.withOpacity(0.08),
+              ],
+            ),
+          ),
+        ),
+
+        // Photo or icon fallback
+        if (data.imagePath != null)
+          Image.asset(
+            data.imagePath!,
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+            errorBuilder: (_, __, ___) => _IconFallback(data: data),
+          )
+        else
+          _IconFallback(data: data),
+
+        // Subtle dark vignette on the very top so the Skip pill stays legible
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 120,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.28),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Gradient dissolve — image fades into the page background at the bottom
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 96,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, bgColor],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Icon fallback (shown when image asset is absent) ─────────────────────────
+
+class _IconFallback extends StatelessWidget {
+  final _OnboardingData data;
+  const _IconFallback({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 160,
+        height: 160,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: data.accentColor.withOpacity(0.14),
+        ),
+        child: Icon(
+          data.icon,
+          size: 88,
+          color: data.accentColor.withOpacity(0.75),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Data model ────────────────────────────────────────────────────────────────
+
+class _OnboardingData {
   final String title;
   final String description;
-
-  /// Asset path to an image, e.g. `'assets/images/onboarding1.png'`.
-  /// Takes precedence over [icon] when set.
   final String? imagePath;
+  final IconData icon;
+  final Color accentColor;
 
-  /// Fallback icon shown when [imagePath] is null or fails to load.
-  final IconData? icon;
-
-  final Color color;
-
-  OnboardingData({
+  const _OnboardingData({
     required this.title,
     required this.description,
+    required this.icon,
+    required this.accentColor,
     this.imagePath,
-    this.icon,
-    required this.color,
   });
 }

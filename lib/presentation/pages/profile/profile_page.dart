@@ -19,7 +19,10 @@ import '../../blocs/subscription/subscription_state.dart';
 import '../../widgets/ad_banner_widget.dart';
 import '../../widgets/prayer_card.dart';
 import '../prayers/prayer_detail_page.dart';
+import '../prayers/edit_prayer_page.dart';
 import '../../widgets/testimony_card.dart';
+import '../testimonies/testimony_detail_page.dart';
+import '../testimonies/edit_testimony_page.dart';
 import '../auth/login_page.dart';
 import '../settings/settings_page.dart';
 import '../prayers/prayer_submission_page.dart';
@@ -394,9 +397,22 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
   }
 
   Widget _buildMyPrayers() {
-    return BlocBuilder<PrayerBloc, PrayerState>(
+    return BlocConsumer<PrayerBloc, PrayerState>(
+      listener: (context, state) {
+        if (state is PrayerDeleted) {
+          context.read<PrayerBloc>().add(LoadMyPrayersEvent());
+        }
+        if (state is PrayerError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
-        if (state is MyPrayersLoading) {
+        if (state is MyPrayersLoading || state is PrayerDeleting) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -433,36 +449,107 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
                         profileImageUrl: prayer.profileImageUrl ??
                             widget.user.profileImageUrl as String?,
                       );
-                return Column(
+                final canEdit = prayer.status == 'pending' ||
+                    (prayer.status == 'approved' && prayer.prayCount == 0);
+
+                return Stack(
                   children: [
-                    PrayerCard(
-                      prayer: displayPrayer,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PrayerDetailPage(
-                              prayerId: displayPrayer.id,
-                              initialPrayer: displayPrayer,
+                    Column(
+                      children: [
+                        PrayerCard(
+                          prayer: displayPrayer,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PrayerDetailPage(
+                                  prayerId: displayPrayer.id,
+                                  initialPrayer: displayPrayer,
+                                ),
+                              ),
+                            ).then((_) => context
+                                .read<PrayerBloc>()
+                                .add(LoadMyPrayersEvent()));
+                          },
+                          onTapPraying: () {
+                            context
+                                .read<PrayerBloc>()
+                                .add(TogglePrayingEvent(prayer.id));
+                          },
+                        ),
+                        if (prayer.status != 'approved')
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Chip(
+                              label: Text(_getStatusText(prayer.status)),
+                              backgroundColor:
+                                  _getStatusColor(context, prayer.status),
                             ),
                           ),
-                        );
-                      },
-                      onTapPraying: () {
-                        context
-                            .read<PrayerBloc>()
-                            .add(TogglePrayingEvent(prayer.id));
-                      },
+                      ],
                     ),
-                    if (prayer.status != 'approved')
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Chip(
-                          label: Text(_getStatusText(prayer.status)),
-                          backgroundColor:
-                              _getStatusColor(context, prayer.status),
-                        ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 20),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            if (!canEdit) {
+                              _showCannotEditPrayerDialog(context, prayer.prayCount);
+                              return;
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EditPrayerPage(prayer: prayer),
+                              ),
+                            ).then((_) => context
+                                .read<PrayerBloc>()
+                                .add(LoadMyPrayersEvent()));
+                          } else if (value == 'delete') {
+                            _showDeletePrayerDialog(context, prayer.id, prayer.prayCount);
+                          }
+                        },
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 18,
+                                  color: canEdit ? null : Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    color: canEdit ? null : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline,
+                                    size: 18,
+                                    color: Theme.of(context).colorScheme.error),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                      color: Theme.of(context).colorScheme.error),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
                   ],
                 );
               },
@@ -481,6 +568,56 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
 
         return const SizedBox();
       },
+    );
+  }
+
+  void _showCannotEditPrayerDialog(BuildContext context, int prayCount) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Cannot Edit'),
+        content: Text(
+          prayCount > 0
+              ? 'This prayer has $prayCount ${prayCount == 1 ? 'person' : 'people'} praying for it and cannot be edited.'
+              : 'This prayer cannot be edited in its current state.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeletePrayerDialog(BuildContext context, int prayerId, int prayCount) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Prayer'),
+        content: Text(
+          prayCount > 0
+              ? 'This prayer has $prayCount ${prayCount == 1 ? 'person' : 'people'} praying for it. Are you sure you want to delete it?'
+              : 'Are you sure you want to delete this prayer?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<PrayerBloc>().add(DeletePrayerEvent(prayerId));
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -552,9 +689,22 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
   }
 
   Widget _buildMyTestimonies() {
-    return BlocBuilder<TestimonyBloc, TestimonyState>(
+    return BlocConsumer<TestimonyBloc, TestimonyState>(
+      listener: (context, state) {
+        if (state is TestimonyDeleted) {
+          context.read<TestimonyBloc>().add(LoadMyTestimoniesEvent());
+        }
+        if (state is TestimonyError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
-        if (state is MyTestimoniesLoading) {
+        if (state is MyTestimoniesLoading || state is TestimonyDeleting) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -586,25 +736,111 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
                   profileImageUrl: testimony.profileImageUrl ??
                       widget.user.profileImageUrl as String?,
                 );
-                return Column(
+                final canEdit = testimony.status == 'pending' ||
+                    (testimony.status == 'approved' &&
+                        testimony.praiseCount == 0 &&
+                        testimony.linkedPrayer == null);
+
+                return Stack(
                   children: [
-                    TestimonyCard(
-                      testimony: displayTestimony,
-                      onTapPraise: () {
-                        context
-                            .read<TestimonyBloc>()
-                            .add(TogglePraiseEvent(testimony.id));
-                      },
-                    ),
-                    if (testimony.status != 'approved')
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Chip(
-                          label: Text(_getStatusText(testimony.status)),
-                          backgroundColor:
-                              _getStatusColor(context, testimony.status),
+                    Column(
+                      children: [
+                        TestimonyCard(
+                          testimony: displayTestimony,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TestimonyDetailPage(
+                                  testimonyId: displayTestimony.id,
+                                ),
+                              ),
+                            ).then((_) => context
+                                .read<TestimonyBloc>()
+                                .add(LoadMyTestimoniesEvent()));
+                          },
+                          onTapPraise: () {
+                            context
+                                .read<TestimonyBloc>()
+                                .add(TogglePraiseEvent(testimony.id));
+                          },
                         ),
+                        if (testimony.status != 'approved')
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Chip(
+                              label: Text(_getStatusText(testimony.status)),
+                              backgroundColor:
+                                  _getStatusColor(context, testimony.status),
+                            ),
+                          ),
+                      ],
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 20),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            if (!canEdit) {
+                              _showCannotEditTestimonyDialog(
+                                  context, testimony.praiseCount, testimony.linkedPrayer != null);
+                              return;
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    EditTestimonyPage(testimony: testimony),
+                              ),
+                            ).then((_) => context
+                                .read<TestimonyBloc>()
+                                .add(LoadMyTestimoniesEvent()));
+                          } else if (value == 'delete') {
+                            _showDeleteTestimonyDialog(
+                                context, testimony.id, testimony.linkedPrayer != null);
+                          }
+                        },
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 18,
+                                  color: canEdit ? null : Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Edit',
+                                  style: TextStyle(
+                                    color: canEdit ? null : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline,
+                                    size: 18,
+                                    color: Theme.of(context).colorScheme.error),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                      color: Theme.of(context).colorScheme.error),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
                   ],
                 );
               },
@@ -623,6 +859,59 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
 
         return const SizedBox();
       },
+    );
+  }
+
+  void _showCannotEditTestimonyDialog(
+      BuildContext context, int praiseCount, bool hasLinkedPrayer) {
+    final reason = hasLinkedPrayer
+        ? 'This testimony is linked to an answered prayer and cannot be edited.'
+        : 'This testimony has $praiseCount ${praiseCount == 1 ? 'praise' : 'praises'} and cannot be edited.';
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Cannot Edit'),
+        content: Text(reason),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteTestimonyDialog(
+      BuildContext context, int testimonyId, bool hasLinkedPrayer) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Testimony'),
+        content: Text(
+          hasLinkedPrayer
+              ? 'This testimony is linked to a prayer. Deleting it will unlink it from that prayer. Are you sure?'
+              : 'Are you sure you want to delete this testimony?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context
+                  .read<TestimonyBloc>()
+                  .add(DeleteTestimonyEvent(testimonyId));
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -650,7 +939,7 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
               Icon(
                 isOffline ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
                 size: 64,
-                color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 16),
               Text(
@@ -763,11 +1052,11 @@ class _ProfileViewState extends State<ProfileView> with SingleTickerProviderStat
   Color _getStatusColor(BuildContext context, String status) {
     switch (status) {
       case 'pending':
-        return Colors.orange.withOpacity(0.2);
+        return Colors.orange.withValues(alpha: 0.2);
       case 'approved':
-        return Colors.green.withOpacity(0.2);
+        return Colors.green.withValues(alpha: 0.2);
       case 'rejected':
-        return Colors.red.withOpacity(0.2);
+        return Colors.red.withValues(alpha: 0.2);
       default:
         return Theme.of(context).colorScheme.surfaceContainerHighest;
     }

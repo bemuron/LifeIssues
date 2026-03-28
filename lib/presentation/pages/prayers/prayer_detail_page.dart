@@ -12,11 +12,10 @@ import '../../blocs/prayer/prayer_event.dart';
 import '../../blocs/prayer/prayer_state.dart';
 import '../auth/login_page.dart';
 import '../testimonies/testimony_detail_page.dart';
+import 'edit_prayer_page.dart';
 
 class PrayerDetailPage extends StatelessWidget {
   final int prayerId;
-  /// When provided the prayer is used directly, skipping the API fetch.
-  /// Used by the profile page to avoid a backend 404 on anonymous prayers.
   final Prayer? initialPrayer;
 
   const PrayerDetailPage({
@@ -52,38 +51,123 @@ class PrayerDetailView extends StatefulWidget {
 class _PrayerDetailViewState extends State<PrayerDetailView> {
   Prayer? _lastLoadedPrayer;
 
+  /// Returns true when the current auth user owns this prayer.
+  bool _isOwner(AuthState authState, Prayer prayer) {
+    if (authState is! Authenticated) return false;
+    return authState.user.id == prayer.userId;
+  }
+
+  /// Whether the prayer can still be edited per community rules.
+  bool _canEdit(Prayer prayer) {
+    if (prayer.status == 'pending') return true;
+    if (prayer.status == 'approved' && prayer.prayCount == 0) return true;
+    return false;
+  }
+
+  void _showDeleteDialog(BuildContext context, Prayer prayer) {
+    final prayCount = prayer.prayCount;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Prayer?'),
+        content: Text(
+          prayCount > 0
+              ? '$prayCount ${prayCount == 1 ? 'person has' : 'people have'} prayed for this. '
+                  'Deleting will remove it from their activity too.\n\nThis cannot be undone.'
+              : 'Are you sure you want to delete this prayer?\nThis cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<PrayerBloc>().add(DeletePrayerEvent(prayer.id));
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCannotEditDialog(BuildContext context, Prayer prayer) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cannot Edit'),
+        content: Text(
+          prayer.prayCount > 0
+              ? 'This prayer has received responses. Editing it would be misleading to the '
+                  '${prayer.prayCount} ${prayer.prayCount == 1 ? 'person' : 'people'} already praying.'
+              : 'This prayer cannot be edited at this stage.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Prayer Request'),
-      ),
-      body: BlocConsumer<PrayerBloc, PrayerState>(
-        listener: (context, state) {
-          if (state is PrayerPrayingToggled) {
-            final msg = state.alreadyPrayed
-                ? 'You are already praying for this request'
-                : 'You are now praying for this request';
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(msg)),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is PrayerDetailLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+    final authState = context.watch<AuthBloc>().state;
 
-          if (state is PrayerDetailLoaded) {
-            _lastLoadedPrayer = state.prayer;
-            return _PrayerDetailBody(prayer: state.prayer);
-          }
+    return BlocConsumer<PrayerBloc, PrayerState>(
+      listener: (context, state) {
+        if (state is PrayerPrayingToggled) {
+          final msg = state.alreadyPrayed
+              ? 'You are already praying for this request'
+              : 'You are now praying for this request';
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(msg)));
+        }
+        if (state is PrayerEdited) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Prayer updated and resubmitted for review'),
+          ));
+        }
+        if (state is PrayerDeleted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Your prayer has been deleted'),
+          ));
+          Navigator.pop(context);
+        }
+        if (state is PrayerError) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(state.message),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ));
+        }
+      },
+      builder: (context, state) {
+        if (state is PrayerDetailLoading) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Prayer Request')),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-          // While toggling, keep showing the last known prayer detail
-          if (state is PrayerTogglingPraying && _lastLoadedPrayer != null) {
-            return Stack(
+        if (state is PrayerDetailLoaded) {
+          _lastLoadedPrayer = state.prayer;
+        }
+
+        final prayer = _lastLoadedPrayer;
+
+        if (state is PrayerTogglingPraying && prayer != null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Prayer Request')),
+            body: Stack(
               children: [
-                _PrayerDetailBody(prayer: _lastLoadedPrayer!),
+                _PrayerDetailBody(prayer: prayer),
                 const Positioned.fill(
                   child: ColoredBox(
                     color: Colors.black12,
@@ -91,15 +175,87 @@ class _PrayerDetailViewState extends State<PrayerDetailView> {
                   ),
                 ),
               ],
-            );
-          }
+            ),
+          );
+        }
 
-          if (state is PrayerError) {
-            return Center(
+        if (state is PrayerDeleting) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Prayer Request')),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (prayer != null) {
+          final isOwner = _isOwner(authState, prayer);
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Prayer Request'),
+              actions: [
+                if (isOwner)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        if (_canEdit(prayer)) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EditPrayerPage(prayer: prayer),
+                            ),
+                          );
+                        } else {
+                          _showCannotEditDialog(context, prayer);
+                        }
+                      } else if (value == 'delete') {
+                        _showDeleteDialog(context, prayer);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(children: [
+                          Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: _canEdit(prayer) ? null : Colors.grey,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Edit',
+                            style: _canEdit(prayer)
+                                ? null
+                                : const TextStyle(color: Colors.grey),
+                          ),
+                        ]),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(children: [
+                          Icon(Icons.delete_outline,
+                              size: 18, color: Colors.red),
+                          SizedBox(width: 10),
+                          Text('Delete',
+                              style: TextStyle(color: Colors.red)),
+                        ]),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            body: _PrayerDetailBody(prayer: prayer),
+          );
+        }
+
+        if (state is PrayerError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Prayer Request')),
+            body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const Icon(Icons.error_outline,
+                      size: 64, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(state.message),
                   const SizedBox(height: 16),
@@ -109,12 +265,15 @@ class _PrayerDetailViewState extends State<PrayerDetailView> {
                   ),
                 ],
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          return const SizedBox();
-        },
-      ),
+        return Scaffold(
+          appBar: AppBar(title: const Text('Prayer Request')),
+          body: const SizedBox(),
+        );
+      },
     );
   }
 }
@@ -124,7 +283,6 @@ class _PrayerDetailBody extends StatelessWidget {
 
   const _PrayerDetailBody({required this.prayer});
 
-  /// Shows an auth-required dialog. Offers login and register actions.
   void _showAuthDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -171,7 +329,6 @@ class _PrayerDetailBody extends StatelessWidget {
           _SectionCard(
             child: Row(
               children: [
-                // Avatar — show profile image when available
                 CircleAvatar(
                   radius: 22,
                   backgroundColor: cs.primaryContainer,
@@ -193,8 +350,6 @@ class _PrayerDetailBody extends StatelessWidget {
                         ),
                 ),
                 const SizedBox(width: 12),
-
-                // Name + date
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,49 +358,47 @@ class _PrayerDetailBody extends StatelessWidget {
                         prayer.isAnonymous
                             ? 'Anonymous'
                             : (prayer.posterName ?? 'Unknown'),
-                        style: tt.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: tt.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         DateFormat('MMM d, yyyy').format(prayer.createdAt),
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
+                        style: tt.bodySmall
+                            ?.copyWith(color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
                 ),
-
-                // Answered badge
-                if (prayer.answered)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.green.withOpacity(0.35),
+                // Status badges
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (prayer.isEdited)
+                      _StatusBadge(
+                        label: 'Edited',
+                        color: cs.tertiary,
+                        icon: Icons.edit_outlined,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_circle_outline,
-                            size: 14, color: Colors.green.shade700),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Answered',
-                          style: tt.labelSmall?.copyWith(
-                            color: Colors.green.shade700,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                    if (prayer.status == 'pending') ...[
+                      if (prayer.isEdited) const SizedBox(width: 6),
+                      _StatusBadge(
+                        label: 'Under Review',
+                        color: Colors.orange,
+                        icon: Icons.hourglass_empty,
+                      ),
+                    ],
+                    if (prayer.answered) ...[
+                      if (prayer.isEdited || prayer.status == 'pending')
+                        const SizedBox(width: 6),
+                      _StatusBadge(
+                        label: 'Answered',
+                        color: Colors.green,
+                        icon: Icons.check_circle_outline,
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -257,8 +410,8 @@ class _PrayerDetailBody extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: cs.secondaryContainer,
                   borderRadius: BorderRadius.circular(20),
@@ -288,13 +441,11 @@ class _PrayerDetailBody extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Left accent bar
                 Container(
                   width: 3,
-                  height: null,
                   constraints: const BoxConstraints(minHeight: 40),
                   decoration: BoxDecoration(
-                    color: cs.primary.withOpacity(0.5),
+                    color: cs.primary.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -321,8 +472,7 @@ class _PrayerDetailBody extends StatelessWidget {
               color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: cs.outlineVariant.withOpacity(0.5),
-              ),
+                  color: cs.outlineVariant.withValues(alpha: 0.5)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -332,11 +482,10 @@ class _PrayerDetailBody extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   '${prayer.prayCount} '
-                      '${prayer.prayCount == 1 ? 'person is' : 'people are'} '
-                      'praying',
-                  style: tt.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  '${prayer.prayCount == 1 ? 'person is' : 'people are'} '
+                  'praying',
+                  style: tt.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -367,7 +516,9 @@ class _PrayerDetailBody extends StatelessWidget {
                     _showAuthDialog(ctx);
                     return;
                   }
-                  ctx.read<PrayerBloc>().add(TogglePrayingEvent(prayer.id));
+                  ctx
+                      .read<PrayerBloc>()
+                      .add(TogglePrayingEvent(prayer.id));
                 },
                 icon: const Icon(Icons.favorite_outline, size: 18),
                 label: const Text("I'm praying"),
@@ -397,7 +548,7 @@ class _PrayerDetailBody extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Divider(
-                    color: cs.outlineVariant.withOpacity(0.5),
+                    color: cs.outlineVariant.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -433,18 +584,16 @@ class _PrayerDetailBody extends StatelessWidget {
                       children: [
                         Text(
                           prayer.linkedTestimony!.title,
-                          style: tt.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: tt.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '${prayer.linkedTestimony!.praiseCount} people praised God',
-                          style: tt.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
+                          style: tt.bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -463,7 +612,44 @@ class _PrayerDetailBody extends StatelessWidget {
   }
 }
 
-// ── Shared card wrapper ──────────────────────────────────────────────────────
+// ── Status badge ─────────────────────────────────────────────────────────────
+
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _StatusBadge(
+      {required this.label, required this.color, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Shared card wrapper ───────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final Widget child;
@@ -486,7 +672,7 @@ class _SectionCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.4),
+              color: cs.outlineVariant.withValues(alpha: 0.4),
             ),
           ),
           child: child,

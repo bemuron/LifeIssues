@@ -20,6 +20,12 @@ abstract class TestimonyRemoteDataSource {
     int? prayerId,
   });
   Future<Map<String, dynamic>> togglePraise(int testimonyId);
+  Future<TestimonyModel> editTestimony({
+    required int testimonyId,
+    required String title,
+    required String body,
+    String? category,
+  });
   Future<void> deleteTestimony(int testimonyId);
   Future<List<TestimonyModel>> getMyTestimonies({int page = 1});
 }
@@ -106,6 +112,25 @@ class TestimonyRemoteDataSourceImpl implements TestimonyRemoteDataSource {
       'praise_count': rawPraiseCount is int ? rawPraiseCount : (rawPraiseCount as num?)?.toInt() ?? 0,
       'already_praised': response.data['already_praised'] == true || response.data['already_praised'] == 1,
     };
+  }
+
+  @override
+  Future<TestimonyModel> editTestimony({
+    required int testimonyId,
+    required String title,
+    required String body,
+    String? category,
+  }) async {
+    final data = <String, dynamic>{'title': title, 'body': body};
+    if (category != null) data['category'] = category;
+
+    final response = await apiClient.put(
+      ApiConfig.testimonyById(testimonyId),
+      data: data,
+    );
+
+    return TestimonyModel.fromJson(
+        response.data['testimony'] ?? response.data);
   }
 
   @override

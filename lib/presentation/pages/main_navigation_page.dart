@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/services/connectivity_service.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../blocs/auth/auth_event.dart';
 import '../blocs/subscription/subscription_bloc.dart';
@@ -38,6 +39,37 @@ class _MainNavigationPageUpdatedState
 
     context.read<AuthBloc>().add(CheckAuthStatusEvent());
     context.read<SubscriptionBloc>().add(LoadSubscriptionStatusEvent());
+
+    // Run connectivity check in parallel with the initial network calls.
+    // If offline: clear any stacked "unknown error" snackbars from individual
+    // bloc listeners and replace them with one clear message.
+    _checkConnectivityAndNotify();
+  }
+
+  Future<void> _checkConnectivityAndNotify() async {
+    final connected = await ConnectivityService.isConnected();
+    if (!connected && mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.wifi_off, color: Colors.white, size: 18),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'No internet connection. Please check your connection.',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange.shade800,
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+    }
   }
 
   void _onDestinationSelected(int index) {

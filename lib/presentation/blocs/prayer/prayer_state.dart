@@ -109,6 +109,20 @@ class PrayerPrayingToggled extends PrayerState {
   List<Object?> get props => [prayerId, hasPrayed, prayCount, alreadyPrayed];
 }
 
+class PrayerEditing extends PrayerState {
+  final int prayerId;
+  PrayerEditing(this.prayerId);
+  @override
+  List<Object?> get props => [prayerId];
+}
+
+class PrayerEdited extends PrayerState {
+  final Prayer prayer;
+  PrayerEdited(this.prayer);
+  @override
+  List<Object?> get props => [prayer];
+}
+
 class PrayerDeleting extends PrayerState {
   final int prayerId;
 

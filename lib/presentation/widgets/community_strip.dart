@@ -13,12 +13,15 @@ class CommunityStrip extends StatefulWidget {
   const CommunityStrip({Key? key, this.onNavigateToTab}) : super(key: key);
 
   @override
-  State<CommunityStrip> createState() => _CommunityStripState();
+  State<CommunityStrip> createState() => CommunityStripState();
 }
 
-class _CommunityStripState extends State<CommunityStrip> {
+class CommunityStripState extends State<CommunityStrip> {
   HomeSummaryModel? _summary;
   bool _isLoading = true;
+
+  /// Called by the parent (e.g. pull-to-refresh) to reload the data.
+  Future<void> refresh() => _loadSummary();
 
   @override
   void initState() {

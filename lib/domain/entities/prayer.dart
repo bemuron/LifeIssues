@@ -16,6 +16,7 @@ class Prayer extends Equatable {
   final LinkedTestimony? linkedTestimony;
   final DateTime createdAt;
   final String? profileImageUrl;
+  final bool isEdited;
 
   const Prayer({
     required this.id,
@@ -31,6 +32,7 @@ class Prayer extends Equatable {
     this.linkedTestimony,
     required this.createdAt,
     this.profileImageUrl,
+    this.isEdited = false,
   });
 
   @override
@@ -48,6 +50,7 @@ class Prayer extends Equatable {
     linkedTestimony,
     createdAt,
     profileImageUrl,
+    isEdited,
   ];
 
   Prayer copyWith({
@@ -64,6 +67,7 @@ class Prayer extends Equatable {
     LinkedTestimony? linkedTestimony,
     DateTime? createdAt,
     String? profileImageUrl,
+    bool? isEdited,
   }) {
     return Prayer(
       id: id ?? this.id,
@@ -79,6 +83,7 @@ class Prayer extends Equatable {
       linkedTestimony: linkedTestimony ?? this.linkedTestimony,
       createdAt: createdAt ?? this.createdAt,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      isEdited: isEdited ?? this.isEdited,
     );
   }
 }

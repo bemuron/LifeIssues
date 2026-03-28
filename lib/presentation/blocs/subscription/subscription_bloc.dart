@@ -80,7 +80,20 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         event.qonversionData,
       );
 
-      emit(SubscriptionSynced());
+      final isActive = event.qonversionData['is_active'] == true;
+      final status = event.qonversionData['status'] as String? ?? '';
+
+      // Only show a message when something genuinely positive happened.
+      // Expiry / cancellation syncs are silent — the UI updates via the
+      // subsequent LoadSubscriptionStatusEvent instead.
+      String message = '';
+      if (isActive) {
+        message = status == 'restored'
+            ? 'Subscription restored successfully!'
+            : 'Subscription activated successfully!';
+      }
+
+      emit(SubscriptionSynced(message: message));
 
       // Reload subscription status after sync
       add(LoadSubscriptionStatusEvent());
