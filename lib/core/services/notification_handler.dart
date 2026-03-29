@@ -368,6 +368,11 @@ class NotificationHandler {
     required TimeOfDay time,
   }) async {
     try {
+      // Ensure timezone data is initialised — initialize() may not have run yet
+      // if this is called from the settings toggle before the app fully boots.
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation(await _getLocalTimeZoneName()));
+
       // Cancel existing notification first
       await cancelDailyVerseNotification();
 

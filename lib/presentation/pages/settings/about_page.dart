@@ -69,7 +69,7 @@ class AboutPage extends StatelessWidget {
                   Text(
                     'Version ${AppStrings.appVersion}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),
 
@@ -165,7 +165,7 @@ class AboutPage extends StatelessWidget {
                   Text(
                     '© 2019 – 2026 ${AppStrings.appName}\nAll rights reserved.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textTertiary,
+                          color: Theme.of(context).colorScheme.outline,
                           height: 1.6,
                         ),
                     textAlign: TextAlign.center,
@@ -217,7 +217,7 @@ class AboutPage extends StatelessWidget {
                   Text(
                     description,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           height: 1.5,
                         ),
                   ),
@@ -386,7 +386,7 @@ class _CtaSection extends StatelessWidget {
           'We\'re just getting started. More features, more topics, and more ways '
           'to grow together are coming in future updates.',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
           textAlign: TextAlign.center,

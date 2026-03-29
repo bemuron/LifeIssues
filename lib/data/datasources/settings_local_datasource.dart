@@ -61,17 +61,18 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
       final minute = prefs.getInt(_keyNotificationMinute) ?? 0;
       final time = TimeOfDay(hour: hour, minute: minute);
 
-      // Enable or disable notifications with NotificationService
       if (newValue) {
-        final success = await NotificationHandler().enableDailyNotifications(time);
-        if (!success) {
-          // Permission denied or scheduling failed
-          return false;
-        }
+        // Request Android 13+ POST_NOTIFICATIONS and exact alarm permissions
+        // before scheduling — without this the schedule silently fails and the
+        // switch never moves because scheduling returns false.
+        await NotificationHandler().requestPermission();
+        // Schedule best-effort; do not block the preference save on success
+        await NotificationHandler().enableDailyNotifications(time);
       } else {
         await NotificationHandler().disableDailyNotifications();
       }
 
+      // Always save the new value so the switch reflects the user's intent
       await prefs.setBool(_keyNotificationsEnabled, newValue);
       return newValue;
     } catch (e) {

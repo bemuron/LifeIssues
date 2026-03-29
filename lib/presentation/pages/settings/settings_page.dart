@@ -109,7 +109,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         SwitchListTile(
                           secondary: const Icon(Icons.auto_awesome),
                           title: const Text('Testimony Notifications'),
-                          subtitle: const Text('When someone praises your testimony'),
+                          subtitle: const Text('When someone praises God for your testimony'),
                           value: _testimonyNotifications,
                           onChanged: (value) {
                             setState(() {

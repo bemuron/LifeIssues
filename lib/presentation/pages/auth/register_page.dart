@@ -305,19 +305,8 @@ class _RegisterViewState extends State<RegisterView> {
     if (!mounted) return;
 
     if (result.success) {
+      // BlocConsumer listener handles navigation via popUntil(isFirst)
       context.read<AuthBloc>().add(AuthenticateDirectEvent(user: result.user!));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 12),
-            Expanded(child: Text('Signed in with Google!')),
-          ]),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -339,19 +328,8 @@ class _RegisterViewState extends State<RegisterView> {
     if (!mounted) return;
 
     if (result.success) {
+      // BlocConsumer listener handles navigation via popUntil(isFirst)
       context.read<AuthBloc>().add(AuthenticateDirectEvent(user: result.user!));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 12),
-            Expanded(child: Text('Signed in with Apple!')),
-          ]),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
